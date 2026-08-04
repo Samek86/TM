@@ -1,0 +1,39 @@
+{
+  "source": "Tm.run file offset 0x39C20 (VA 0x439C20), record size 23 (0x17)",
+  "record": {
+    "name": "char[20] null-padded",
+    "usable_born": "u8 at +20",
+    "usable_killers": "u8 at +21",
+    "usable_sorcerer": "u8 at +22"
+  },
+  "weapons": [
+    { "id": 1, "name": "Vulcan Cannon", "B": 1, "K": 1, "S": 1, "body": "wp1.spr", "shot": "WP1SHT.SPR", "sfx": "shoot1.wav" },
+    { "id": 2, "name": "ATi-Gun", "B": 1, "K": 0, "S": 0, "body": "wp2.spr", "shot": "WP2SHT.SPR", "sfx": "shoot2.wav" },
+    { "id": 3, "name": "EM-Gun", "B": 0, "K": 1, "S": 0, "body": "wp3.spr", "shot": "WP3SHT.SPR", "sfx": "shoot3.wav" },
+    { "id": 4, "name": "Plazma Shooter", "B": 0, "K": 0, "S": 1, "body": "wp4.spr", "shot": "wp4sht.spr", "sfx": "shoot4.wav" },
+    { "id": 5, "name": "Gun Cannon", "B": 1, "K": 0, "S": 0, "body": "wp5.spr", "shot": "wp5sht.spr", "sfx": "shoot5.wav" },
+    { "id": 6, "name": "Laser Cannon", "B": 1, "K": 0, "S": 0, "body": "wp6.spr", "shot": "WP6SHT.SPR", "sfx": "shoot6.wav" },
+    { "id": 7, "name": "Spiner", "B": 1, "K": 1, "S": 0, "body": "wp7.spr", "shot": "WP7SHT.SPR", "sfx": "shoot7.wav" },
+    { "id": 8, "name": "Slayer", "B": 0, "K": 0, "S": 1, "body": "wp8.spr", "shot": "wp8sht.spr", "sfx": "shoot8.wav" },
+    { "id": 9, "name": "Paranoid Shooter", "B": 0, "K": 1, "S": 1, "body": "wp9.spr", "shot": "WP9SHT.SPR", "sfx": "shoot9.wav" },
+    { "id": 10, "name": "S-mine", "B": 1, "K": 0, "S": 1, "body": "wp10.spr", "shot": "WP10SHT.SPR", "sfx": "shoot10.wav" },
+    { "id": 11, "name": "Fire Bomb", "B": 0, "K": 1, "S": 0, "body": "wp11.spr", "shot": "WP11SHT.SPR", "sfx": "shoot11.wav" },
+    { "id": 12, "name": "Stinger", "B": 1, "K": 0, "S": 1, "body": "wp12.spr", "shot": "WP12SHT.SPR", "sfx": "shoot12.wav" },
+    { "id": 13, "name": "Multi Missiler", "B": 0, "K": 1, "S": 1, "body": "wp13.spr", "shot": "WP13SHT.SPR", "sfx": "shoot13.wav" },
+    { "id": 14, "name": "Tow Missile", "B": 0, "K": 1, "S": 1, "body": "wp14.spr", "shot": "WP14SHT.SPR", "sfx": "shoot14.wav" },
+    { "id": 15, "name": "Tomahawk", "B": 1, "K": 0, "S": 0, "body": "wp15.spr", "shot": "WP15SHT.SPR", "sfx": "shoot15.wav" },
+    { "id": 16, "name": "Burst Apocalypse", "B": 0, "K": 1, "S": 0, "body": "WP16.SPR", "shot": "WP16SHT.SPR", "sfx": "shoot16.wav" },
+    { "id": 17, "name": "Blazing Beam", "B": 1, "K": 0, "S": 1, "body": "wp17.spr", "shot": "WP17SHT.SPR", "sfx": "shoot17.wav" },
+    { "id": 18, "name": "Fire Bault", "B": 1, "K": 0, "S": 0, "body": null, "shot": null, "sfx": null },
+    { "id": 19, "name": "Burst Launcher", "B": 0, "K": 1, "S": 0, "body": null, "shot": null, "sfx": null },
+    { "id": 20, "name": "Ice Bault", "B": 0, "K": 0, "S": 1, "body": null, "shot": null, "sfx": null },
+    { "id": 21, "name": "Lust Cannon", "B": 0, "K": 1, "S": 0, "body": "wp21.spr", "shot": "wp21sht.spr", "sfx": "shoot21.wav" }
+  ],
+  "notes": [
+    "Name table xrefs only draw UI strings (imul ecx,23; add 0x439C20) — no numeric stats adjacent.",
+    "Damage/fire-rate/speed floats for 21 weapons not found as dense table in on-disk .data (most BSS).",
+    "wp18–20 body/shot files missing from extracted client pack.",
+    "2026-08 deep pass: craft mask byte at BSS 0x4738E4 selects B/K/S column (+20/+21/+22); weapon:%d uses view+0x59.",
+    "Network strings (Join/speed/score) show combat identity is largely server-filled — static RE cannot invent damage tables."
+  ]
+}

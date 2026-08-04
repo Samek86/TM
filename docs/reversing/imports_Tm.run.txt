@@ -1,0 +1,166 @@
+
+### KERNEL32.dll
+    0x435074  GetTickCount
+    0x435078  RtlUnwind
+    0x43507c  GetModuleFileNameA
+    0x435080  FreeEnvironmentStringsA
+    0x435084  FreeEnvironmentStringsW
+    0x435088  GetEnvironmentStrings
+    0x43508c  GetEnvironmentStringsW
+    0x435090  HeapDestroy
+    0x435094  HeapCreate
+    0x435098  VirtualFree
+    0x43509c  GetStringTypeA
+    0x4350a0  GetStringTypeW
+    0x4350a4  VirtualAlloc
+    0x4350a8  IsBadWritePtr
+    0x4350ac  SetStdHandle
+    0x4350b0  FlushFileBuffers
+    0x4350b4  SetUnhandledExceptionFilter
+    0x4350b8  IsBadReadPtr
+    0x4350bc  IsBadCodePtr
+    0x4350c0  QueryPerformanceCounter
+    0x4350c4  _lopen
+    0x4350c8  _lread
+    0x4350cc  _lclose
+    0x4350d0  SetCurrentDirectoryA
+    0x4350d4  GetCurrentProcessId
+    0x4350d8  GetLastError
+    0x4350dc  GetProcessHeap
+    0x4350e0  HeapAlloc
+    0x4350e4  CreateFileA
+    0x4350e8  SetFilePointer
+    0x4350ec  GetFileType
+    0x4350f0  WriteFile
+    0x4350f4  Sleep
+    0x4350f8  UnhandledExceptionFilter
+    0x4350fc  ReadFile
+    0x435100  CloseHandle
+    0x435104  GetOEMCP
+    0x435108  LoadLibraryA
+    0x43510c  GetCPInfo
+    0x435110  SetEndOfFile
+    0x435114  MultiByteToWideChar
+    0x435118  OutputDebugStringA
+    0x43511c  CreateThread
+    0x435120  RaiseException
+    0x435124  GetProcAddress
+    0x435128  GetACP
+    0x43512c  HeapFree
+    0x435130  GetStdHandle
+    0x435134  SetHandleCount
+    0x435138  HeapSize
+    0x43513c  GetCurrentProcess
+    0x435140  TerminateProcess
+    0x435144  HeapReAlloc
+    0x435148  ExitProcess
+    0x43514c  LCMapStringW
+    0x435150  LCMapStringA
+    0x435154  WideCharToMultiByte
+    0x435158  GetStartupInfoA
+    0x43515c  GetVersion
+    0x435160  GetCommandLineA
+    0x435164  GetModuleHandleA
+
+### USER32.dll
+    0x435178  GetMessageA
+    0x43517c  PeekMessageA
+    0x435180  ShowWindow
+    0x435184  ShowCursor
+    0x435188  LoadIconA
+    0x43518c  LoadCursorA
+    0x435190  RegisterClassA
+    0x435194  FindWindowA
+    0x435198  CreateWindowExA
+    0x43519c  DefWindowProcA
+    0x4351a0  DestroyWindow
+    0x4351a4  PostQuitMessage
+    0x4351a8  DispatchMessageA
+    0x4351ac  SendMessageA
+    0x4351b0  MessageBoxA
+    0x4351b4  GetClientRect
+    0x4351b8  ClientToScreen
+    0x4351bc  GetDC
+    0x4351c0  ReleaseDC
+    0x4351c4  wsprintfA
+    0x4351c8  GetSystemMetrics
+    0x4351cc  MoveWindow
+    0x4351d0  AdjustWindowRectEx
+    0x4351d4  TranslateMessage
+    0x4351d8  GetAsyncKeyState
+
+### GDI32.dll
+    0x43503c  DeleteObject
+    0x435040  GetTextExtentExPointA
+    0x435044  CreateFontA
+    0x435048  GetStockObject
+    0x43504c  StretchDIBits
+    0x435050  SetBkMode
+    0x435054  SetTextColor
+    0x435058  TextOutA
+    0x43505c  SelectObject
+
+### ADVAPI32.dll
+    0x435000  RegCloseKey
+    0x435004  RegCreateKeyExA
+    0x435008  RegOpenKeyExA
+    0x43500c  RegQueryValueExA
+    0x435010  RegSetValueExA
+
+### SHELL32.dll
+    0x43516c  SHBrowseForFolderA
+    0x435170  SHGetPathFromIDListA
+
+### ole32.dll
+    0x435254  CoInitialize
+    0x435258  CoUninitialize
+    0x43525c  CoCreateInstance
+
+### DINPUT.dll
+    0x435020  DirectInputCreateA
+
+### DDRAW.dll
+    0x435018  DirectDrawCreate
+
+### IMM32.dll
+    0x435064  ImmGetContext
+    0x435068  ImmGetConversionStatus
+    0x43506c  ImmSetConversionStatus
+
+### DSOUND.dll
+    0x435028  ord_1
+
+### DirtStrDll.dll
+    0x435030  ??0CDirtStrDll@@QAE@XZ
+    0x435034  ?CDirtModify@CDirtStrDll@@QAEXPAD@Z
+
+### WINMM.dll
+    0x4351e0  mciSendStringA
+    0x4351e4  mixerSetControlDetails
+    0x4351e8  mixerGetControlDetailsA
+    0x4351ec  mixerGetID
+    0x4351f0  mixerGetDevCapsA
+    0x4351f4  mixerGetLineInfoA
+    0x4351f8  mixerGetLineControlsA
+    0x4351fc  mixerGetNumDevs
+
+### WS2_32.dll
+    0x435204  setsockopt
+    0x435208  recv
+    0x43520c  send
+    0x435210  closesocket
+    0x435214  socket
+    0x435218  connect
+    0x43521c  WSAAsyncSelect
+    0x435220  WSACleanup
+    0x435224  WSAStartup
+    0x435228  WSASocketA
+    0x43522c  WSAGetLastError
+    0x435230  gethostbyname
+    0x435234  inet_addr
+    0x435238  inet_ntoa
+    0x43523c  sendto
+    0x435240  recvfrom
+    0x435244  ntohs
+    0x435248  htons
+    0x43524c  ntohl

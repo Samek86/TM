@@ -1,0 +1,79 @@
+# Strings analysis: tmup.run
+Total ASCII strings (>=5): 113, UTF16: 1
+
+## paths (4)
+  !This program cannot be run in DOS mode.
+  abnormal program termination
+  Program: 
+  <program name unknown>
+
+## urls (0)
+
+## errors (12)
+  runtime error 
+  TLOSS error
+  SING error
+  DOMAIN error
+  - unable to initialize heap
+  - unable to open console device
+  - unexpected heap error
+  - unexpected multithread lock error
+  Runtime Error!
+  GetLastError
+  UnhandledExceptionFilter
+  . [error 1]
+
+## game (3)
+  LCMapStringA
+  LCMapStringW
+  Tactics Mercenary
+
+## network (1)
+  GetCPInfo
+
+## dx (0)
+
+## files (6)
+  @.data
+  user32.dll
+  KERNEL32.dll
+  USER32.dll
+  tmnew.exe
+  tm.exe
+
+## fmt (0)
+
+## koreanish (0)
+
+## other_long (31)
+  - not enough space for lowio initialization
+  - not enough space for stdio initialization
+  - pure virtual function call
+  - not enough space for _onexit/atexit table
+  - not enough space for thread data
+  - not enough space for environment
+  - not enough space for arguments
+  - floating point not loaded
+  Microsoft Visual C++ Runtime Library
+  GetLastActivePopup
+  GetActiveWindow
+  PostMessageA
+  GetModuleHandleA
+  GetStartupInfoA
+  GetCommandLineA
+  TerminateProcess
+  GetCurrentProcess
+  GetModuleFileNameA
+  FreeEnvironmentStringsA
+  FreeEnvironmentStringsW
+  WideCharToMultiByte
+  GetEnvironmentStrings
+  GetEnvironmentStringsW
+  SetHandleCount
+  GetStdHandle
+  VirtualAlloc
+  GetProcAddress
+  LoadLibraryA
+  MultiByteToWideChar
+  GetStringTypeA
+  GetStringTypeW

@@ -1,0 +1,17 @@
+Tactics Mercenary Revival — Full Archive Download Packs
+======================================================
+
+OPTION A — reassemble single archive (Linux / Mac / Git Bash):
+  cat tm_revival_full_archive.tar.gz.part00 \
+      tm_revival_full_archive.tar.gz.part01 \
+      tm_revival_full_archive.tar.gz.part02 \
+      > tm_revival_full_archive.tar.gz
+  tar -xzf tm_revival_full_archive.tar.gz
+
+OPTION B — logical packs (no reassembly needed):
+  01_media_docs      screenshots, art, video, audio, docs, website HTML
+  02_client_installers  tm12.zip, tm10.exe, InstallShield CABs
+  03_client_extracted   Tm.run, maps, sprites, sounds, logo.mpg
+
+Google Drive folder:
+  https://drive.google.com/drive/folders/1fMEg63u9Dh1jCQFmd4QAowRsAPt9hzAS

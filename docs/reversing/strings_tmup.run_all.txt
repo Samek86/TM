@@ -1,0 +1,86 @@
+!This program cannot be run in DOS mode.
+`.rdata
+@.data
+YYh P@
+SS@SSPVSS
+t#SSUP
+t$$VSS
+_^][YY
+DSUVWh
+t.;t$$t(
+VC20XC00U
+Y;5PX@
+0B=hT@
+runtime error 
+TLOSS error
+SING error
+DOMAIN error
+- unable to initialize heap
+- not enough space for lowio initialization
+- not enough space for stdio initialization
+- pure virtual function call
+- not enough space for _onexit/atexit table
+- unable to open console device
+- unexpected heap error
+- unexpected multithread lock error
+- not enough space for thread data
+abnormal program termination
+- not enough space for environment
+- not enough space for arguments
+- floating point not loaded
+Microsoft Visual C++ Runtime Library
+Runtime Error!
+Program: 
+<program name unknown>
+GetLastActivePopup
+GetActiveWindow
+MessageBoxA
+user32.dll
+KERNEL32.dll
+PostMessageA
+FindWindowA
+USER32.dll
+GetLastError
+MoveFileA
+DeleteFileA
+GetModuleHandleA
+GetStartupInfoA
+GetCommandLineA
+GetVersion
+ExitProcess
+TerminateProcess
+GetCurrentProcess
+UnhandledExceptionFilter
+GetModuleFileNameA
+FreeEnvironmentStringsA
+FreeEnvironmentStringsW
+WideCharToMultiByte
+GetEnvironmentStrings
+GetEnvironmentStringsW
+SetHandleCount
+GetStdHandle
+GetFileType
+HeapDestroy
+HeapCreate
+VirtualFree
+HeapFree
+RtlUnwind
+WriteFile
+GetCPInfo
+GetACP
+GetOEMCP
+HeapAlloc
+VirtualAlloc
+HeapReAlloc
+GetProcAddress
+LoadLibraryA
+MultiByteToWideChar
+LCMapStringA
+LCMapStringW
+GetStringTypeA
+GetStringTypeW
+      
+. [error 1]
+tmnew.exe
+tm.exe
+Tactics Mercenary

@@ -1,0 +1,24 @@
+# Dependencies & local tooling
+node_modules/
+.local/
+.npm/
+.cache/
+
+# Build / env
+dist/
+.output/
+.vinxi/
+.tanstack/
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Temp
+*.tmp
+tmp/

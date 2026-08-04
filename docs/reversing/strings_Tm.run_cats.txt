@@ -1,0 +1,437 @@
+# Strings analysis: Tm.run
+Total ASCII strings (>=5): 772, UTF16: 39
+
+## paths (28)
+  !This program cannot be run in DOS mode.
+  \SVWj
+  \SVWh
+  Rh0\C
+  Ph|\C
+  Rh\]C
+  Ph\_C
+  "WWSh\kC
+  PVh\kC
+  d:\oldtm\client\directxs.cpp
+  d:\oldtm\client\fio.cpp
+  d:\oldtm\client\gmain.cpp
+  d:\oldtm\client\message.cpp
+  data\lang.kor
+  d:\oldtm\client\ninter.cpp
+  Software\Pantech Net\Tactics Mercenary
+  Bd:\oldtm\client\sprmanager.cpp
+  d:\oldtm\client\srd.cpp
+  Client programming. Song KilSup (SaemSong)
+  Server programming. Hong Myung Goo
+  abnormal program termination
+  Program: 
+  <program name unknown>
+  WWVVUUTTSSRRQQPPXXYYZZ[[\\]]^^__``aabbccddeeffgghhiijjkkklllmmnnHHIIJJKKLLMMNNOO
+  sound\tactics1.mid
+  sound\tactics2.mid
+  sound\tactics4.mid
+  sound\tactics5.mid
+
+## urls (0)
+
+## errors (21)
+  failed
+  @MsgText Load max error %d %d
+  HeapAlloc failed %d
+  Unable to resolve %s
+   WSAStartup failed : %d
+  Non-recoverable errors
+  No error
+  runtime error 
+  TLOSS error
+  SING error
+  DOMAIN error
+  - unable to initialize heap
+  - unable to open console device
+  - unexpected heap error
+  - unexpected multithread lock error
+  Runtime Error!
+  OutputDebugStringA
+  GetLastError
+  UnhandledExceptionFilter
+  SetUnhandledExceptionFilter
+  RaiseException
+
+## game (26)
+  HPh<UC
+  QhpUC
+  PhP[C
+  Rhp]C
+  QhpfA
+  RhpfA
+  PhpfA
+  Tactics Mercenary(v 1.2)
+  Map Display %d.%d
+  weapon:%d ID:%s 
+  I:%d hp:%d %d:%d %d %d
+  3> Sorcerer
+  2> Killers Pot
+  1> Born Armor
+  id:%s speed:%d score:%d
+  Other Player :%d
+  start!! v:%d id: %s %d %d speed:%d score:%d
+  LCMapStringA
+  LCMapStringW
+  Vulcan Cannon
+  ATi-Gun
+  EM-Gun
+  Gun Cannon
+  Laser Cannon
+  Multi Missiler
+  Tow Missile
+
+## network (39)
+  [Connect]
+  DirectInputCreate 5.0 FAILED - no joystick support
+  recvfrom failed: %d
+  sendto failed: %d
+  failed to set send timeout: %d
+  failed to set recv timeout: %d
+  WSASocket() failed: %d
+  Recv : 0x%x 0x%x
+  [Login]
+  Graceful disconnect in progress
+  Non-authoritative host not found
+  Host not found
+  Winsock not yet initialized
+  Winsock version not supported
+  No route to host
+  Host is down
+  Connection refused
+  Connection timed out
+  Can't send after socket shutdown
+  Socket is not connected
+  Socket is already connected
+  Connection reset by peer
+  Software caused connection abort
+  Net connection reset
+  Address family not supported
+  Protocol family not supported
+  Operation not supported on socket
+  Socket type not supported
+  Protocol not supported
+  Protocol wrong type for socket
+  Socket operation on non-socket
+  Too many open sockets
+  Recv data error
+  ClientToScreen
+  GetClientRect
+  SendMessageA
+  mciSendStringA
+  WSASocketA
+  GetCPInfo
+
+## dx (12)
+  IDirectInputDevice::GetDeviceInfo FAILED
+  IDirectInputDevice::SetCooperativeLevel FAILED
+  IDirectInputDevice::SetDataFormat FAILED
+  IDirectInput::CreateDevice FAILED
+  IDirectInputDevice::SetProperty(DIPH_DEVICE) FAILED
+  IDirectInputDevice::SetProperty(DIPH_DEADZONE) FAILED
+  IDirectInputDevice::SetProperty(DIPH_RANGE) FAILED
+  DirectInputCreate 3.0 FAILED
+  Directory not empty
+  SetCurrentDirectoryA
+  DirectInputCreateA
+  DirectDrawCreate
+
+## files (119)
+  @.data
+  data\SENG.FNT
+  data\SHAN.FNT
+  data\%s.lfx
+  data\%s.dfx
+  data\gameinte.ppp
+  data\item.spr
+  data\wp21sht.spr
+  data\wp17sht.spr
+  data\wp16sht.spr
+  data\wp161sht.spr
+  data\wp15sht.spr
+  data\wp14sht.spr
+  data\wp13sht.spr
+  data\wp12sht.spr
+  data\wp11sht.spr
+  data\wp10sht.spr
+  data\wp9sht.spr
+  data\wp8sht.spr
+  data\wp7sht.spr
+  data\wp6sht.spr
+  data\wp5sht.spr
+  data\wp4sht.spr
+  data\wp3sht.spr
+  data\wp2sht.spr
+  data\wp1sht.spr
+  data\wp21.spr
+  data\wp17.spr
+  data\wp16.spr
+  data\wp15.spr
+  data\wp14.spr
+  data\wp13.spr
+  data\wp12.spr
+  data\wp11.spr
+  data\wp10.spr
+  data\wp9.spr
+  data\wp8.spr
+  data\wp7.spr
+  data\wp6.spr
+  data\wp5.spr
+  data\wp4.spr
+  data\wp3.spr
+  data\wp2.spr
+  data\wp1.spr
+  data\piece.spr
+  data\ef1.spr
+  data\cyr.spr
+  data\cop.spr
+  data\char3.spr
+  data\char2.spr
+  data\char1.spr
+  data\%s.bob
+  data\%s.til
+  data\%s.map
+  data\now%d.ppp
+  Check you have run regsvr32 amstream.dll
+  data\font.ppp
+  data\login0.ppp
+  data\msgbox.ppp
+  data\ranking2.ppp
+  data\ranking.ppp
+  data\login2.ppp
+  data\login1.ppp
+  data\hpbar.ppp
+  data\chat.ppp
+  data\screenc.ppp
+  data\button.ppp
+  data\inter2.ppp
+  data\canit3.spr
+  data\canit2.spr
+  data\canit1.spr
+  data\inter.ppp
+  data\interb.ppp
+  data\logo.mpg
+  user32.dll
+  KERNEL32.dll
+  USER32.dll
+  GDI32.dll
+  ADVAPI32.dll
+  SHELL32.dll
+  ole32.dll
+  DINPUT.dll
+  DDRAW.dll
+  IMM32.dll
+  DSOUND.dll
+  DirtStrDll.dll
+  WINMM.dll
+  WS2_32.dll
+  sound\rev.wav
+  sound\gx1.wav
+  sound\gx2.wav
+  sound\shoot1.wav
+  sound\shoot2.wav
+  sound\shoot3.wav
+  sound\shoot4.wav
+  sound\shoot5.wav
+  sound\shoot6.wav
+  sound\shoot7.wav
+  sound\shoot8.wav
+  sound\shoot9.wav
+  sound\shoot10.wav
+  sound\shoot11.wav
+  sound\shoot12.wav
+  sound\shoot13.wav
+  sound\shoot14.wav
+  sound\shoot15.wav
+  sound\shoot16.wav
+  sound\shoot17.wav
+  sound\shoot21.wav
+  sound\item.wav
+  sound\cyr.wav
+  sound\shoot161.wav
+  sound\shoot162.wav
+  sound\click.wav
+  sound\over.wav
+  sound\wow.wav
+  sound\vselect.wav
+  sound\inputsel.wav
+  sound\interback.wav
+
+## fmt (36)
+  ^}%95,
+  Now Loading.. %d%%
+  TEMP%04d.PCX
+  B333?%-3d
+  %d/%d
+  Pilot %s is escaped this zone.
+  AIndex:%d x:%lf y:%lf id:%s 
+     Total:%d
+  BPilot %s is crushed by %s.
+   Bprev2 %d
+  prev1 %d
+  ;%s : 
+  %s not found!!
+  open %s type sequencer alias MUSIC
+  %6dms
+  B%2d:
+  add : %s
+  <%s> %s
+  %s file not found
+  %x %x
+  .. %d
+  MAX item :%d
+  Pilot %s is entering this zone.
+  Join %x %s x:%d y:%d %d %d speed:%d
+   %d %d %d %d
+   MAX : %d
+  .! %d
+   : Code:0x%x, Index:%d
+   :%d %d
+  %s %s
+   !"#$%&'()*+,-./0123456789:;<=>?
+   !"#$%&'()*+,--./0123456789::;<=>?
+   !"#$%&'(()*+,-./001234567789:;<<=>?
+   !"#$%%&'()*+,,-./011234566789::;<==>?
+   !!"#$%&'())*+,-../0122345567889:;;<=>>?
+  zc%C1
+
+## koreanish (0)
+
+## other_long (134)
+  DSERR_UNINITIALIZED 
+   DSERR_OUTOFMEMORY
+  DSERR_INVALIDPARAM
+   DSERR_INVALIDCALL
+   DSERR_ALLOCATED 
+  FSOUND BUFFER NULL
+  we don't have a current device
+  play MUSIC from 0 notify
+  Could not create a CLSID_MultiMediaStream object
+  Zero addreass
+  NULL pointer
+  Kook kyungmok(Doogie)
+  Shin JinHo(laputan)
+  Hwang sooyong(Him)
+  Song Youngkook(MAYA)
+  Shin Hwakook(Micael)
+  Kook Hyunsub(khs)
+  Special Thank you
+  Sound. Rim JaeWook(MusicFighter)
+  Graphic. Son mee young (mee),Hong ByungKee (kee)
+  Design. Oh SeoungEan (eany)
+  MS Sans Serif
+  Valid name, no data record of requested type
+  Network subsystem is unavailable
+  Too many levels of remote in path
+  Stale NFS file handle
+  Disc quota exceeded
+  Too many users
+  Too many processes
+  File name too long
+  Too many levels of symbolic links
+  Too many references, can't splice
+  No buffer space available
+  Network is unreachable
+  Network is down
+  Can't assign requested address
+  Address already in use
+  Bad protocol option
+  Message too long
+  Destination address required
+  Operation already in progress
+  Operation now in progress
+  Operation would block
+  Invalid argument
+  Permission denied
+  Bad file number
+  Interrupted system call
+  GAIsProcessorFeaturePresent
+  - not enough space for lowio initialization
+  - not enough space for stdio initialization
+  - pure virtual function call
+  - not enough space for _onexit/atexit table
+  - not enough space for thread data
+  - not enough space for environment
+  - not enough space for arguments
+  - floating point not loaded
+  Microsoft Visual C++ Runtime Library
+  SunMonTueWedThuFriSat
+  JanFebMarAprMayJunJulAugSepOctNovDec
+  GetLastActivePopup
+  GetActiveWindow
+  GetTickCount
+  CreateThread
+  MultiByteToWideChar
+  GetProcessHeap
+  GetCurrentProcessId
+  QueryPerformanceCounter
+  TranslateMessage
+  PeekMessageA
+  GetAsyncKeyState
+  AdjustWindowRectEx
+  GetSystemMetrics
+  DispatchMessageA
+  PostQuitMessage
+  DestroyWindow
+  DefWindowProcA
+  CreateWindowExA
+  RegisterClassA
+  GetTextExtentExPointA
+  SelectObject
+  SetTextColor
+  StretchDIBits
+  GetStockObject
+  DeleteObject
+  RegSetValueExA
+  RegCreateKeyExA
+  RegQueryValueExA
+  RegOpenKeyExA
+  SHGetPathFromIDListA
+  SHBrowseForFolderA
+  CoCreateInstance
+  CoUninitialize
+  CoInitialize
+  ImmSetConversionStatus
+  ImmGetConversionStatus
+  ImmGetContext
+  ??0CDirtStrDll@@QAE@XZ
+  ?CDirtModify@CDirtStrDll@@QAEXPAD@Z
+  mixerGetNumDevs
+  mixerGetLineControlsA
+  mixerGetLineInfoA
+  mixerGetDevCapsA
+  mixerGetControlDetailsA
+  mixerSetControlDetails
+  GetModuleHandleA
+  GetStartupInfoA
+  GetCommandLineA
+  WideCharToMultiByte
+  GetProcAddress
+  TerminateProcess
+  GetCurrentProcess
+  SetHandleCount
+  GetStdHandle
+  SetFilePointer
+  GetModuleFileNameA
+  FreeEnvironmentStringsA
+  FreeEnvironmentStringsW
+  GetEnvironmentStrings
+  GetEnvironmentStringsW
+  GetStringTypeA
+  GetStringTypeW
+  VirtualAlloc
+  IsBadWritePtr
+  SetStdHandle
+  FlushFileBuffers
+  IsBadReadPtr
+  IsBadCodePtr
+  LoadLibraryA
+  SetEndOfFile
+  Plazma Shooter
+  Paranoid Shooter
+  Burst Apocalypse
+  Blazing Beam
+  Burst Launcher

@@ -1,0 +1,47 @@
+
+### KERNEL32.dll
+    0x404000  SetHandleCount
+    0x404004  GetStdHandle
+    0x404008  Sleep
+    0x40400c  GetStringTypeW
+    0x404010  GetStringTypeA
+    0x404014  GetLastError
+    0x404018  MoveFileA
+    0x40401c  DeleteFileA
+    0x404020  GetModuleHandleA
+    0x404024  GetStartupInfoA
+    0x404028  GetCommandLineA
+    0x40402c  GetVersion
+    0x404030  ExitProcess
+    0x404034  TerminateProcess
+    0x404038  GetCurrentProcess
+    0x40403c  UnhandledExceptionFilter
+    0x404040  GetModuleFileNameA
+    0x404044  FreeEnvironmentStringsA
+    0x404048  FreeEnvironmentStringsW
+    0x40404c  WideCharToMultiByte
+    0x404050  GetEnvironmentStrings
+    0x404054  GetEnvironmentStringsW
+    0x404058  LCMapStringA
+    0x40405c  LCMapStringW
+    0x404060  GetFileType
+    0x404064  HeapDestroy
+    0x404068  HeapCreate
+    0x40406c  VirtualFree
+    0x404070  HeapFree
+    0x404074  RtlUnwind
+    0x404078  WriteFile
+    0x40407c  GetCPInfo
+    0x404080  GetACP
+    0x404084  GetOEMCP
+    0x404088  HeapAlloc
+    0x40408c  VirtualAlloc
+    0x404090  HeapReAlloc
+    0x404094  GetProcAddress
+    0x404098  LoadLibraryA
+    0x40409c  MultiByteToWideChar
+
+### USER32.dll
+    0x4040a4  FindWindowA
+    0x4040a8  PostMessageA
+    0x4040ac  MessageBoxA

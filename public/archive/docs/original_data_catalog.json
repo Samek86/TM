@@ -1,0 +1,1121 @@
+{
+  "game": "Tactics Mercenary",
+  "version": "1.2",
+  "vultures": [
+    {
+      "id": 1,
+      "name": "Born Armor",
+      "select_label": "1> Born Armor",
+      "sprite": "char1.spr",
+      "select_anim": "canit1.spr",
+      "specs": {
+        "model": "XRb 324-A Krisaris BA",
+        "engine_kw": 354,
+        "weight_t": 12,
+        "speed": 12
+      },
+      "role": "balanced"
+    },
+    {
+      "id": 2,
+      "name": "Killers Pot",
+      "select_label": "2> Killers Pot",
+      "sprite": "char2.spr",
+      "select_anim": "canit2.spr",
+      "role": "close_range_power"
+    },
+    {
+      "id": 3,
+      "name": "Sorcerer",
+      "select_label": "3> Sorcerer",
+      "sprite": "char3.spr",
+      "select_anim": "canit3.spr",
+      "role": "melee_electric"
+    }
+  ],
+  "weapons": [
+    {
+      "id": 1,
+      "name": "Vulcan Cannon",
+      "sprite": "wp1.spr",
+      "shot_sprite_candidates": [
+        "wp1sht.spr",
+        "WP1SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot1.wav"
+      ],
+      "vulture_mask": [
+        1,
+        1,
+        1
+      ],
+      "usable_by": [
+        "Born Armor",
+        "Killers Pot",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39c20",
+      "shot_sprites_present": [
+        "WP1SHT.SPR",
+        "WP1SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot1.wav"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ATi-Gun",
+      "sprite": "wp2.spr",
+      "shot_sprite_candidates": [
+        "wp2sht.spr",
+        "WP2SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot2.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        0
+      ],
+      "usable_by": [
+        "Born Armor"
+      ],
+      "record_offset": "0x39c37",
+      "shot_sprites_present": [
+        "WP2SHT.SPR",
+        "WP2SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot2.wav"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "EM-Gun",
+      "sprite": "wp3.spr",
+      "shot_sprite_candidates": [
+        "wp3sht.spr",
+        "WP3SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot3.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        0
+      ],
+      "usable_by": [
+        "Killers Pot"
+      ],
+      "record_offset": "0x39c4e",
+      "shot_sprites_present": [
+        "WP3SHT.SPR",
+        "WP3SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot3.wav"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Plazma Shooter",
+      "sprite": "wp4.spr",
+      "shot_sprite_candidates": [
+        "wp4sht.spr",
+        "WP4SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot4.wav"
+      ],
+      "vulture_mask": [
+        0,
+        0,
+        1
+      ],
+      "usable_by": [
+        "Sorcerer"
+      ],
+      "record_offset": "0x39c65",
+      "shot_sprites_present": [
+        "wp4sht.spr",
+        "wp4sht.spr"
+      ],
+      "sfx_present": [
+        "shoot4.wav"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Gun Cannon",
+      "sprite": "wp5.spr",
+      "shot_sprite_candidates": [
+        "wp5sht.spr",
+        "WP5SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot5.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        0
+      ],
+      "usable_by": [
+        "Born Armor"
+      ],
+      "record_offset": "0x39c7c",
+      "shot_sprites_present": [
+        "wp5sht.spr",
+        "wp5sht.spr"
+      ],
+      "sfx_present": [
+        "shoot5.wav"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Laser Cannon",
+      "sprite": "wp6.spr",
+      "shot_sprite_candidates": [
+        "wp6sht.spr",
+        "WP6SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot6.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        0
+      ],
+      "usable_by": [
+        "Born Armor"
+      ],
+      "record_offset": "0x39c93",
+      "shot_sprites_present": [
+        "WP6SHT.SPR",
+        "WP6SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot6.wav"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Spiner",
+      "sprite": "wp7.spr",
+      "shot_sprite_candidates": [
+        "wp7sht.spr",
+        "WP7SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot7.wav"
+      ],
+      "vulture_mask": [
+        1,
+        1,
+        0
+      ],
+      "usable_by": [
+        "Born Armor",
+        "Killers Pot"
+      ],
+      "record_offset": "0x39caa",
+      "shot_sprites_present": [
+        "WP7SHT.SPR",
+        "WP7SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot7.wav"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Slayer",
+      "sprite": "wp8.spr",
+      "shot_sprite_candidates": [
+        "wp8sht.spr",
+        "WP8SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot8.wav"
+      ],
+      "vulture_mask": [
+        0,
+        0,
+        1
+      ],
+      "usable_by": [
+        "Sorcerer"
+      ],
+      "record_offset": "0x39cc1",
+      "shot_sprites_present": [
+        "wp8sht.spr",
+        "wp8sht.spr"
+      ],
+      "sfx_present": [
+        "shoot8.wav"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Paranoid Shooter",
+      "sprite": "wp9.spr",
+      "shot_sprite_candidates": [
+        "wp9sht.spr",
+        "WP9SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot9.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        1
+      ],
+      "usable_by": [
+        "Killers Pot",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39cd8",
+      "shot_sprites_present": [
+        "WP9SHT.SPR",
+        "WP9SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot9.wav"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "S-mine",
+      "sprite": "wp10.spr",
+      "shot_sprite_candidates": [
+        "wp10sht.spr",
+        "WP10SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot10.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        1
+      ],
+      "usable_by": [
+        "Born Armor",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39cef",
+      "shot_sprites_present": [
+        "WP10SHT.SPR",
+        "WP10SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot10.wav"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Fire Bomb",
+      "sprite": "wp11.spr",
+      "shot_sprite_candidates": [
+        "wp11sht.spr",
+        "WP11SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot11.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        0
+      ],
+      "usable_by": [
+        "Killers Pot"
+      ],
+      "record_offset": "0x39d06",
+      "shot_sprites_present": [
+        "WP11SHT.SPR",
+        "WP11SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot11.wav"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Stinger",
+      "sprite": "wp12.spr",
+      "shot_sprite_candidates": [
+        "wp12sht.spr",
+        "WP12SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot12.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        1
+      ],
+      "usable_by": [
+        "Born Armor",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39d1d",
+      "shot_sprites_present": [
+        "WP12SHT.SPR",
+        "WP12SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot12.wav"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Multi Missiler",
+      "sprite": "wp13.spr",
+      "shot_sprite_candidates": [
+        "wp13sht.spr",
+        "WP13SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot13.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        1
+      ],
+      "usable_by": [
+        "Killers Pot",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39d34",
+      "shot_sprites_present": [
+        "WP13SHT.SPR",
+        "WP13SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot13.wav"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Tow Missile",
+      "sprite": "wp14.spr",
+      "shot_sprite_candidates": [
+        "wp14sht.spr",
+        "WP14SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot14.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        1
+      ],
+      "usable_by": [
+        "Killers Pot",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39d4b",
+      "shot_sprites_present": [
+        "WP14SHT.SPR",
+        "WP14SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot14.wav"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Tomahawk",
+      "sprite": "wp15.spr",
+      "shot_sprite_candidates": [
+        "wp15sht.spr",
+        "WP15SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot15.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        0
+      ],
+      "usable_by": [
+        "Born Armor"
+      ],
+      "record_offset": "0x39d62",
+      "shot_sprites_present": [
+        "WP15SHT.SPR",
+        "WP15SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot15.wav"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Burst Apocalypse",
+      "sprite": "wp16.spr",
+      "shot_sprite_candidates": [
+        "wp16sht.spr",
+        "WP16SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot16.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        0
+      ],
+      "usable_by": [
+        "Killers Pot"
+      ],
+      "record_offset": "0x39d79",
+      "shot_sprites_present": [
+        "WP16SHT.SPR",
+        "WP16SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot16.wav"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Blazing Beam",
+      "sprite": "wp17.spr",
+      "shot_sprite_candidates": [
+        "wp17sht.spr",
+        "WP17SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot17.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        1
+      ],
+      "usable_by": [
+        "Born Armor",
+        "Sorcerer"
+      ],
+      "record_offset": "0x39d90",
+      "shot_sprites_present": [
+        "WP17SHT.SPR",
+        "WP17SHT.SPR"
+      ],
+      "sfx_present": [
+        "shoot17.wav"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Fire Bault",
+      "sprite": "wp18.spr",
+      "shot_sprite_candidates": [
+        "wp18sht.spr",
+        "WP18SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot18.wav"
+      ],
+      "vulture_mask": [
+        1,
+        0,
+        0
+      ],
+      "usable_by": [
+        "Born Armor"
+      ],
+      "record_offset": "0x39da7",
+      "shot_sprites_present": [],
+      "sfx_present": []
+    },
+    {
+      "id": 19,
+      "name": "Burst Launcher",
+      "sprite": "wp19.spr",
+      "shot_sprite_candidates": [
+        "wp19sht.spr",
+        "WP19SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot19.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        0
+      ],
+      "usable_by": [
+        "Killers Pot"
+      ],
+      "record_offset": "0x39dbe",
+      "shot_sprites_present": [],
+      "sfx_present": []
+    },
+    {
+      "id": 20,
+      "name": "Ice Bault",
+      "sprite": "wp20.spr",
+      "shot_sprite_candidates": [
+        "wp20sht.spr",
+        "WP20SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot20.wav"
+      ],
+      "vulture_mask": [
+        0,
+        0,
+        1
+      ],
+      "usable_by": [
+        "Sorcerer"
+      ],
+      "record_offset": "0x39dd5",
+      "shot_sprites_present": [],
+      "sfx_present": []
+    },
+    {
+      "id": 21,
+      "name": "Lust Cannon",
+      "sprite": "wp21.spr",
+      "shot_sprite_candidates": [
+        "wp21sht.spr",
+        "WP21SHT.SPR"
+      ],
+      "sfx_candidates": [
+        "shoot21.wav"
+      ],
+      "vulture_mask": [
+        0,
+        1,
+        0
+      ],
+      "usable_by": [
+        "Killers Pot"
+      ],
+      "record_offset": "0x39dec",
+      "shot_sprites_present": [
+        "wp21sht.spr",
+        "wp21sht.spr"
+      ],
+      "sfx_present": [
+        "shoot21.wav"
+      ]
+    }
+  ],
+  "maps": [
+    {
+      "file": "jungle2.map",
+      "version": 2,
+      "flags": "0xf000",
+      "width": 300,
+      "height": 300,
+      "tile_count": 90000,
+      "asset_name_a": "jungle",
+      "asset_name_b": "jungle",
+      "height_u16_range": [
+        0,
+        3599
+      ],
+      "layer2_u32_sample": [
+        "0xaa000020",
+        "0xaa000020",
+        "0xaa000020",
+        "0xaa000020",
+        "0xaa000020",
+        "0xaa000020",
+        "0xaa000020",
+        "0xaa000020"
+      ],
+      "filesize": 540052,
+      "layout": {
+        "header_bytes": 52,
+        "heightmap_offset": 52,
+        "heightmap_bytes": 180000,
+        "attr_offset": 180052,
+        "attr_bytes": 360000,
+        "formula": "filesize == 52 + w*h*2 + w*h*4"
+      }
+    },
+    {
+      "file": "vil.map",
+      "version": 2,
+      "flags": "0xf000",
+      "width": 600,
+      "height": 320,
+      "tile_count": 192000,
+      "asset_name_a": "vil",
+      "asset_name_b": "vil",
+      "height_u16_range": [
+        0,
+        2610
+      ],
+      "layer2_u32_sample": [
+        "0x5a000020",
+        "0x5a000020",
+        "0x5a000020",
+        "0x5a000020",
+        "0x5a000020",
+        "0x5a000020",
+        "0x5a000020",
+        "0x5a000020"
+      ],
+      "filesize": 1152052,
+      "layout": {
+        "header_bytes": 52,
+        "heightmap_offset": 52,
+        "heightmap_bytes": 384000,
+        "attr_offset": 384052,
+        "attr_bytes": 768000,
+        "formula": "filesize == 52 + w*h*2 + w*h*4"
+      }
+    },
+    {
+      "file": "z-desert.map",
+      "version": 2,
+      "flags": "0xf000",
+      "width": 240,
+      "height": 120,
+      "tile_count": 28800,
+      "asset_name_a": "z-desert",
+      "asset_name_b": "z-desert",
+      "height_u16_range": [
+        0,
+        2797
+      ],
+      "layer2_u32_sample": [
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020"
+      ],
+      "filesize": 172852,
+      "layout": {
+        "header_bytes": 52,
+        "heightmap_offset": 52,
+        "heightmap_bytes": 57600,
+        "attr_offset": 57652,
+        "attr_bytes": 115200,
+        "formula": "filesize == 52 + w*h*2 + w*h*4"
+      }
+    },
+    {
+      "file": "z-desert2.map",
+      "version": 2,
+      "flags": "0xf000",
+      "width": 240,
+      "height": 120,
+      "tile_count": 28800,
+      "asset_name_a": "z-desert.til",
+      "asset_name_b": "z-desert.bob",
+      "height_u16_range": [
+        0,
+        2797
+      ],
+      "layer2_u32_sample": [
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020",
+        "0x61000020"
+      ],
+      "filesize": 172852,
+      "layout": {
+        "header_bytes": 52,
+        "heightmap_offset": 52,
+        "heightmap_bytes": 57600,
+        "attr_offset": 57652,
+        "attr_bytes": 115200,
+        "formula": "filesize == 52 + w*h*2 + w*h*4"
+      }
+    },
+    {
+      "file": "JUNGLE.MAP",
+      "version": 2,
+      "flags": "0xf000",
+      "width": 400,
+      "height": 170,
+      "tile_count": 68000,
+      "asset_name_a": "jungle",
+      "asset_name_b": "jungle",
+      "height_u16_range": [
+        0,
+        4378
+      ],
+      "layer2_u32_sample": [
+        "0xd3000020",
+        "0xd3000020",
+        "0xd3000020",
+        "0xd3000020",
+        "0xd3000020",
+        "0xd3000020",
+        "0xd3000020",
+        "0xd3000020"
+      ],
+      "filesize": 408052,
+      "layout": {
+        "header_bytes": 52,
+        "heightmap_offset": 52,
+        "heightmap_bytes": 136000,
+        "attr_offset": 136052,
+        "attr_bytes": 272000,
+        "formula": "filesize == 52 + w*h*2 + w*h*4"
+      }
+    }
+  ],
+  "sprites_summary": [
+    {
+      "file": "canit1.spr",
+      "size": 54329,
+      "type": 0,
+      "frames": 20
+    },
+    {
+      "file": "canit2.spr",
+      "size": 67276,
+      "type": 0,
+      "frames": 20
+    },
+    {
+      "file": "canit3.spr",
+      "size": 50796,
+      "type": 0,
+      "frames": 20
+    },
+    {
+      "file": "char1.spr",
+      "size": 118212,
+      "type": 1,
+      "frames": 120
+    },
+    {
+      "file": "char2.spr",
+      "size": 145759,
+      "type": 1,
+      "frames": 120
+    },
+    {
+      "file": "char3.spr",
+      "size": 109120,
+      "type": 1,
+      "frames": 120
+    },
+    {
+      "file": "cop.spr",
+      "size": 38821,
+      "type": 1,
+      "frames": 40
+    },
+    {
+      "file": "cyr.spr",
+      "size": 28481,
+      "type": 0,
+      "frames": 15
+    },
+    {
+      "file": "ef1.spr",
+      "size": 108561,
+      "type": 0,
+      "frames": 84
+    },
+    {
+      "file": "item.spr",
+      "size": 12585,
+      "type": 0,
+      "frames": 22
+    },
+    {
+      "file": "piece.spr",
+      "size": 11043,
+      "type": 0,
+      "frames": 63
+    },
+    {
+      "file": "wp1.spr",
+      "size": 74919,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp10.spr",
+      "size": 99022,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp11.spr",
+      "size": 108936,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp12.spr",
+      "size": 118651,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp13.spr",
+      "size": 77104,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp14.spr",
+      "size": 69151,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp15.spr",
+      "size": 95357,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp17.spr",
+      "size": 104992,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp2.spr",
+      "size": 57621,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp21.spr",
+      "size": 152466,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp21_sht.spr",
+      "size": 811,
+      "type": 2,
+      "frames": 3
+    },
+    {
+      "file": "wp21sht.spr",
+      "size": 14855,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "wp3.spr",
+      "size": 71839,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp4.spr",
+      "size": 80140,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp4sht.spr",
+      "size": 9017,
+      "type": 1,
+      "frames": 7
+    },
+    {
+      "file": "wp5.spr",
+      "size": 96646,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp5sht.spr",
+      "size": 64969,
+      "type": 0,
+      "frames": 160
+    },
+    {
+      "file": "wp6.spr",
+      "size": 96181,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp7.spr",
+      "size": 86898,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "wp8.spr",
+      "size": 125272,
+      "type": 1,
+      "frames": 120
+    },
+    {
+      "file": "wp8sht.spr",
+      "size": 10103,
+      "type": 1,
+      "frames": 40
+    },
+    {
+      "file": "wp9.spr",
+      "size": 130505,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "WP10SHT.SPR",
+      "size": 3685,
+      "type": 0,
+      "frames": 10
+    },
+    {
+      "file": "WP11SHT.SPR",
+      "size": 13425,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "WP12SHT.SPR",
+      "size": 6621,
+      "type": 2,
+      "frames": 40
+    },
+    {
+      "file": "WP13SHT.SPR",
+      "size": 2274,
+      "type": 0,
+      "frames": 8
+    },
+    {
+      "file": "WP14SHT.SPR",
+      "size": 13995,
+      "type": 2,
+      "frames": 40
+    },
+    {
+      "file": "WP15SHT.SPR",
+      "size": 11049,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "WP16.SPR",
+      "size": 183007,
+      "type": 2,
+      "frames": 120
+    },
+    {
+      "file": "WP161SHT.SPR",
+      "size": 7116,
+      "type": 1,
+      "frames": 40
+    },
+    {
+      "file": "WP16SHT.SPR",
+      "size": 11303,
+      "type": 0,
+      "frames": 28
+    },
+    {
+      "file": "WP17SHT.SPR",
+      "size": 3648,
+      "type": 0,
+      "frames": 9
+    },
+    {
+      "file": "WP1SHT.SPR",
+      "size": 5676,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "WP2SHT.SPR",
+      "size": 16093,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "WP3SHT.SPR",
+      "size": 10379,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "WP6SHT.SPR",
+      "size": 13818,
+      "type": 2,
+      "frames": 40
+    },
+    {
+      "file": "WP7SHT.SPR",
+      "size": 9028,
+      "type": 0,
+      "frames": 40
+    },
+    {
+      "file": "WP9SHT.SPR",
+      "size": 11374,
+      "type": 0,
+      "frames": 7
+    }
+  ],
+  "network": {
+    "transport": "datagram sendto/recvfrom",
+    "rtt_probes": 5,
+    "timeout_ms": 1000,
+    "reject_if_rtt_ms_gte": 1000
+  },
+  "display": {
+    "target_fps_marketing": 60,
+    "resolutions": [
+      [
+        640,
+        480
+      ],
+      [
+        800,
+        600
+      ],
+      [
+        1024,
+        768
+      ]
+    ],
+    "view": "quarter-view 2D with heightmap"
+  },
+  "controls_known": {
+    "fire": "Ctrl",
+    "special_item": "Space",
+    "weapon_slots": "1-0",
+    "item_slots": "Alt+1-0",
+    "status": "S",
+    "options": "O",
+    "quit": "Q",
+    "chat": "Enter",
+    "team_chat": "F1",
+    "zone_chat": "F2",
+    "all_chat": "F3",
+    "move": "UNKNOWN_STATIC — DirectInput + GetAsyncKeyState (need dynamic or player memory)"
+  }
+}

@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-tm-void: #070b12;
+  --color-tm-panel: #0f1623;
+  --color-tm-elevated: #172033;
+  --color-tm-border: #2a3548;
+  --color-tm-fg: #e8eef8;
+  --color-tm-muted: #93a0b8;
+  --color-tm-dim: #64748b;
+  --color-tm-accent: #f0b429;
+  --color-tm-accent-fg: #ffe8a3;
+  --color-tm-cyan: #38bdf8;
+  --color-tm-danger: #f43f5e;
+  --font-sans: "IBM Plex Sans KR", "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Segoe UI", "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --radius-tm: 0.75rem;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--color-tm-void);
+    color: var(--color-tm-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+  /* Browser fullscreen element fills the screen */
+  .tm-game-shell:fullscreen {
+    width: 100%;
+    height: 100%;
+  }
+  .tm-game-shell:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+  }
+  .tm-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #2a3548 transparent;
+  }
+  .tm-grid-bg {
+    background-color: var(--color-tm-void);
+    background-image:
+      linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}

@@ -1,0 +1,510 @@
+!This program cannot be run in DOS mode.
+ HVWd)8
+Richd)8
+`.rdata
+@.data
+.RhlSC
+@SVW_^[
+.Qh<UC
+HPh<UC
+MRh<UC
+RRh<UC
+]Qh<UC
+bQh<UC
+t!h$YC
+@SVWh`
+jdjehD
+AQ(_^[
+@SVWh0vA
+#Ph8^C
+)Rh8^C
+0Qh8^C
+Pj0j>j
+Pj0j}j
+Pjmj>j2j
+Pjmj}j2j@h
+Rj8j:j
+Rj8juj
+RjhjKj
+Rjgj0j
+Rjgjaj
+jcjghD
+VWPSQR
+ZY[X_^
+VWPRSQ
+Y[ZX_^
+^FGBIu
+M;U$|);U,},
+QQSVWd
+t.;t$$t(
+[Sh`kC
+"WWSh\kC
+HHtpHHtl
+DSUVWh
+btHHt.
+^}%95,
+<]t_G<-uA
+sO;>|C;~
+SS@SSPVSS
+t#SSUP
+t$$VSS
+_^][YY
+VC20XC00U
+^Vh`kC
+PVh\kC
+t-Ht!Ht
+t+Ht$Ht
++ttHHtd
+HHtYHHtF
+DSERR_UNINITIALIZED 
+ DSERR_OUTOFMEMORY
+DSERR_INVALIDPARAM
+ DSERR_INVALIDCALL
+ DSERR_ALLOCATED 
+d:\oldtm\client\directxs.cpp
+FSOUND BUFFER NULL
+Now Loading.. %d%%
+Tactics Mercenary(v 1.2)
+d:\oldtm\client\fio.cpp
+TEMP%04d.PCX
+data\SENG.FNT
+data\SHAN.FNT
+Map Display %d.%d
+d:\oldtm\client\gmain.cpp
+data\%s.lfx
+data\%s.dfx
+data\gameinte.ppp
+data\item.spr
+data\wp21sht.spr
+data\wp17sht.spr
+data\wp16sht.spr
+data\wp161sht.spr
+data\wp15sht.spr
+data\wp14sht.spr
+data\wp13sht.spr
+data\wp12sht.spr
+data\wp11sht.spr
+data\wp10sht.spr
+data\wp9sht.spr
+data\wp8sht.spr
+data\wp7sht.spr
+data\wp6sht.spr
+data\wp5sht.spr
+data\wp4sht.spr
+data\wp3sht.spr
+data\wp2sht.spr
+data\wp1sht.spr
+data\wp21.spr
+data\wp17.spr
+data\wp16.spr
+data\wp15.spr
+data\wp14.spr
+data\wp13.spr
+data\wp12.spr
+data\wp11.spr
+data\wp10.spr
+data\wp9.spr
+data\wp8.spr
+data\wp7.spr
+data\wp6.spr
+data\wp5.spr
+data\wp4.spr
+data\wp3.spr
+data\wp2.spr
+data\wp1.spr
+data\piece.spr
+data\ef1.spr
+data\cyr.spr
+data\cop.spr
+data\char3.spr
+data\char2.spr
+data\char1.spr
+data\%s.bob
+data\%s.til
+data\%s.map
+data\now%d.ppp
+[Connect]
+IDirectInputDevice::GetDeviceInfo FAILED
+IDirectInputDevice::SetCooperativeLevel FAILED
+IDirectInputDevice::SetDataFormat FAILED
+IDirectInput::CreateDevice FAILED
+IDirectInputDevice::SetProperty(DIPH_DEVICE) FAILED
+IDirectInputDevice::SetProperty(DIPH_DEADZONE) FAILED
+IDirectInputDevice::SetProperty(DIPH_RANGE) FAILED
+DirectInputCreate 5.0 FAILED - no joystick support
+DirectInputCreate 3.0 FAILED
+we don't have a current device
+failed
+successful
+B333?%-3d
+weapon:%d ID:%s 
+I:%d hp:%d %d:%d %d %d
+Pilot %s is escaped this zone.
+AIndex:%d x:%lf y:%lf id:%s 
+   Total:%d
+BPilot %s is crushed by %s.
+ Bprev2 %d
+prev1 %d
+;%s : 
+@MsgText Load max error %d %d
+d:\oldtm\client\message.cpp
+%s not found!!
+data\lang.kor
+play MUSIC from 0 notify
+close all
+open %s type sequencer alias MUSIC
+Could not create a CLSID_MultiMediaStream object
+Check you have run regsvr32 amstream.dll
+3> Sorcerer
+2> Killers Pot
+1> Born Armor
+data\font.ppp
+data\login0.ppp
+data\msgbox.ppp
+data\ranking2.ppp
+data\ranking.ppp
+data\login2.ppp
+data\login1.ppp
+data\hpbar.ppp
+data\chat.ppp
+data\screenc.ppp
+data\button.ppp
+data\inter2.ppp
+data\canit3.spr
+data\canit2.spr
+data\canit1.spr
+data\inter.ppp
+d:\oldtm\client\ninter.cpp
+data\interb.ppp
+L>SPEED
+add : %s
+<%s> %s
+%s file not found
+recvfrom failed: %d
+sendto failed: %d
+HeapAlloc failed %d
+Unable to resolve %s
+failed to set send timeout: %d
+failed to set recv timeout: %d
+WSASocket() failed: %d
+ WSAStartup failed : %d
+Recv : 0x%x 0x%x
+PANACT01
+[Login]
+Zero addreass
+Index 
+id:%s speed:%d score:%d
+Other Player :%d
+MAX item :%d
+start!! v:%d id: %s %d %d speed:%d score:%d
+Pilot %s is entering this zone.
+Join %x %s x:%d y:%d %d %d speed:%d
+ %d %d %d %d
+ MAX : %d
+ : Code:0x%x, Index:%d
+ :%d %d
+ScreenMode
+Screen
+UserID
+Software\Pantech Net\Tactics Mercenary
+Control
+Bd:\oldtm\client\sprmanager.cpp
+d:\oldtm\client\srd.cpp
+NULL pointer
+data\logo.mpg
+Kook kyungmok(Doogie)
+Shin JinHo(laputan)
+Hwang sooyong(Him)
+Song Youngkook(MAYA)
+Shin Hwakook(Micael)
+Kook Hyunsub(khs)
+PANTECH NET
+Special Thank you
+Client programming. Song KilSup (SaemSong)
+Server programming. Hong Myung Goo
+Sound. Rim JaeWook(MusicFighter)
+Graphic. Son mee young (mee),Hong ByungKee (kee)
+Design. Oh SeoungEan (eany)
+TactApp
+MS Sans Serif
+Graceful disconnect in progress
+Valid name, no data record of requested type
+Non-recoverable errors
+Non-authoritative host not found
+Host not found
+Winsock not yet initialized
+Winsock version not supported
+Network subsystem is unavailable
+Too many levels of remote in path
+Stale NFS file handle
+Disc quota exceeded
+Too many users
+Too many processes
+Directory not empty
+No route to host
+Host is down
+File name too long
+Too many levels of symbolic links
+Connection refused
+Connection timed out
+Too many references, can't splice
+Can't send after socket shutdown
+Socket is not connected
+Socket is already connected
+No buffer space available
+Connection reset by peer
+Software caused connection abort
+Net connection reset
+Network is unreachable
+Network is down
+Can't assign requested address
+Address already in use
+Address family not supported
+Protocol family not supported
+Operation not supported on socket
+Socket type not supported
+Protocol not supported
+Bad protocol option
+Protocol wrong type for socket
+Message too long
+Destination address required
+Socket operation on non-socket
+Operation already in progress
+Operation now in progress
+Operation would block
+Too many open sockets
+Invalid argument
+Bad address
+Permission denied
+Bad file number
+Interrupted system call
+No error
+Recv data error
+GAIsProcessorFeaturePresent
+KERNEL32
+`h````
+ppxxxx
+(null)
+runtime error 
+TLOSS error
+SING error
+DOMAIN error
+- unable to initialize heap
+- not enough space for lowio initialization
+- not enough space for stdio initialization
+- pure virtual function call
+- not enough space for _onexit/atexit table
+- unable to open console device
+- unexpected heap error
+- unexpected multithread lock error
+- not enough space for thread data
+abnormal program termination
+- not enough space for environment
+- not enough space for arguments
+- floating point not loaded
+Microsoft Visual C++ Runtime Library
+Runtime Error!
+Program: 
+<program name unknown>
+SunMonTueWedThuFriSat
+JanFebMarAprMayJunJulAugSepOctNovDec
+GetLastActivePopup
+GetActiveWindow
+MessageBoxA
+user32.dll
+1#QNAN
+1#SNAN
+_hypot
+GetTickCount
+CloseHandle
+ReadFile
+CreateFileA
+CreateThread
+OutputDebugStringA
+MultiByteToWideChar
+HeapAlloc
+GetProcessHeap
+GetLastError
+GetCurrentProcessId
+SetCurrentDirectoryA
+_lclose
+_lread
+_lopen
+QueryPerformanceCounter
+KERNEL32.dll
+TranslateMessage
+GetMessageA
+PeekMessageA
+GetAsyncKeyState
+ShowWindow
+AdjustWindowRectEx
+MoveWindow
+GetSystemMetrics
+wsprintfA
+ReleaseDC
+ClientToScreen
+GetClientRect
+SendMessageA
+DispatchMessageA
+PostQuitMessage
+DestroyWindow
+DefWindowProcA
+CreateWindowExA
+FindWindowA
+RegisterClassA
+LoadCursorA
+LoadIconA
+ShowCursor
+USER32.dll
+GetTextExtentExPointA
+SelectObject
+TextOutA
+SetTextColor
+SetBkMode
+StretchDIBits
+GetStockObject
+CreateFontA
+DeleteObject
+GDI32.dll
+RegSetValueExA
+RegCloseKey
+RegCreateKeyExA
+RegQueryValueExA
+RegOpenKeyExA
+ADVAPI32.dll
+SHGetPathFromIDListA
+SHBrowseForFolderA
+SHELL32.dll
+CoCreateInstance
+CoUninitialize
+CoInitialize
+ole32.dll
+DirectInputCreateA
+DINPUT.dll
+DirectDrawCreate
+DDRAW.dll
+ImmSetConversionStatus
+ImmGetConversionStatus
+ImmGetContext
+IMM32.dll
+DSOUND.dll
+??0CDirtStrDll@@QAE@XZ
+?CDirtModify@CDirtStrDll@@QAEXPAD@Z
+DirtStrDll.dll
+mciSendStringA
+mixerGetNumDevs
+mixerGetLineControlsA
+mixerGetLineInfoA
+mixerGetDevCapsA
+mixerGetID
+mixerGetControlDetailsA
+mixerSetControlDetails
+WINMM.dll
+WSASocketA
+WS2_32.dll
+RtlUnwind
+GetModuleHandleA
+GetStartupInfoA
+GetCommandLineA
+GetVersion
+ExitProcess
+WideCharToMultiByte
+LCMapStringA
+LCMapStringW
+HeapFree
+GetProcAddress
+HeapReAlloc
+TerminateProcess
+GetCurrentProcess
+HeapSize
+SetHandleCount
+GetStdHandle
+GetFileType
+SetFilePointer
+WriteFile
+UnhandledExceptionFilter
+GetModuleFileNameA
+FreeEnvironmentStringsA
+FreeEnvironmentStringsW
+GetEnvironmentStrings
+GetEnvironmentStringsW
+HeapDestroy
+HeapCreate
+VirtualFree
+GetStringTypeA
+GetStringTypeW
+VirtualAlloc
+IsBadWritePtr
+SetStdHandle
+FlushFileBuffers
+SetUnhandledExceptionFilter
+IsBadReadPtr
+IsBadCodePtr
+GetCPInfo
+GetACP
+GetOEMCP
+LoadLibraryA
+SetEndOfFile
+RaiseException
+ !"#$%&'()*+,-./0123456789:;<=>?
+ !"#$%&'()*+,--./0123456789::;<=>?
+ !"#$%&'(()*+,-./001234567789:;<<=>?
+ !"#$%%&'()*+,,-./011234566789::;<==>?
+ !!"#$%&'())*+,-../0122345567889:;;<=>>?
+WWVVUUTTSSRRQQPPXXYYZZ[[\\]]^^__``aabbccddeeffgghhiijjkkklllmmnnHHIIJJKKLLMMNNOO
+sound\rev.wav
+sound\gx1.wav
+sound\gx2.wav
+sound\shoot1.wav
+sound\shoot2.wav
+sound\shoot3.wav
+sound\shoot4.wav
+sound\shoot5.wav
+sound\shoot6.wav
+sound\shoot7.wav
+sound\shoot8.wav
+sound\shoot9.wav
+sound\shoot10.wav
+sound\shoot11.wav
+sound\shoot12.wav
+sound\shoot13.wav
+sound\shoot14.wav
+sound\shoot15.wav
+sound\shoot16.wav
+sound\shoot17.wav
+sound\shoot21.wav
+sound\item.wav
+sound\cyr.wav
+sound\shoot161.wav
+sound\shoot162.wav
+sound\tactics1.mid
+sound\tactics2.mid
+sound\tactics4.mid
+sound\tactics5.mid
+Vulcan Cannon
+ATi-Gun
+EM-Gun
+Plazma Shooter
+Gun Cannon
+Laser Cannon
+Spiner
+Slayer
+Paranoid Shooter
+S-mine
+Fire Bomb
+Stinger
+Multi Missiler
+Tow Missile
+Tomahawk
+Burst Apocalypse
+Blazing Beam
+Fire Bault
+Burst Launcher
+Ice Bault
+Lust Cannon
+sound\click.wav
+sound\over.wav
+sound\wow.wav
+sound\vselect.wav
+sound\inputsel.wav
+sound\interback.wav

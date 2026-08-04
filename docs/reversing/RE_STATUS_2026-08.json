@@ -1,0 +1,311 @@
+{
+  "binary": {
+    "file": "Tm.run",
+    "size": 249856,
+    "pe_timestamp": "1999-10-13",
+    "image_base": "0x00400000"
+  },
+  "sections": {
+    ".text": "game code",
+    ".rdata": "imports + strings",
+    ".data": "16KB initialized + ~2.7MB BSS (runtime tables zeroed)"
+  },
+  "asset_paths_in_binary": [
+    "data\\SENG.FNT",
+    "data\\SHAN.FNT",
+    "data\\button.ppp",
+    "data\\canit1.spr",
+    "data\\canit2.spr",
+    "data\\canit3.spr",
+    "data\\char1.spr",
+    "data\\char2.spr",
+    "data\\char3.spr",
+    "data\\chat.ppp",
+    "data\\cop.spr",
+    "data\\cyr.spr",
+    "data\\ef1.spr",
+    "data\\font.ppp",
+    "data\\gameinte.ppp",
+    "data\\hpbar.ppp",
+    "data\\inter.ppp",
+    "data\\inter2.ppp",
+    "data\\interb.ppp",
+    "data\\item.spr",
+    "data\\lang.kor",
+    "data\\login0.ppp",
+    "data\\login1.ppp",
+    "data\\login2.ppp",
+    "data\\logo.mpg",
+    "data\\msgbox.ppp",
+    "data\\piece.spr",
+    "data\\ranking.ppp",
+    "data\\ranking2.ppp",
+    "data\\screenc.ppp",
+    "data\\wp1.spr",
+    "data\\wp10.spr",
+    "data\\wp10sht.spr",
+    "data\\wp11.spr",
+    "data\\wp11sht.spr",
+    "data\\wp12.spr",
+    "data\\wp12sht.spr",
+    "data\\wp13.spr",
+    "data\\wp13sht.spr",
+    "data\\wp14.spr",
+    "data\\wp14sht.spr",
+    "data\\wp15.spr",
+    "data\\wp15sht.spr",
+    "data\\wp16.spr",
+    "data\\wp161sht.spr",
+    "data\\wp16sht.spr",
+    "data\\wp17.spr",
+    "data\\wp17sht.spr",
+    "data\\wp1sht.spr",
+    "data\\wp2.spr",
+    "data\\wp21.spr",
+    "data\\wp21sht.spr",
+    "data\\wp2sht.spr",
+    "data\\wp3.spr",
+    "data\\wp3sht.spr",
+    "data\\wp4.spr",
+    "data\\wp4sht.spr",
+    "data\\wp5.spr",
+    "data\\wp5sht.spr",
+    "data\\wp6.spr",
+    "data\\wp6sht.spr",
+    "data\\wp7.spr",
+    "data\\wp7sht.spr",
+    "data\\wp8.spr",
+    "data\\wp8sht.spr",
+    "data\\wp9.spr",
+    "data\\wp9sht.spr",
+    "sound\\click.wav",
+    "sound\\cyr.wav",
+    "sound\\gx1.wav",
+    "sound\\gx2.wav",
+    "sound\\inputsel.wav",
+    "sound\\interback.wav",
+    "sound\\item.wav",
+    "sound\\over.wav",
+    "sound\\rev.wav",
+    "sound\\shoot1.wav",
+    "sound\\shoot10.wav",
+    "sound\\shoot11.wav",
+    "sound\\shoot12.wav",
+    "sound\\shoot13.wav",
+    "sound\\shoot14.wav",
+    "sound\\shoot15.wav",
+    "sound\\shoot16.wav",
+    "sound\\shoot161.wav",
+    "sound\\shoot162.wav",
+    "sound\\shoot17.wav",
+    "sound\\shoot2.wav",
+    "sound\\shoot21.wav",
+    "sound\\shoot3.wav",
+    "sound\\shoot4.wav",
+    "sound\\shoot5.wav",
+    "sound\\shoot6.wav",
+    "sound\\shoot7.wav",
+    "sound\\shoot8.wav",
+    "sound\\shoot9.wav",
+    "sound\\tactics1.mid",
+    "sound\\tactics2.mid",
+    "sound\\tactics4.mid",
+    "sound\\tactics5.mid",
+    "sound\\vselect.wav",
+    "sound\\wow.wav"
+  ],
+  "asset_paths_count": 102,
+  "all_referenced_assets_present_on_disk": true,
+  "weapons_0x39C20": [
+    {
+      "id": 1,
+      "name": "Vulcan Cannon",
+      "B": 1,
+      "K": 1,
+      "S": 1
+    },
+    {
+      "id": 2,
+      "name": "ATi-Gun",
+      "B": 1,
+      "K": 0,
+      "S": 0
+    },
+    {
+      "id": 3,
+      "name": "EM-Gun",
+      "B": 0,
+      "K": 1,
+      "S": 0
+    },
+    {
+      "id": 4,
+      "name": "Plazma Shooter",
+      "B": 0,
+      "K": 0,
+      "S": 1
+    },
+    {
+      "id": 5,
+      "name": "Gun Cannon",
+      "B": 1,
+      "K": 0,
+      "S": 0
+    },
+    {
+      "id": 6,
+      "name": "Laser Cannon",
+      "B": 1,
+      "K": 0,
+      "S": 0
+    },
+    {
+      "id": 7,
+      "name": "Spiner",
+      "B": 1,
+      "K": 1,
+      "S": 0
+    },
+    {
+      "id": 8,
+      "name": "Slayer",
+      "B": 0,
+      "K": 0,
+      "S": 1
+    },
+    {
+      "id": 9,
+      "name": "Paranoid Shooter",
+      "B": 0,
+      "K": 1,
+      "S": 1
+    },
+    {
+      "id": 10,
+      "name": "S-mine",
+      "B": 1,
+      "K": 0,
+      "S": 1
+    },
+    {
+      "id": 11,
+      "name": "Fire Bomb",
+      "B": 0,
+      "K": 1,
+      "S": 0
+    },
+    {
+      "id": 12,
+      "name": "Stinger",
+      "B": 1,
+      "K": 0,
+      "S": 1
+    },
+    {
+      "id": 13,
+      "name": "Multi Missiler",
+      "B": 0,
+      "K": 1,
+      "S": 1
+    },
+    {
+      "id": 14,
+      "name": "Tow Missile",
+      "B": 0,
+      "K": 1,
+      "S": 1
+    },
+    {
+      "id": 15,
+      "name": "Tomahawk",
+      "B": 1,
+      "K": 0,
+      "S": 0
+    },
+    {
+      "id": 16,
+      "name": "Burst Apocalypse",
+      "B": 0,
+      "K": 1,
+      "S": 0
+    },
+    {
+      "id": 17,
+      "name": "Blazing Beam",
+      "B": 1,
+      "K": 0,
+      "S": 1
+    },
+    {
+      "id": 18,
+      "name": "Fire Bault",
+      "B": 1,
+      "K": 0,
+      "S": 0
+    },
+    {
+      "id": 19,
+      "name": "Burst Launcher",
+      "B": 0,
+      "K": 1,
+      "S": 0
+    },
+    {
+      "id": 20,
+      "name": "Ice Bault",
+      "B": 0,
+      "K": 0,
+      "S": 1
+    },
+    {
+      "id": 21,
+      "name": "Lust Cannon",
+      "B": 0,
+      "K": 1,
+      "S": 0
+    }
+  ],
+  "vulture_select_order": [
+    "1> Born Armor",
+    "2> Killers Pot",
+    "3> Sorcerer"
+  ],
+  "getAsyncKeyState_vks_observed": [
+    13,
+    16,
+    18,
+    27,
+    32,
+    33,
+    34,
+    35,
+    36
+  ],
+  "vk_legend": {
+    "0x10": "SHIFT",
+    "0x12": "MENU/Alt",
+    "0x1B": "ESCAPE",
+    "0x0D": "RETURN",
+    "0x20": "SPACE (special item)",
+    "0x21": "PRIOR",
+    "0x22": "NEXT",
+    "0x23": "END",
+    "0x24": "HOME"
+  },
+  "formats": {
+    "SPR": "documented ORIGINAL_FIDELITY_SPEC 100%",
+    "MAP": "0xF0000002 height+attr",
+    "TIL": "0xF0000001 pal+16x16 tiles",
+    "BOB": "0xF0000004 count*0x1C + trailing SPR",
+    "DFX": "65536 bytes = 256 identical rows of 256-byte LUT (palette/material remap, NOT lighting)",
+    "LFX": "65536 = 256 light levels x 256 palette remaps; row0 mostly identity",
+    "PPP": "UI image: header BBBB + u32 + maxx,maxy,w,h (u16). Common 640x480. RLE-like payload after +16"
+  },
+  "missing_content": {
+    "wp18_wp19_wp20": "No path strings in Tm.run \u2014 weapons exist as names only",
+    "weapon_numeric_stats": "Not in on-disk .data; live in BSS/runtime",
+    "movement_keys": "DirectInput (not GetAsyncKeyState immediates)",
+    "DD_palette_for_SPR": "Runtime SetPalette; TIL has own 6-bit DAC"
+  },
+  "mystery_pre_weapon_table_0x439be0": "Looks like UI layout records (-1, 240,246,300) not combat stats"
+}

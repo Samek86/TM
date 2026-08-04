@@ -1,0 +1,338 @@
+!This program cannot be run in DOS mode.
+`.rdata
+@.data
+JtOJt2Jut3
+HtMHt&HuLh\
+PQh '@
+tGIukj
+D$$WPhT
+VWh`bJ
+u'h`bJ
+t$LWjeV
+PQh`bJ
+QRh`bJ
+RPh`bJ
+D$(j!h
+QRjPPV
+PT;QP}
+PH;QL|
+JH;HL|
+AH;BL|
+PT;QP|
+F;5`{L
+t.;t$$t(
+VC20XC00U
+PPPPPPPP
+_9=deL
+<]t_G<-uA
+W;5@kL
+HHtpHHtl
+"WWSh(
+btHHt.
+SS@SSPVSS
+t#SSUP
+t$$VSS
+_^][YY
+DSUVWh
+^95`{L
+t-Ht!Ht
++ttHHtd
+`h````
+ppxxxx
+(null)
+GAIsProcessorFeaturePresent
+KERNEL32
+runtime error 
+TLOSS error
+SING error
+DOMAIN error
+- unable to initialize heap
+- not enough space for lowio initialization
+- not enough space for stdio initialization
+- pure virtual function call
+- not enough space for _onexit/atexit table
+- unable to open console device
+- unexpected heap error
+- unexpected multithread lock error
+- not enough space for thread data
+abnormal program termination
+- not enough space for environment
+- not enough space for arguments
+- floating point not loaded
+Microsoft Visual C++ Runtime Library
+Runtime Error!
+Program: 
+<program name unknown>
+SunMonTueWedThuFriSat
+JanFebMarAprMayJunJulAugSepOctNovDec
+GetLastActivePopup
+GetActiveWindow
+MessageBoxA
+user32.dll
+1#QNAN
+1#SNAN
+_osfile(filedes) & FOPEN
+(unsigned)filedes < (unsigned)_nhandle
+fdopen.c
+mode != NULL
+Assertion Failed
+Warning
+%s(%d) : %s
+Assertion failed!
+Assertion failed: 
+_CrtDbgReport: String too long or IO Error
+Second Chance Assertion Failed: File %s, Line %d
+wsprintfA
+Microsoft Visual C++ Debug Library
+Debug %s!
+Program: %s%s%s%s%s%s%s%s%s%s%s
+(Press Retry to debug the application)
+Module: 
+File: 
+Line: 
+Expression: 
+For information on how your program can cause an assertion
+failure, see the Visual C++ documentation on asserts.
+dbgrpt.c
+szUserMessage != NULL
+format != NULL
+sprintf.c
+string != NULL
+vsprintf.c
+_lclose
+_lread
+_lopen
+WinExec
+SetCurrentDirectoryA
+GetTempPathA
+FindNextFileA
+FindFirstFileA
+WaitForSingleObject
+CreateProcessA
+GetCurrentDirectoryA
+KERNEL32.dll
+ShowWindow
+SendMessageA
+SetWindowPos
+CreateWindowExA
+GetWindowTextA
+GetClientRect
+SetWindowTextA
+DestroyWindow
+PostQuitMessage
+KillTimer
+FindWindowA
+DefWindowProcA
+PostMessageA
+GetSystemMetrics
+GetDlgItem
+SetDlgItemTextA
+EndDialog
+DialogBoxParamA
+DispatchMessageA
+TranslateMessage
+GetMessageA
+SetTimer
+UpdateWindow
+RegisterClassA
+LoadCursorA
+LoadIconA
+USER32.dll
+RegCloseKey
+RegQueryValueExA
+RegOpenKeyExA
+RegSetValueExA
+RegCreateKeyExA
+ADVAPI32.dll
+SHGetPathFromIDListA
+SHBrowseForFolderA
+SHELL32.dll
+InternetCloseHandle
+InternetReadFile
+InternetErrorDlg
+HttpQueryInfoA
+HttpSendRequestA
+HttpAddRequestHeadersA
+HttpOpenRequestA
+InternetConnectA
+InternetOpenA
+InternetCrackUrlA
+WININET.dll
+PlaySoundA
+WINMM.dll
+WS2_32.dll
+GetLastError
+GetProcAddress
+LoadLibraryA
+GetVersionExA
+FreeLibrary
+SetLastError
+GetComputerNameA
+DeleteFileA
+CreateDirectoryA
+GetModuleHandleA
+GetStartupInfoA
+GetCommandLineA
+GetVersion
+ExitProcess
+RtlUnwind
+TerminateProcess
+GetCurrentProcess
+HeapAlloc
+HeapFree
+CloseHandle
+FlushFileBuffers
+WriteFile
+ReadFile
+WideCharToMultiByte
+MultiByteToWideChar
+LCMapStringA
+LCMapStringW
+HeapReAlloc
+HeapSize
+UnhandledExceptionFilter
+GetModuleFileNameA
+FreeEnvironmentStringsA
+FreeEnvironmentStringsW
+GetEnvironmentStrings
+GetEnvironmentStringsW
+SetHandleCount
+GetStdHandle
+GetFileType
+HeapDestroy
+HeapCreate
+VirtualFree
+GetStringTypeA
+GetStringTypeW
+VirtualAlloc
+SetStdHandle
+SetFilePointer
+CreateFileA
+GetCPInfo
+GetACP
+GetOEMCP
+SetEndOfFile
+DebugBreak
+InterlockedDecrement
+OutputDebugStringA
+InterlockedIncrement
+GetDesktopWindow
+SysAnimate32
+netsgo
+tactics.pannet.co.kr
+CHANNELITM&
+CHOLTM
+UNITEL&
+nowtm&
+pantm&
+Tactics Mercenary
+button
+static
+      
+. [error 1]
+! %s %s
+NETSGO 
+Tatics Mercenary 
+ guest
+PANNET 
+Connecting..
+Unknown protocol
+Unknown game
+download infomation
+http://www.pannet.co.kr/tactics/tm.htm
+htmlfile\shell\open\command
+Software\Pantech Net\Tactics Mercenary
+D:\Tm\up\Srd.cpp
+NULL pointer
+msctls_progress32
+tmnew.exe
+tm.exe
+Memory alloction error %d
+file write error!!
+notice.txt
+can't bz2openstream
+can't open[%s]
+recv.tmp
+NULL pointer error!
+%s\%s:%s
+%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x
+msctls_statusbar32
+tmup.run
+tm.run
+tm.run %s %d
+TactApp
+http://home.channeli.net/game/IDFetch/IDFetch.asp
+sound\gclick.wav
+ %s %s v(%x.%x)
+Connect
+ftp://
+http://
+Host: %s
+HTTP/1.1
+Mozilla/4.0 (compatible; MSIE 4.01; Proudhon's Bot; Windows)
+VerifySignature
+RevertSecurityContext
+QuerySecurityPackageInfoA
+QueryCredentialsAttributesA
+QueryContextAttributesA
+MakeSignature
+InitializeSecurityContextA
+ImpersonateSecurityContext
+FreeCredentialsHandle
+FreeContextBuffer
+EnumerateSecurityPackagesA
+DeleteSecurityContext
+CompleteAuthToken
+ApplyControlToken
+AcquireCredentialsHandleA
+AcceptSecurityContext
+secur32.dll
+security.dll
+InetSvcs
+%s: Basic 
+Authorization: 
+SEQUENCE_ERROR
+PARAM_ERROR
+MEM_ERROR
+DATA_ERROR
+DATA_ERROR_MAGIC
+IO_ERROR
+UNEXPECTED_EOF
+OUTBUFF_FULL
+bzip2/libbzip2, v0.9.0c: internal error number %d.
+This is a bug in bzip2/libbzip2, v0.9.0c.  Please report
+it to me at: jseward@acm.org.  If this happened when
+you were using some program which uses libbzip2 as a
+component, you should also report this bug to the author(s)
+of that program.  Please make an effort to report this bug;
+timely and accurate bug reports eventually lead to higher
+quality software.  Thx.  Julian Seward, 18 October 1998.
+ {0x%x, 0x%x}
+    combined CRCs: stored = 0x%x, computed = 0x%x
+0.9.0c
+    block %d: crc = 0x%8x, combined CRC = 0x%8x, size = %d
+    %d block%s needed randomisation
+    final combined CRC = 0x%x
+      %d in block, %d after MTF & 1-2 coding, %d+2 syms in use
+      initial group %d, [%d .. %d], has %d syms (%4.1f%%)
+      pass %d: size is %d, grp uses are 
+      bytes: mapping %d, 
+selectors %d, 
+code lengths %d, 
+codes %d
+    [%d: huff+mtf 
+rt+rld
+      %d work, %d block, ratio %5.2f
+    sorting aborted; randomising block
+      %d work, %d block, ratio %f
+        sort initialise ...
+        simpleSort ...
+        simpleSort done.
+        bucket sorting ...
+        qsort [0x%x, 0x%x]   done %d   this %d
+        %d pointers, %d sorted, %d scanned
+AVI LIST
+hdrlavih8
+strlstrh8
+vidsRLE 
+movi00dc*

@@ -1,0 +1,142 @@
+
+### KERNEL32.dll
+    0x41b018  FindFirstFileA
+    0x41b01c  FindNextFileA
+    0x41b020  SetCurrentDirectoryA
+    0x41b024  GetCurrentDirectoryA
+    0x41b028  GetTempPathA
+    0x41b02c  WinExec
+    0x41b030  _lopen
+    0x41b034  _lread
+    0x41b038  CreateProcessA
+    0x41b03c  WaitForSingleObject
+    0x41b040  SetStdHandle
+    0x41b044  HeapSize
+    0x41b048  HeapReAlloc
+    0x41b04c  LCMapStringW
+    0x41b050  LCMapStringA
+    0x41b054  MultiByteToWideChar
+    0x41b058  WideCharToMultiByte
+    0x41b05c  ReadFile
+    0x41b060  WriteFile
+    0x41b064  FlushFileBuffers
+    0x41b068  CloseHandle
+    0x41b06c  HeapFree
+    0x41b070  HeapAlloc
+    0x41b074  GetCurrentProcess
+    0x41b078  TerminateProcess
+    0x41b07c  RtlUnwind
+    0x41b080  ExitProcess
+    0x41b084  GetVersion
+    0x41b088  GetCommandLineA
+    0x41b08c  GetStartupInfoA
+    0x41b090  GetModuleHandleA
+    0x41b094  CreateDirectoryA
+    0x41b098  DeleteFileA
+    0x41b09c  GetComputerNameA
+    0x41b0a0  SetLastError
+    0x41b0a4  FreeLibrary
+    0x41b0a8  GetVersionExA
+    0x41b0ac  LoadLibraryA
+    0x41b0b0  GetProcAddress
+    0x41b0b4  GetLastError
+    0x41b0b8  GetModuleFileNameA
+    0x41b0bc  InterlockedIncrement
+    0x41b0c0  OutputDebugStringA
+    0x41b0c4  InterlockedDecrement
+    0x41b0c8  DebugBreak
+    0x41b0cc  UnhandledExceptionFilter
+    0x41b0d0  SetEndOfFile
+    0x41b0d4  GetOEMCP
+    0x41b0d8  GetACP
+    0x41b0dc  GetCPInfo
+    0x41b0e0  CreateFileA
+    0x41b0e4  SetFilePointer
+    0x41b0e8  FreeEnvironmentStringsA
+    0x41b0ec  _lclose
+    0x41b0f0  VirtualAlloc
+    0x41b0f4  GetStringTypeW
+    0x41b0f8  GetStringTypeA
+    0x41b0fc  VirtualFree
+    0x41b100  HeapCreate
+    0x41b104  HeapDestroy
+    0x41b108  GetFileType
+    0x41b10c  GetStdHandle
+    0x41b110  SetHandleCount
+    0x41b114  GetEnvironmentStringsW
+    0x41b118  GetEnvironmentStrings
+    0x41b11c  FreeEnvironmentStringsW
+
+### USER32.dll
+    0x41b130  ShowWindow
+    0x41b134  SendMessageA
+    0x41b138  SetWindowPos
+    0x41b13c  CreateWindowExA
+    0x41b140  MessageBoxA
+    0x41b144  GetWindowTextA
+    0x41b148  LoadIconA
+    0x41b14c  LoadCursorA
+    0x41b150  RegisterClassA
+    0x41b154  UpdateWindow
+    0x41b158  SetTimer
+    0x41b15c  GetMessageA
+    0x41b160  TranslateMessage
+    0x41b164  DispatchMessageA
+    0x41b168  DialogBoxParamA
+    0x41b16c  EndDialog
+    0x41b170  SetDlgItemTextA
+    0x41b174  GetDlgItem
+    0x41b178  GetSystemMetrics
+    0x41b17c  PostMessageA
+    0x41b180  DefWindowProcA
+    0x41b184  FindWindowA
+    0x41b188  KillTimer
+    0x41b18c  PostQuitMessage
+    0x41b190  DestroyWindow
+    0x41b194  SetWindowTextA
+    0x41b198  wsprintfA
+    0x41b19c  GetClientRect
+    0x41b1a0  GetDesktopWindow
+
+### ADVAPI32.dll
+    0x41b000  RegCloseKey
+    0x41b004  RegQueryValueExA
+    0x41b008  RegOpenKeyExA
+    0x41b00c  RegSetValueExA
+    0x41b010  RegCreateKeyExA
+
+### SHELL32.dll
+    0x41b124  SHBrowseForFolderA
+    0x41b128  SHGetPathFromIDListA
+
+### WININET.dll
+    0x41b1a8  InternetReadFile
+    0x41b1ac  InternetErrorDlg
+    0x41b1b0  InternetCloseHandle
+    0x41b1b4  HttpSendRequestA
+    0x41b1b8  HttpAddRequestHeadersA
+    0x41b1bc  HttpQueryInfoA
+    0x41b1c0  InternetConnectA
+    0x41b1c4  InternetOpenA
+    0x41b1c8  HttpOpenRequestA
+    0x41b1cc  InternetCrackUrlA
+
+### WINMM.dll
+    0x41b1d4  PlaySoundA
+
+### WS2_32.dll
+    0x41b1dc  ntohs
+    0x41b1e0  htonl
+    0x41b1e4  inet_ntoa
+    0x41b1e8  inet_addr
+    0x41b1ec  connect
+    0x41b1f0  gethostbyname
+    0x41b1f4  WSAAsyncSelect
+    0x41b1f8  send
+    0x41b1fc  socket
+    0x41b200  closesocket
+    0x41b204  recv
+    0x41b208  htons
+    0x41b20c  ntohl
+    0x41b210  WSAStartup
+    0x41b214  WSACleanup

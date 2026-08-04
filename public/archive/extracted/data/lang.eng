@@ -1,0 +1,45 @@
+DirectX Initializing error\n\n You must restary windows, or reinstall the lastest DirectX ver
+Memory allocation error!%s %s
+Can not open file %s
+unknown format %d
+s Initializing Error
+Can not connect Game Server %s
+DirectSound Initializing error occured. Can not find sound card on \n\nPC or aleady used
+Exess Maximum user
+DirectSound object creation error
+Can not find your resistry code. Have to recreation. Click \n\n[OK] button and decide directory installed Tactics Mercenary
+Disconnect Server. Please reconnect Game Server
+Data management error %s
+DirectInput Initializing error occured!
+Please select TM folder
+TM can not be run on more than two applications
+Input your Pilot ID
+Input your Pilot Password
+Did not match your Password and confirm password
+Plaeas Select Game Map
+Map Number Error when enter game map
+Please make ID more than four letters
+This is not resisted Game ID
+This pilot id is in used
+Wrong Password
+Excess Maximum user
+Aleady existed pilot ID. Input another Pilot id
+Server DB Registration Error
+Error occurred Game Map Server. Please select another Map
+Excess Maximum user of Game Map
+Do not support Timer
+Now checking Network trafic through 5sec. Just wait please. Click [ OK ] Button
+Sorry for cutting off users higher than 1000ms of network trafic. Click [ OK ] Button
+Music volume
+Effect volume
+Vulture select
+Map select
+Ranking
+Chat
+Input control select
+Screen 640x480
+Screen 800x600
+Screen 1024x768
+Type conversation
+Up
+Down

@@ -1,0 +1,271 @@
+# Strings analysis: tm.exe
+Total ASCII strings (>=5): 445, UTF16: 9
+
+## paths (18)
+  !This program cannot be run in DOS mode.
+  HtMHt&HuLh\
+  t;Hu\
+  \@j/P
+  \Fj\V
+  D$\Qj
+  abnormal program termination
+  Program: 
+  <program name unknown>
+  Program: %s%s%s%s%s%s%s%s%s%s%s
+  For information on how your program can cause an assertion
+  htmlfile\shell\open\command
+  Software\Pantech Net\Tactics Mercenary
+  D:\Tm\up\Srd.cpp
+  %s\%s
+  %s\%s:%s
+  you were using some program which uses libbzip2 as a
+  of that program.  Please make an effort to report this bug;
+
+## urls (10)
+  HttpQueryInfoA
+  HttpSendRequestA
+  HttpAddRequestHeadersA
+  HttpOpenRequestA
+  tactics.pannet.co.kr
+  http://www.pannet.co.kr/tactics/tm.htm
+  http://home.channeli.net/game/IDFetch/IDFetch.asp
+  ftp://
+  http://
+  HTTP/1.1
+
+## errors (36)
+  runtime error 
+  TLOSS error
+  SING error
+  DOMAIN error
+  - unable to initialize heap
+  - unable to open console device
+  - unexpected heap error
+  - unexpected multithread lock error
+  Runtime Error!
+  Assertion Failed
+  Error
+  Assertion failed!
+  Assertion failed: 
+  Second Chance Assertion Failed: File %s, Line %d
+  Microsoft Visual C++ Debug Library
+  Debug %s!
+  (Press Retry to debug the application)
+  failure, see the Visual C++ documentation on asserts.
+  InternetErrorDlg
+  GetLastError
+  SetLastError
+  UnhandledExceptionFilter
+  DebugBreak
+  OutputDebugStringA
+  error
+  . [error 1]
+  Memory alloction error %d
+  file write error!!
+  NULL pointer error!
+  SEQUENCE_ERROR
+  PARAM_ERROR
+  MEM_ERROR
+  DATA_ERROR
+  DATA_ERROR_MAGIC
+  IO_ERROR
+  bzip2/libbzip2, v0.9.0c: internal error number %d.
+
+## game (8)
+  Php&@
+  Rhp&@
+  KillTimer
+  LCMapStringA
+  LCMapStringW
+  Tactics Mercenary
+  Tatics Mercenary 
+        bytes: mapping %d, 
+
+## network (12)
+  _CrtDbgReport: String too long or IO Error
+  SendMessageA
+  GetClientRect
+  InternetConnectA
+  GetCPInfo
+  Connecting..
+  recv.tmp
+  Connect
+  Host: %s
+  This is a bug in bzip2/libbzip2, v0.9.0c.  Please report
+  component, you should also report this bug to the author(s)
+  timely and accurate bug reports eventually lead to higher
+
+## dx (3)
+  SetCurrentDirectoryA
+  GetCurrentDirectoryA
+  CreateDirectoryA
+
+## files (17)
+  @.data
+  user32.dll
+  KERNEL32.dll
+  USER32.dll
+  ADVAPI32.dll
+  SHELL32.dll
+  WININET.dll
+  WINMM.dll
+  WS2_32.dll
+  tmnew.exe
+  tm.exe
+  tmup.run
+  tm.run
+  tm.run %s %d
+  sound\gclick.wav
+  secur32.dll
+  security.dll
+
+## fmt (31)
+  Qh`%@
+  Rh`%@
+  Ph0%@
+  ^}%95
+  %s(%d) : %s
+  %s %s
+  ! %s %s
+  %d %s
+  %d/%d
+  can't open[%s]
+  %s:%s
+  %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x
+   %s %s v(%x.%x)
+  %s: Basic 
+   {0x%x, 0x%x}
+      combined CRCs: stored = 0x%x, computed = 0x%x
+      block %d: crc = 0x%8x, combined CRC = 0x%8x, size = %d
+      %d block%s needed randomisation
+      final combined CRC = 0x%x
+        %d in block, %d after MTF & 1-2 coding, %d+2 syms in use
+        initial group %d, [%d .. %d], has %d syms (%4.1f%%)
+        pass %d: size is %d, grp uses are 
+  selectors %d, 
+  code lengths %d, 
+  codes %d
+      [%d: huff+mtf 
+        %d work, %d block, ratio %5.2f
+        %d work, %d block, ratio %f
+          qsort [0x%x, 0x%x]   done %d   this %d
+          %d pointers, %d sorted, %d scanned
+  zc%C1
+
+## koreanish (0)
+
+## other_long (114)
+  GAIsProcessorFeaturePresent
+  - not enough space for lowio initialization
+  - not enough space for stdio initialization
+  - pure virtual function call
+  - not enough space for _onexit/atexit table
+  - not enough space for thread data
+  - not enough space for environment
+  - not enough space for arguments
+  - floating point not loaded
+  Microsoft Visual C++ Runtime Library
+  SunMonTueWedThuFriSat
+  JanFebMarAprMayJunJulAugSepOctNovDec
+  GetLastActivePopup
+  GetActiveWindow
+  _osfile(filedes) & FOPEN
+  (unsigned)filedes < (unsigned)_nhandle
+  mode != NULL
+  Expression: 
+  szUserMessage != NULL
+  format != NULL
+  string != NULL
+  GetTempPathA
+  FindNextFileA
+  FindFirstFileA
+  WaitForSingleObject
+  CreateProcessA
+  SetWindowPos
+  CreateWindowExA
+  GetWindowTextA
+  SetWindowTextA
+  DestroyWindow
+  PostQuitMessage
+  DefWindowProcA
+  PostMessageA
+  GetSystemMetrics
+  SetDlgItemTextA
+  DialogBoxParamA
+  DispatchMessageA
+  TranslateMessage
+  UpdateWindow
+  RegisterClassA
+  RegQueryValueExA
+  RegOpenKeyExA
+  RegSetValueExA
+  RegCreateKeyExA
+  SHGetPathFromIDListA
+  SHBrowseForFolderA
+  InternetCloseHandle
+  InternetReadFile
+  InternetOpenA
+  InternetCrackUrlA
+  GetProcAddress
+  LoadLibraryA
+  GetVersionExA
+  GetComputerNameA
+  GetModuleHandleA
+  GetStartupInfoA
+  GetCommandLineA
+  TerminateProcess
+  GetCurrentProcess
+  FlushFileBuffers
+  WideCharToMultiByte
+  MultiByteToWideChar
+  GetModuleFileNameA
+  FreeEnvironmentStringsA
+  FreeEnvironmentStringsW
+  GetEnvironmentStrings
+  GetEnvironmentStringsW
+  SetHandleCount
+  GetStdHandle
+  GetStringTypeA
+  GetStringTypeW
+  VirtualAlloc
+  SetStdHandle
+  SetFilePointer
+  SetEndOfFile
+  InterlockedDecrement
+  InterlockedIncrement
+  GetDesktopWindow
+  SysAnimate32
+  Unknown protocol
+  Unknown game
+  download infomation
+  NULL pointer
+  msctls_progress32
+  can't bz2openstream
+  msctls_statusbar32
+  Mozilla/4.0 (compatible; MSIE 4.01; Proudhon's Bot; Windows)
+  VerifySignature
+  RevertSecurityContext
+  QuerySecurityPackageInfoA
+  QueryCredentialsAttributesA
+  QueryContextAttributesA
+  MakeSignature
+  InitializeSecurityContextA
+  ImpersonateSecurityContext
+  FreeCredentialsHandle
+  FreeContextBuffer
+  EnumerateSecurityPackagesA
+  DeleteSecurityContext
+  CompleteAuthToken
+  ApplyControlToken
+  AcquireCredentialsHandleA
+  AcceptSecurityContext
+  Authorization: 
+  UNEXPECTED_EOF
+  OUTBUFF_FULL
+  it to me at: jseward@acm.org.  If this happened when
+  quality software.  Thx.  Julian Seward, 18 October 1998.
+      sorting aborted; randomising block
+          sort initialise ...
+          simpleSort ...
+          simpleSort done.
+          bucket sorting ...
