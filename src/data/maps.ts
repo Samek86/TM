@@ -34,7 +34,12 @@ export interface MapDef {
   features: string[];
 }
 
-const CELL = 20;
+/**
+ * Default world units per grid cell (all arenas start from this).
+ * Per-map overrides: Jade ×1.5, Iron Ring ×2 (see builders below).
+ * Craft speed uses tilesPerSec × cellSize, so larger cells → faster cruise in world units.
+ */
+const CELL = 30;
 
 type Grid = {
   cols: number;
@@ -154,23 +159,40 @@ function sealCliffEdges(g: Grid): void {
 }
 
 function toMapDef(
-  partial: Omit<MapDef, "elevation" | "ramps" | "width" | "height" | "cols" | "rows"> & {
+  partial: Omit<
+    MapDef,
+    "elevation" | "ramps" | "width" | "height" | "cols" | "rows" | "cellSize"
+  > & {
     grid: Grid;
+    /** Override world units per cell (default CELL). */
+    cellSize?: number;
   },
 ): MapDef {
-  const { grid, ...rest } = partial;
+  const { grid, cellSize: cellOverride, ...rest } = partial;
+  const cell = cellOverride ?? CELL;
   return {
     ...rest,
     cols: grid.cols,
     rows: grid.rows,
-    width: grid.cols * CELL,
-    height: grid.rows * CELL,
+    width: grid.cols * cell,
+    height: grid.rows * cell,
     elevation: grid.elev,
     ramps: grid.ramps,
-    cellSize: CELL,
+    cellSize: cell,
     waterLevel: 0.5,
     fromOriginal: false,
   };
+}
+
+/** Human-readable size for lobby / map picker (linear scale vs default cell). */
+export function formatMapSize(m: MapDef): string {
+  const cell = m.cellSize ?? CELL;
+  const scale = cell / CELL;
+  const scaleLabel =
+    Math.abs(scale - 1) < 0.05
+      ? "기준"
+      : `×${Number.isInteger(scale) ? String(scale) : scale.toFixed(1)}`;
+  return `${m.width}×${m.height} · ${m.cols}×${m.rows}칸 · ${scaleLabel}`;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -222,6 +244,8 @@ function buildJadeBasin(): MapDef {
     accent: "#5eead4",
     features: ["링 고지", "중앙 섬 CP", "4초크 오르막", "코너 매복 포켓"],
     grid: g,
+    // Map 1 — 1.5× larger playfield vs default CELL
+    cellSize: Math.round(CELL * 1.5),
   });
 }
 
@@ -324,6 +348,8 @@ function buildIronRing(): MapDef {
     accent: "#38bdf8",
     features: ["중앙 킵", "4바스티온", "십자 레인", "게이트 초크"],
     grid: g,
+    // Map 3 — 2× larger playfield vs default CELL
+    cellSize: CELL * 2,
   });
 }
 

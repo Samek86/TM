@@ -1,0 +1,16 @@
+Combat weapon SFX (shoot*.wav)
+================================
+
+Source pack: Kenney "Digital Audio"
+  https://kenney.nl/assets/digital-audio
+  License: Creative Commons CC0 1.0 (public domain dedication)
+  https://creativecommons.org/publicdomain/zero/1.0/
+
+Processing (revival build):
+  - Converted OGG → mono 44.1 kHz WAV
+  - High/low-pass filter, light compression
+  - Reduced gain, short fade-in/out, tempo variants per weapon
+  - Output: public/sfx/combat/shoot*.wav
+
+Original 1999 client WAVs remain under public/archive/extracted/sound/
+(for archive fidelity; not used for in-game fire SFX anymore).

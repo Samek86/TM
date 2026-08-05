@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  bindSfxModule,
   createGame,
   setKey,
   setPointerWorld,
+  setSfxMuted,
   startMatch,
   update,
+  warmupCombat,
   type GameState,
 } from "@/game/engine";
 import { renderGame } from "@/game/render";
-import { loadGameAssets, type GameAssets } from "@/game/assets";
+import {
+  loadGameAssets,
+  warmGpuTextures,
+  type GameAssets,
+} from "@/game/assets";
 import { screenToWorld } from "@/game/camera";
 import type { VultureId } from "@/data/weapons";
 
@@ -153,25 +160,32 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     let last = performance.now();
     let running = true;
     let cancelled = false;
+    /** Block gameplay input until settle finishes (keys still allow Q exit). */
+    let acceptInput = false;
+    /** After reveal, skip canvas buffer realloc for a bit (header mount thrash). */
+    let freezeCanvasAllocUntil = 0;
     setLoading(true);
     setLoadMsg("전투 준비 중…");
     setLoadPct(0);
     setLoadError(null);
     setPausedUi(false);
-
-    void enterBrowserFullscreen(shell);
+    setSfxMuted(true);
 
     // Cache layout metrics — never read clientWidth/getBoundingClientRect in the hot path
     let cssW = shell.clientWidth || window.innerWidth;
     let cssH = shell.clientHeight || window.innerHeight;
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Cap DPR slightly — full 2× on large retina is a common first-seconds hitch
+    let dpr = Math.min(window.devicePixelRatio || 1, 1.75);
     let rectLeft = 0;
     let rectTop = 0;
     let rectW = cssW;
     let rectH = cssH;
     // Cached audio module — avoid dynamic import on every key/mouse event
     let sfxResume: (() => Promise<void>) | null = null;
+    let sfxModule: typeof import("@/lib/audio/sfx") | null = null;
     void import("@/lib/audio/sfx").then((mod) => {
+      sfxModule = mod;
+      bindSfxModule(mod);
       sfxResume = () => mod.resumeAudio();
       void mod.resumeAudio().catch(() => {});
     });
@@ -179,17 +193,20 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       if (sfxResume) void sfxResume().catch(() => {});
     };
 
-    const resize = () => {
+    const resize = (forceAlloc = false) => {
       const nextW = shell.clientWidth || window.innerWidth;
       const nextH = shell.clientHeight || window.innerHeight;
-      const nextDpr = Math.min(window.devicePixelRatio || 1, 2);
-      // Only reallocate backing store when size actually changes
+      const nextDpr = Math.min(window.devicePixelRatio || 1, 1.75);
+      const frozen =
+        !forceAlloc && performance.now() < freezeCanvasAllocUntil;
+      // Only reallocate backing store when size actually changes (and not frozen)
       if (
-        nextW !== cssW ||
-        nextH !== cssH ||
-        nextDpr !== dpr ||
-        canvas.width !== Math.floor(nextW * nextDpr) ||
-        canvas.height !== Math.floor(nextH * nextDpr)
+        !frozen &&
+        (nextW !== cssW ||
+          nextH !== cssH ||
+          nextDpr !== dpr ||
+          canvas.width !== Math.floor(nextW * nextDpr) ||
+          canvas.height !== Math.floor(nextH * nextDpr))
       ) {
         cssW = nextW;
         cssH = nextH;
@@ -198,6 +215,10 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         canvas.height = Math.floor(cssH * dpr);
         canvas.style.width = `${cssW}px`;
         canvas.style.height = `${cssH}px`;
+      } else if (frozen) {
+        // Keep mouse mapping in sync even if buffer size is frozen
+        cssW = nextW || cssW;
+        cssH = nextH || cssH;
       }
       const r = canvas.getBoundingClientRect();
       rectLeft = r.left;
@@ -205,12 +226,13 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       rectW = r.width || cssW;
       rectH = r.height || cssH;
     };
-    resize();
-    window.addEventListener("resize", resize);
+    const onWindowResize = () => resize(false);
+    resize(true);
+    window.addEventListener("resize", onWindowResize);
     // Catch fullscreen / flex layout changes that don't fire window.resize
     const ro =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => resize())
+        ? new ResizeObserver(() => resize(false))
         : null;
     ro?.observe(shell);
 
@@ -221,6 +243,10 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       if (e.code === "KeyQ" || e.code === "F10") {
         e.preventDefault();
         exitToMenu();
+        return;
+      }
+      if (!acceptInput) {
+        // Still allow leave during settle; ignore gameplay keys
         return;
       }
       if (e.code === "F11") {
@@ -258,7 +284,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     };
     const onKeyUp = (e: KeyboardEvent) => {
       const state = stateRef.current;
-      if (!state) return;
+      if (!state || !acceptInput) return;
       setKey(state, e.code, false);
     };
     const onBlur = () => {
@@ -283,7 +309,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       if (e.button !== 0) return;
       e.preventDefault();
       const state = stateRef.current;
-      if (!state || state.phase === "paused") return;
+      if (!state || !acceptInput || state.phase === "paused") return;
       ensureAudio();
       syncPointer(e.clientX, e.clientY);
       setKey(state, "Mouse0", true);
@@ -291,11 +317,11 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     const onMouseUp = (e: MouseEvent) => {
       if (e.button !== 0) return;
       const state = stateRef.current;
-      if (state) setKey(state, "Mouse0", false);
+      if (state && acceptInput) setKey(state, "Mouse0", false);
     };
     const onMouseMove = (e: MouseEvent) => {
       const state = stateRef.current;
-      if (!state || state.phase === "paused") return;
+      if (!state || !acceptInput || state.phase === "paused") return;
       syncPointer(e.clientX, e.clientY);
     };
     const onContextMenu = (e: Event) => e.preventDefault();
@@ -347,41 +373,54 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         setLoadPct(Math.max(0, Math.min(100, Math.round(pct))));
       };
 
-      // --- Phase A: audio (does not block match start hard) ---
-      report("오디오 준비…", 3);
+      const waitFrames = async (n: number) => {
+        for (let i = 0; i < n; i++) {
+          if (cancelled) return;
+          await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        }
+      };
+
+      // --- Phase 0: fullscreen + layout settle (prevents mid-game resize hitch) ---
+      report("화면 준비…", 2);
+      await enterBrowserFullscreen(shell);
+      resize(true);
+      await waitFrames(8);
+      resize(true);
+      if (cancelled) return;
+
+      // --- Phase A: audio + BGM as early as possible (while assets still load) ---
+      report("오디오 준비…", 4);
       const audioP = import("@/lib/audio/sfx")
         .then(async (mod) => {
+          sfxModule = mod;
+          bindSfxModule(mod);
+          sfxResume = () => mod.resumeAudio();
           try {
             await withTimeout(mod.resumeAudio(), 2000, "오디오");
           } catch {
             /* ignore */
           }
-          report("전투 SFX 프리로드…", 6);
+          // Keep / resume zone BGM (usually already started on Play click; no restart)
+          report("배경음악…", 5);
+          void mod.startZoneBgm(mapId).catch((e) => {
+            console.warn("[game] BGM skip", e);
+          });
+          report("전투 SFX 프리로드…", 7);
           try {
             await withTimeout(mod.preloadCombatSfx(), 15000, "SFX");
           } catch (e) {
             console.warn("[game] SFX preload skip", e);
           }
-          try {
-            const { isMidiPlaying } = await import("@/lib/audio/midiPlayer");
-            if (!isMidiPlaying()) {
-              report("BGM 로딩…", 8);
-              await withTimeout(mod.startZoneBgm(mapId), 10000, "BGM");
-            }
-          } catch (e) {
-            console.warn("[game] BGM skip", e);
-          }
         })
         .catch(() => {});
 
-      // --- Phase B: full visual assets (blocking — no mid-match hitch) ---
+      // --- Phase B: full visual assets ---
       let assets: GameAssets | null = null;
       try {
         report("맵·기체 로딩…", 10);
         assets = await withTimeout(
           loadGameAssets(mapId, vultureId, ({ msg, pct }) => {
-            // Map asset loader 10–90 onto overall 10–90
-            report(msg, Math.min(90, Math.max(10, pct)));
+            report(msg, Math.min(88, Math.max(10, pct)));
           }),
           90000,
           "에셋",
@@ -402,56 +441,137 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
 
       if (cancelled) return;
 
-      // Wait for audio path too (SFX cache avoids first-shot jank)
-      report("오디오 마무리…", 92);
+      report("오디오 마무리…", 89);
       try {
         await withTimeout(audioP, 12000, "오디오 대기");
       } catch {
-        /* continue without full audio */
+        /* continue */
       }
       if (cancelled) return;
 
-      // --- Phase C: GPU / path warm-up while still on loading screen ---
-      // Do not set stateRef yet — input must stay dead until reveal.
-      report("엔진 워밍업…", 94);
+      // --- Phase C: GPU texture upload (all craft angles / FX) ---
+      if (assets) {
+        report("텍스처 업로드…", 90);
+        resize(true);
+        try {
+          await warmGpuTextures(ctx, assets, (done, total) => {
+            if (total <= 0) return;
+            const p = 90 + Math.round((done / total) * 4);
+            report(`텍스처 업로드… ${done}/${total}`, Math.min(94, p));
+          });
+        } catch (e) {
+          console.warn("[game] GPU warm skip", e);
+        }
+      }
+      if (cancelled) return;
+
+      // --- Phase D: combat path warm-up under overlay ---
+      report("엔진 워밍업…", 95);
+      setSfxMuted(true);
       startMatch(state);
-      resize();
-      for (let i = 0; i < 10; i++) {
+      resize(true);
+      warmupCombat(state);
+      for (let i = 0; i < 24; i++) {
         if (cancelled) return;
-        // Advance sim so movement / collision / draw paths JIT once
         update(state, 1 / 60);
         renderGame(ctx, state, cssW, cssH, dpr);
-        report(`엔진 워밍업… ${i + 1}/10`, 94 + i * 0.5);
+        if (i % 8 === 0) {
+          report(`엔진 워밍업… ${i + 1}/24`, 95 + Math.round((i / 24) * 2));
+        }
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      }
+      if (cancelled) return;
+      warmupCombat(state);
+      for (let i = 0; i < 12; i++) {
+        if (cancelled) return;
+        update(state, 1 / 60);
+        renderGame(ctx, state, cssW, cssH, dpr);
         await new Promise<void>((r) => requestAnimationFrame(() => r()));
       }
       if (cancelled) return;
 
-      // Clean match start after warm-up (fresh spawns / timers)
-      report("전투 시작!", 100);
+      // --- Phase E: clean match + real-time settle (~2.5s) under overlay ---
+      // GC / driver / JIT finish while user still sees loading — not mid-fight.
+      report("프레임 안정화…", 98);
       startMatch(state);
-      setLoadError(null);
-      setLoadPct(100);
-      // Brief beat so 100% is visible, then reveal
-      await new Promise((r) => setTimeout(r, 150));
+      stateRef.current = state;
+      acceptInput = false;
+      setLoadPct(99);
+
+      const settleMs = 2500;
+      const settleStart = performance.now();
+      last = settleStart;
+      await new Promise<void>((resolve) => {
+        const settleLoop = (now: number) => {
+          if (cancelled) {
+            resolve();
+            return;
+          }
+          const dt = Math.min(0.033, (now - last) / 1000);
+          last = now;
+          if (dt > 0) update(state, dt);
+          renderGame(ctx, state, cssW, cssH, dpr);
+          const elapsed = now - settleStart;
+          if (elapsed < settleMs) {
+            // Re-warm weapons mid-settle once so late paths stay hot
+            if (elapsed > 900 && elapsed < 950) warmupCombat(state);
+            const left = Math.max(0, Math.ceil((settleMs - elapsed) / 1000));
+            report(`프레임 안정화… ${left}s`, 99);
+            raf = requestAnimationFrame(settleLoop);
+          } else {
+            resolve();
+          }
+        };
+        raf = requestAnimationFrame(settleLoop);
+      });
       if (cancelled) return;
 
-      stateRef.current = state;
+      // Fresh match after settle (no warm-up damage / leftover bullets)
+      startMatch(state);
+      for (let i = 0; i < 6; i++) {
+        if (cancelled) return;
+        update(state, 1 / 60);
+        renderGame(ctx, state, cssW, cssH, dpr);
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      }
+      if (cancelled) return;
+
+      // --- Phase F: reveal ---
+      report("전투 시작!", 100);
+      setLoadError(null);
+      setLoadPct(100);
+      setSfxMuted(false);
+      freezeCanvasAllocUntil = performance.now() + 3000;
+      acceptInput = true;
+      last = performance.now();
+      // Drop overlay first paint, then keep loop going
       setLoading(false);
       setLoadMsg("완료");
-      last = performance.now();
-      raf = requestAnimationFrame(loop);
       canvas.focus();
+      raf = requestAnimationFrame(loop);
+
+      // Safety: if BGM failed to start under overlay, start immediately on reveal
+      if (sfxModule) {
+        void import("@/lib/audio/midiPlayer")
+          .then(({ isMidiPlaying }) => {
+            if (cancelled || isMidiPlaying()) return;
+            return sfxModule!.startZoneBgm(mapId);
+          })
+          .catch((e) => console.warn("[game] BGM skip", e));
+      }
     })();
 
     return () => {
       cancelled = true;
       running = false;
+      acceptInput = false;
+      setSfxMuted(false);
       cancelAnimationFrame(raf);
       stateRef.current = null;
       void import("@/lib/audio/midiPlayer").then(({ stopMidi }) => stopMidi());
       void leaveBrowserFullscreen();
       ro?.disconnect();
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", onWindowResize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
@@ -518,7 +638,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         <canvas
           ref={canvasRef}
           className={`h-full w-full touch-none bg-black outline-none ${
-            loading ? "cursor-wait opacity-0" : "cursor-crosshair"
+            loading ? "cursor-wait" : "cursor-crosshair"
           }`}
           tabIndex={0}
           aria-hidden={loading}
@@ -547,9 +667,9 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
                 {loadMsg}
               </p>
               <p className="max-w-xs text-center text-[10px] leading-relaxed text-slate-600">
-                맵 · 기체 · 미사일 · 사운드를 모두 준비한 뒤 전투를 시작합니다.
+                맵 · 기체 · 텍스처 · 전투 경로를 예열한 뒤 시작합니다.
                 <br />
-                로딩이 끝나면 처음부터 부드럽게 진행됩니다.
+                마지막 &quot;프레임 안정화&quot;까지 기다리면 초반 버벅임이 줄어듭니다.
               </p>
               {loadError && (
                 <p className="max-w-md text-center text-xs text-rose-300">

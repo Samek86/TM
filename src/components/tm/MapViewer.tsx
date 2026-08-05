@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MAP_CATALOG,
+  ORIGINAL_MAP_CATALOG,
+  CREATIVE_MAP_CATALOG,
   mapUrl,
   loadMap,
   loadTil,
@@ -15,11 +17,42 @@ import {
   type TmTil,
   type MapViewMode,
 } from "@/lib/map";
+import { getMap, type MapDef } from "@/data/maps";
 
 type Pane = "composed" | "composed3d" | "heightmap" | "attr" | "flags" | "tiles";
 
+/** Synthetic TmMap from creative MapDef so heightmap pane always works. */
+function mapDefToTmMap(def: MapDef): TmMap {
+  const n = def.cols * def.rows;
+  const heightmap = new Uint16Array(n);
+  const attrs = new Uint32Array(n);
+  for (let i = 0; i < n; i++) {
+    const elev = def.elevation[i] ?? 0;
+    const ramp = def.ramps[i] ?? false;
+    heightmap[i] = elev >= 0.5 ? 200 : 40;
+    // Fake attr: high plateau vs low; ramps marked
+    attrs[i] = ramp ? 0x60000020 : elev >= 0.5 ? 0x40000000 : 0x20000000;
+  }
+  return {
+    version: 2,
+    flags: 0,
+    width: def.cols,
+    height: def.rows,
+    sizeField: 0,
+    nameTil: def.originalFiles[0]?.replace(/\.til$/i, "") ?? def.id,
+    nameBob: "",
+    heightmap,
+    attrs,
+    heightMin: 40,
+    heightMax: 200,
+  };
+}
+
 export function MapViewer() {
-  const [mapId, setMapId] = useState(MAP_CATALOG[0]!.id);
+  // Default to first original client map (has real MAP binary)
+  const [mapId, setMapId] = useState(
+    ORIGINAL_MAP_CATALOG[0]?.id ?? MAP_CATALOG[0]!.id,
+  );
   // heightmap first so UI never freezes on open; user can switch to compose
   const [pane, setPane] = useState<Pane>("heightmap");
   const [map, setMap] = useState<TmMap | null>(null);
@@ -52,19 +85,17 @@ export function MapViewer() {
 
     (async () => {
       try {
-        if (!entry.mapFile) {
-          // Creative maps have no original MAP binary — viewer shows note only
-          if (!cancelled) {
-            setError(
-              `「${entry.label}」는 창작 전략 맵입니다. 플레이 탭 미리보기를 사용하세요.`,
-            );
-            setLoading(false);
-          }
-          return;
+        if (entry.mapFile) {
+          const m = await loadMap(mapUrl(entry.mapFile));
+          if (cancelled) return;
+          setMap(m);
+        } else {
+          // Creative arena — no .MAP file; build height grid from MapDef
+          const def = getMap(entry.id);
+          if (cancelled) return;
+          setMap(mapDefToTmMap(def));
+          setBobInfo("창작 맵 · 높이/램프 합성 (원본 MAP 없음)");
         }
-        const m = await loadMap(mapUrl(entry.mapFile));
-        if (cancelled) return;
-        setMap(m);
 
         // Yield so heightmap can paint before heavy TIL parse
         await new Promise((r) => setTimeout(r, 0));
@@ -244,10 +275,10 @@ export function MapViewer() {
       <aside className="flex w-full shrink-0 flex-col gap-3 lg:w-64">
         <div>
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-tm-dim">
-            원본 맵 ({MAP_CATALOG.length})
+            원본 MAP ({ORIGINAL_MAP_CATALOG.length})
           </p>
-          <ul className="tm-scroll max-h-48 space-y-1 overflow-y-auto rounded-xl border border-tm-border bg-tm-panel/80 p-1.5 lg:max-h-[50vh]">
-            {MAP_CATALOG.map((m) => (
+          <ul className="tm-scroll max-h-40 space-y-1 overflow-y-auto rounded-xl border border-tm-border bg-tm-panel/80 p-1.5 lg:max-h-[36vh]">
+            {ORIGINAL_MAP_CATALOG.map((m) => (
               <li key={m.id}>
                 <button
                   type="button"
@@ -260,7 +291,31 @@ export function MapViewer() {
                 >
                   <div className="font-medium">{m.label}</div>
                   <div className="font-mono text-[10px] opacity-70">
-                    {m.width}×{m.height} · {m.mapFile}
+                    {m.mapFile}
+                    {m.tilFile ? ` · ${m.tilFile}` : ""}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-wider text-tm-dim">
+            창작 맵 ({CREATIVE_MAP_CATALOG.length})
+          </p>
+          <ul className="tm-scroll max-h-32 space-y-1 overflow-y-auto rounded-xl border border-tm-border bg-tm-panel/80 p-1.5">
+            {CREATIVE_MAP_CATALOG.map((m) => (
+              <li key={m.id}>
+                <button
+                  type="button"
+                  onClick={() => setMapId(m.id)}
+                  className={`w-full rounded-lg px-2.5 py-2 text-left text-sm transition ${
+                    mapId === m.id
+                      ? "bg-tm-accent/20 text-tm-accent-fg ring-1 ring-tm-accent/40"
+                      : "text-tm-muted hover:bg-tm-elevated hover:text-tm-fg"
+                  }`}
+                >
+                  <div className="font-medium">{m.label}</div>
+                  <div className="font-mono text-[10px] opacity-70">
+                    {m.width}×{m.height} · 높이맵
                   </div>
                 </button>
               </li>
@@ -353,7 +408,11 @@ export function MapViewer() {
             <p className="text-xs text-tm-muted">{entry.theme}</p>
           </div>
           <span className="font-mono text-[10px] text-tm-dim">
-            {loading ? "로딩…" : painting ? "렌더 중…" : entry.mapFile}
+            {loading
+              ? "로딩…"
+              : painting
+                ? "렌더 중…"
+                : entry.mapFile ?? "creative"}
           </span>
         </div>
 

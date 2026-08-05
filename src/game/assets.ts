@@ -39,6 +39,14 @@ export interface TerrainAsset {
 export type VultureSpriteSet = {
   frames: HTMLCanvasElement[];
   frameCount: number;
+  /**
+   * angleLut[bin] → source frame index.
+   * bin = round(aimAngle / 2π * frameCount) with aimAngle 0 = east (same as missiles).
+   * Built from SPR hotspots so craft nose tracks the mouse.
+   */
+  angleLut?: number[];
+  /** Pivot in source pixels (hotspot 0); default = frame center */
+  pivot?: { x: number; y: number };
 };
 
 export type ShotSpriteSet = {
@@ -190,7 +198,7 @@ export async function rebakeCraftDirections(
   // Supersample bake: rotate east-facing art to each yaw
   const outSize = Math.max(48, Math.ceil(srcSize * 1.15));
   const frames: HTMLCanvasElement[] = [];
-  const ss = 2; // 2× supersample
+  const ss = 2; // 2× supersample (classic look)
   const big = outSize * ss;
   const tmp = document.createElement("canvas");
   tmp.width = big;
@@ -296,9 +304,96 @@ async function loadSprFrames(
 }
 
 /**
+ * Estimate which way a craft frame points (world/missile radians).
+ * Hotspot bank A is [cx,cy, x1,y1, x2,y2, ...] — farthest attachment = nose tip.
+ */
+function estimateCraftFrameFacing(pointsA: number[]): number {
+  if (pointsA.length < 4) return 0;
+  const cx = pointsA[0]!;
+  const cy = pointsA[1]!;
+  let bestD = -1;
+  let ang = 0;
+  const pairs = Math.floor(pointsA.length / 2);
+  for (let k = 1; k < pairs && k < 5; k++) {
+    const x = pointsA[k * 2]!;
+    const y = pointsA[k * 2 + 1]!;
+    // Skip sentinel / garbage
+    if (x > 1000 || y > 1000) continue;
+    const d = Math.hypot(x - cx, y - cy);
+    if (d > bestD) {
+      bestD = d;
+      ang = Math.atan2(y - cy, x - cx);
+    }
+  }
+  return ang;
+}
+
+/** For each aim bin (0=east …), pick source frame whose nose is closest. */
+function buildCraftAngleLut(facings: number[]): number[] {
+  const n = facings.length;
+  const lut = new Array<number>(n);
+  const twoPi = Math.PI * 2;
+  for (let bin = 0; bin < n; bin++) {
+    let aim = (bin / n) * twoPi;
+    if (aim > Math.PI) aim -= twoPi;
+    let best = 0;
+    let bestErr = Infinity;
+    for (let fi = 0; fi < n; fi++) {
+      let d = facings[fi]! - aim;
+      while (d > Math.PI) d -= twoPi;
+      while (d < -Math.PI) d += twoPi;
+      const ad = Math.abs(d);
+      if (ad < bestErr) {
+        bestErr = ad;
+        best = fi;
+      }
+    }
+    lut[bin] = best;
+  }
+  return lut;
+}
+
+/** Load craft SPR with aim→frame LUT so nose tracks mouse like missiles. */
+async function loadCraftSpriteSet(
+  file: string,
+  palette: RgbaPalette,
+): Promise<VultureSpriteSet | null> {
+  try {
+    const spr: SprSprite = await loadSpr(sprUrl(file));
+    const n = spr.frames.length;
+    if (!n) return null;
+    const frames: HTMLCanvasElement[] = [];
+    const facings: number[] = [];
+    let pivot = { x: 0, y: 0 };
+    for (let i = 0; i < n; i++) {
+      const fr = spr.frames[i]!;
+      const { data, width, height } = frameToRgba(fr, palette);
+      frames.push(rgbaToCanvas(width, height, data));
+      facings.push(estimateCraftFrameFacing(fr.pointsA));
+      if (i === 0 && fr.pointsA.length >= 2) {
+        pivot = { x: fr.pointsA[0]!, y: fr.pointsA[1]! };
+      }
+    }
+    if (!pivot.x && !pivot.y) {
+      pivot = {
+        x: frames[0]!.width / 2,
+        y: frames[0]!.height / 2,
+      };
+    }
+    return {
+      frames,
+      frameCount: n,
+      angleLut: buildCraftAngleLut(facings),
+      pivot,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Map facing angle → direction frame index.
  * World/canvas: atan2(dy,dx) with +Y down → 0 = east, +π/2 = south.
- * Rebaked craft sheets: frame 0 faces east, indices advance with +angle.
  */
 export function angleToSprFrame(angle: number, frameCount = 72): number {
   const n = Math.max(1, frameCount);
@@ -306,6 +401,26 @@ export function angleToSprFrame(angle: number, frameCount = 72): number {
   let a = angle % twoPi;
   if (a < 0) a += twoPi;
   return Math.round((a / twoPi) * n) % n;
+}
+
+/**
+ * Craft frame for aim angle. Prefer hotspot-built LUT (matches missiles).
+ * Hotspot "nose" was 180° off from visual nose — flip aim when sampling LUT.
+ */
+export function angleToCraftFrame(
+  angle: number,
+  frameCount: number,
+  angleLut?: number[],
+): number {
+  const n = Math.max(1, frameCount);
+  // Visual craft nose is opposite the primary hotspot axis
+  const facing = angle + Math.PI;
+  if (angleLut && angleLut.length === n) {
+    const bin = angleToSprFrame(facing, n);
+    return angleLut[bin] ?? bin;
+  }
+  // Fallback: treat frame 0 as east (rebake-style), also flipped
+  return angleToSprFrame(facing, n);
 }
 
 /** Try exact client filename only (no multi-variant 404 storm). */
@@ -373,11 +488,11 @@ export async function loadGameAssetsEssential(
   };
 
   const vultures: Partial<Record<VultureId, VultureSpriteSet>> = {};
-  progress("선택 기체 디코드…", 18);
+  progress("선택 기체 SPR 디코드…", 18);
   try {
-    const set = await loadSprFrames(VULTURE_SPR[vultureId], sprPalette);
-    progress("선택 기체 방향 시트 생성…", 24);
-    if (set) vultures[vultureId] = await rebakeCraftDirections(set.frames, 72);
+    // Full original multi-angle sheet + hotspot aim LUT
+    const set = await loadCraftSpriteSet(VULTURE_SPR[vultureId], sprPalette);
+    if (set) vultures[vultureId] = set;
   } catch (e) {
     console.warn("[assets] vulture spr failed", e);
   }
@@ -419,12 +534,9 @@ export async function loadGameAssetsExtras(
 
   for (let i = 0; i < others.length; i++) {
     const id = others[i]!;
-    progress(`기체 준비 ${i + 1}/${others.length}…`, 42 + i * 10);
-    const set = await loadSprFrames(VULTURE_SPR[id], palette);
-    if (set) {
-      progress(`기체 방향 시트 ${i + 1}/${others.length}…`, 46 + i * 10);
-      assets.vultures[id] = await rebakeCraftDirections(set.frames, 72);
-    }
+    progress(`기체 SPR ${i + 1}/${others.length}…`, 42 + i * 12);
+    const set = await loadCraftSpriteSet(VULTURE_SPR[id], palette);
+    if (set) assets.vultures[id] = set;
     await yieldFrame();
   }
 
@@ -480,4 +592,55 @@ export async function loadGameAssets(
   const assets = await loadGameAssetsEssential(mapId, vultureId, progress);
   await loadGameAssetsExtras(assets, mapId, vultureId, progress);
   return assets;
+}
+
+/**
+ * Upload every baked canvas to the GPU while the loading overlay is still up.
+ * First on-screen draw of each sprite otherwise hitches mid-match as bots turn.
+ */
+export async function warmGpuTextures(
+  ctx: CanvasRenderingContext2D,
+  assets: GameAssets,
+  onProgress?: (done: number, total: number) => void,
+): Promise<void> {
+  const list: HTMLCanvasElement[] = [];
+  const push = (c: HTMLCanvasElement | null | undefined) => {
+    if (c && c.width > 0 && c.height > 0) list.push(c);
+  };
+  push(assets.style?.canvas ?? null);
+  push(assets.terrain?.style?.canvas ?? null);
+  for (const set of Object.values(assets.vultures)) {
+    if (!set) continue;
+    for (const f of set.frames) push(f);
+  }
+  for (const set of Object.values(assets.shots)) {
+    if (!set) continue;
+    for (const f of set.frames) push(f);
+  }
+  for (const set of Object.values(assets.weaponBodies)) {
+    if (!set) continue;
+    for (const f of set.frames) push(f);
+  }
+  for (const f of assets.explode?.frames ?? []) push(f);
+  for (const f of assets.debris?.frames ?? []) push(f);
+  for (const f of assets.items?.frames ?? []) push(f);
+
+  // Preserve transform; draw 2×2 samples so drivers materialize textures
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const chunk = 32;
+  for (let i = 0; i < list.length; i += chunk) {
+    const end = Math.min(i + chunk, list.length);
+    for (let j = i; j < end; j++) {
+      const c = list[j]!;
+      try {
+        ctx.drawImage(c, 0, 0, 2, 2);
+      } catch {
+        /* ignore tainted / zero-size edge cases */
+      }
+    }
+    onProgress?.(end, list.length);
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  }
+  ctx.restore();
 }

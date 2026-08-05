@@ -47,10 +47,16 @@ export function playSfx(
   if (!buffer) return;
   try {
     const c = getCtx();
-    if (c.state === "suspended") void c.resume();
+    // Resume must complete for first shots after autoplay unlock
+    if (c.state === "suspended") {
+      void c.resume().then(() => playSfx(buffer, opts));
+      return;
+    }
     const src = c.createBufferSource();
     src.buffer = buffer;
-    if (opts.playbackRate) src.playbackRate.value = opts.playbackRate;
+    if (opts.playbackRate != null && opts.playbackRate > 0) {
+      src.playbackRate.value = opts.playbackRate;
+    }
     const gain = c.createGain();
     gain.gain.value = opts.volume ?? 0.7;
     src.connect(gain);
@@ -70,10 +76,16 @@ export async function playSfxUrl(
 }
 
 const SOUND = "/archive/client/extracted/sound";
+/** Softened CC0 combat fire SFX (Kenney Digital Audio, processed + loudnorm). */
+const COMBAT = "/sfx/combat";
+/** Cache-bust after re-export so browsers pick up louder masters. */
+const COMBAT_VER = "3";
 
-/** Original client SFX paths under the extracted sound pack. */
+/** SFX paths — fire uses modern soft pack; UI/world keep original client pack. */
 export const SFX = {
-  shoot: (n: number) => `${SOUND}/shoot${n}.wav`,
+  shoot: (n: number) => `${COMBAT}/shoot${n}.wav?v=${COMBAT_VER}`,
+  /** Fallback if combat pack missing */
+  shootOriginal: (n: number) => `${SOUND}/shoot${n}.wav`,
   item: `${SOUND}/item.wav`,
   vselect: `${SOUND}/vselect.wav`,
   click: `${SOUND}/click.wav`,
@@ -83,8 +95,16 @@ export const SFX = {
   gx1: `${SOUND}/gx1.wav`,
   gx2: `${SOUND}/gx2.wav`,
   gx3: `${SOUND}/gx3.wav`,
+  /** Player hit / damage tick */
+  hit: `${SOUND}/gx1.wav`,
+  hitAlt: `${SOUND}/gx2.wav`,
   interback: `${SOUND}/interback.wav`,
 } as const;
+
+/** Weapon fire gain (files are loudnorm'd; this is the final bus fader). */
+export const SHOOT_VOLUME = 0.52;
+/** Damage-taken gain */
+export const HIT_VOLUME = 0.42;
 
 export const BGM = {
   tactics1: "/archive/audio/tactics1.mid",
@@ -120,17 +140,48 @@ export function bgmWavFallback(_mapId?: string): string {
   return SFX.interback;
 }
 
+const BGM_VOLUME_DB = -6.7;
+const BGM_WAV_VOLUME = 0.55;
+
+/**
+ * Prefetch Tone.js / MIDI parser / map tracks while user is still on the menu.
+ * Safe to call without a gesture (won't fully unlock audio until play).
+ */
+export async function warmZoneBgm(mapId?: string): Promise<void> {
+  try {
+    const { warmBgmEngine } = await import("./midiPlayer");
+    const urls = mapId
+      ? [bgmForMap(mapId)]
+      : [BGM.tactics1, BGM.tactics2, BGM.tactics4, BGM.tactics5];
+    await warmBgmEngine(urls);
+  } catch (e) {
+    console.warn("[audio] warm BGM skip", e);
+  }
+}
+
 /**
  * Start zone BGM from a user gesture when possible.
  * MIDI first, then interback.wav loop.
+ * Idempotent: if the same track is already playing, does not restart.
  */
 export async function startZoneBgm(mapId: string): Promise<"midi" | "wav" | "none"> {
-  await resumeAudio();
+  const midiUrl = bgmForMap(mapId);
   try {
-    const { playBgmWithFallback } = await import("./midiPlayer");
-    return await playBgmWithFallback(bgmForMap(mapId), bgmWavFallback(mapId), {
-      volumeDb: -5,
-      wavVolume: 0.42,
+    // Parallel resume + midi module (module often already warm from menu)
+    const [, midiMod] = await Promise.all([
+      resumeAudio(),
+      import("./midiPlayer"),
+    ]);
+    // Already on the right track — keep going (avoid silence from restart)
+    if (
+      midiMod.isMidiPlaying() &&
+      midiMod.getPlayingUrl() === midiUrl
+    ) {
+      return "midi";
+    }
+    return await midiMod.playBgmWithFallback(midiUrl, bgmWavFallback(mapId), {
+      volumeDb: BGM_VOLUME_DB,
+      wavVolume: BGM_WAV_VOLUME,
     });
   } catch (e) {
     console.warn("[audio] all BGM failed", e);
@@ -141,9 +192,13 @@ export async function startZoneBgm(mapId: string): Promise<"midi" | "wav" | "non
 /** Preload common combat SFX into AudioBuffer cache. */
 export async function preloadCombatSfx(): Promise<void> {
   await resumeAudio();
-  const ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 21, 161, 162];
+  const ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 161, 162];
   await Promise.all([
-    ...ids.map((n) => loadSfx(SFX.shoot(n))),
+    ...ids.map(async (n) => {
+      const buf = await loadSfx(SFX.shoot(n));
+      // If new pack failed, fall back to original client WAV
+      if (!buf) await loadSfx(SFX.shootOriginal(n));
+    }),
     loadSfx(SFX.item),
     loadSfx(SFX.over),
     loadSfx(SFX.wow),
@@ -151,6 +206,8 @@ export async function preloadCombatSfx(): Promise<void> {
     loadSfx(SFX.gx1),
     loadSfx(SFX.gx2),
     loadSfx(SFX.gx3),
+    loadSfx(SFX.hit),
+    loadSfx(SFX.hitAlt),
   ]);
 }
 

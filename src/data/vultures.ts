@@ -18,12 +18,27 @@ export interface VultureDef {
   damageMul: number;
   /** Default unlimited weapon id */
   starterWeaponId: number;
+  /**
+   * Fixed field weapon slots for keys 2–4 (key 1 = starter).
+   * Exactly 3: first two exclusive to this craft, last one shared with another craft.
+   * Ammo starts at 0 until picked up; empty slots cannot be selected.
+   */
+  loadoutWeaponIds: readonly [number, number, number];
   color: string;
   accent: string;
   blurb: string;
   lore: string;
 }
 
+/**
+ * Per-craft loadouts — 4 weapons total (key 1 starter + keys 2–4 field).
+ *
+ * | Craft    | 2 exclusive | 3 exclusive | 4 shared              |
+ * |----------|-------------|-------------|------------------------|
+ * | Born     | ATi-Gun     | Tomahawk    | Stinger (↔ Sorcerer)   |
+ * | Killers  | Fire Bomb   | Burst Apoc. | Multi (↔ Sorcerer)     |
+ * | Sorcerer | Slayer      | Ice Bault   | Stinger (↔ Born)       |
+ */
 export const VULTURES: VultureDef[] = [
   {
     id: "born_armor",
@@ -36,10 +51,11 @@ export const VULTURES: VultureDef[] = [
     radiusTiles: 0.75,
     damageMul: 1.0,
     starterWeaponId: 6, // Laser Cannon twin
+    loadoutWeaponIds: [2, 15, 12], // ATi, Tomahawk | Stinger shared
     color: "#94a3b8",
     accent: "#f59e0b",
-    blurb: "표준형 · 2연 레이저 기본 · 밸런스 주력",
-    lore: "기본형. 표준 속도·내구. 기본 무기는 2줄 레이저(무제한).",
+    blurb: "표준형 · 2연 레이저 · 필드 3슬롯",
+    lore: "기본형. 무제한 2연 레이저. 필드: ATi·Tomahawk(전용) + Stinger(공유). 픽업 무기가 기본보다 훨씬 강함.",
   },
   {
     id: "killers_pot",
@@ -52,10 +68,11 @@ export const VULTURES: VultureDef[] = [
     radiusTiles: 1.0,
     damageMul: 1.15,
     starterWeaponId: 3, // EM-Gun cloud burst
+    loadoutWeaponIds: [11, 16, 13], // Fire Bomb, Burst Apoc. | Multi shared
     color: "#38bdf8",
     accent: "#22d3ee",
-    blurb: "살짝 느림 · 강력한 구름형 기본 미사일",
-    lore: "속도는 조금 느리지만 기본 미사일이 강하고 넓게 퍼짐(무제한).",
+    blurb: "중장갑 · 구름 기본 · 필드 3슬롯",
+    lore: "기본 구름은 안정 광역. 필드: Fire Bomb·Burst Apocalypse(전용) + Multi(공유)로 한 방에 판을 뒤집음.",
   },
   {
     id: "sorcerer",
@@ -68,10 +85,11 @@ export const VULTURES: VultureDef[] = [
     radiusTiles: 0.6,
     damageMul: 0.85,
     starterWeaponId: 4, // Plazma weak
+    loadoutWeaponIds: [8, 20, 12], // Slayer, Ice Bault | Stinger shared
     color: "#c084fc",
     accent: "#a78bfa",
-    blurb: "빠름 · 약한 기본 미사일 · 기동 특화",
-    lore: "최고 속도. 기본 공격은 약하지만 연사·기동으로 커버(무제한).",
+    blurb: "기동형 · 고연사 기본 · 필드 3슬롯",
+    lore: "기본 플라즈마는 견제용. 필드: Slayer·Ice Bault(전용) + Stinger(공유)가 본 화력.",
   },
 ];
 

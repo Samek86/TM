@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArchiveBrowser } from "@/components/tm/ArchiveBrowser";
 import { GameCanvas } from "@/components/tm/GameCanvas";
 import { SprViewer } from "@/components/tm/SprViewer";
 import { MapViewer } from "@/components/tm/MapViewer";
 import { ARCHIVE_ITEM_COUNT } from "@/data/archive-catalog";
-import { MAPS } from "@/data/maps";
+import { MAPS, formatMapSize } from "@/data/maps";
 import { VULTURES } from "@/data/vultures";
 import type { VultureId } from "@/data/weapons";
 import { FULL_WEAPON_ROSTER } from "@/data/weapons";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 type Tab = "play" | "sprites" | "maps" | "archive" | "codex";
 
 function HomePage() {
-  const [tab, setTab] = useState<Tab>("maps");
+  const [tab, setTab] = useState<Tab>("play");
   const [playing, setPlaying] = useState(false);
   const [vultureId, setVultureId] = useState<VultureId>("born_armor");
   const [mapId, setMapId] = useState("jade_basin");
@@ -33,9 +33,17 @@ function HomePage() {
     void import("@/lib/audio/midiPlayer").then(({ stopMidi }) => stopMidi());
   }, []);
 
+  // Prefetch Tone + MIDI while user picks craft/map so BGM can start instantly on play
+  useEffect(() => {
+    void import("@/lib/audio/sfx").then(({ warmZoneBgm }) => {
+      void warmZoneBgm(mapId);
+    });
+  }, [mapId]);
+
   const startGame = useCallback(() => {
-    // Start BGM in the same user-gesture turn (autoplay policy)
-    void import("@/lib/audio/sfx").then(({ startZoneBgm }) => {
+    // Same click gesture: start BGM immediately (modules usually already warm)
+    void import("@/lib/audio/sfx").then(({ startZoneBgm, resumeAudio }) => {
+      void resumeAudio();
       void startZoneBgm(mapId);
     });
     setPlaying(true);
@@ -58,9 +66,9 @@ function HomePage() {
         <nav className="flex flex-wrap gap-2">
           {(
             [
+              ["play", "플레이"],
               ["maps", "MAP 뷰어"],
               ["sprites", "SPR 뷰어"],
-              ["play", "플레이"],
               ["archive", "자료실"],
               ["codex", "설계 문서"],
             ] as const
@@ -85,13 +93,13 @@ function HomePage() {
       </header>
 
       {tab === "sprites" && (
-        <div className="flex min-h-[min(72vh,760px)] flex-1 flex-col rounded-2xl border border-tm-border bg-tm-panel/50 p-3 sm:p-4">
-          <p className="mb-3 text-sm text-tm-muted">
+        <div className="flex h-[min(calc(100dvh-9.5rem),880px)] min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-tm-border bg-tm-panel/50 p-3 sm:p-4">
+          <p className="mb-3 shrink-0 text-sm text-tm-muted">
             원본 클라이언트 <strong className="text-tm-fg">.SPR</strong> 바이너리를
             브라우저에서 직접 디코딩합니다. {SPR_CATALOG_COUNT}개 파일 · RLE 코덱 완전
             해석 · 색은 임시 팔레트(형태 100% / 색 근사).
           </p>
-          <div className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <SprViewer />
           </div>
         </div>
@@ -100,9 +108,9 @@ function HomePage() {
       {tab === "maps" && (
         <div className="flex min-h-[min(72vh,760px)] flex-1 flex-col rounded-2xl border border-tm-border bg-tm-panel/50 p-3 sm:p-4">
           <p className="mb-3 text-sm text-tm-muted">
-            원본 <strong className="text-tm-fg">.MAP / .TIL / .BOB</strong> 1:1 합성.
-            맵 {MAP_CATALOG_COUNT}종 · attr→tile (mat×16+var&amp;15) · 원본 6-bit 팔레트 ·
-            플레이 시 풀 해상도 지형 + 기체 SPR.
+            원본 <strong className="text-tm-fg">.MAP / .TIL / .BOB</strong> 디코드 · 높이맵 /
+            타일 합성. 카탈로그 {MAP_CATALOG_COUNT}종 (원작 5 + 창작 3). attr→tile
+            (mat×16+var&amp;15) · 원본 6-bit 팔레트.
           </p>
           <div className="min-h-0 flex-1">
             <MapViewer />
@@ -129,7 +137,7 @@ function HomePage() {
 
                 <h2 className="font-display mt-6 text-lg text-tm-accent-fg">맵 선택</h2>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {MAPS.map((m) => (
+                  {MAPS.map((m, i) => (
                     <button
                       key={m.id}
                       type="button"
@@ -140,9 +148,14 @@ function HomePage() {
                           : "border-tm-border bg-tm-elevated/40 text-tm-muted hover:text-tm-fg"
                       }`}
                     >
-                      <span className="font-semibold">{m.name}</span>
+                      <span className="font-semibold">
+                        {i + 1}. {m.name}
+                      </span>
                       <span className="mt-0.5 block text-xs opacity-80">{m.theme}</span>
-                      <span className="mt-1 block text-[10px] text-tm-dim">
+                      <span className="mt-1 block font-mono text-[10px] text-tm-cyan/90">
+                        크기 {formatMapSize(m)}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-tm-dim">
                         {m.features?.slice(0, 3).join(" · ")}
                       </span>
                     </button>
@@ -181,14 +194,19 @@ function HomePage() {
                       <strong className="text-tm-fg">직진</strong>
                     </li>
                     <li>
-                      기본 무기 <strong className="text-tm-cyan">무제한</strong> · 필드 무기는{" "}
-                      <strong className="text-tm-cyan">탄약 제한</strong>
+                      무기 <strong className="text-tm-cyan">총 4종</strong> · 기본 1(무제한) · 전용 2 · 공유 1
                     </li>
                     <li>
-                      Born 2연 레이저 · Killers 강 구름 미사일 · Sorcerer 약·빠름
+                      픽업 시 탄약만 누적 · <strong className="text-tm-fg">1</strong> 기본 ·{" "}
+                      <strong className="text-tm-fg">2–4</strong> 필드
+                      (×0 선택 불가 · 소진 시 1번)
                     </li>
                     <li>
-                      <strong className="text-tm-fg">1–0</strong> 무기 · Esc 일시정지 · Q/F10 종료
+                      무기마다 특색 다름 · 관통 / 순항스플래시 / 세침 / 살포 / 투척 / 핵폭발 / 냉기장판
+                    </li>
+                    <li>
+                      봇 실력 <strong className="text-tm-fg">5단계 랜덤</strong>
+                      (초보·견습·숙련·정예·에이스) · Esc 일시정지 · Q 종료
                     </li>
                   </ul>
                 </div>
@@ -279,7 +297,8 @@ function CodexPanel() {
         <ul className="list-disc space-y-1 pl-4">
           {MAPS.map((m) => (
             <li key={m.id}>
-              <strong>{m.name}</strong> — {m.originalFiles.join(", ")}
+              <strong>{m.name}</strong> — {formatMapSize(m)} ·{" "}
+              {m.originalFiles.join(", ")}
             </li>
           ))}
         </ul>

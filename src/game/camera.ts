@@ -1,9 +1,13 @@
 /**
  * Shared camera math for render + mouse → world aim.
  * Must stay in sync with renderGame transforms.
+ *
+ * FOV is fixed in world units (see viewScale.ts) so craft size on screen
+ * does not shrink when maps use a larger cellSize.
  */
 import type { GameState } from "./engine";
 import { getPlayer } from "./engine";
+import { VIEW_WORLD_WIDTH } from "./viewScale";
 
 export interface CameraView {
   camX: number;
@@ -24,12 +28,10 @@ export function getCameraView(
   const player = getPlayer(state);
   const camX = player?.x ?? state.map.width / 2;
   const camY = player?.y ?? state.map.height / 2;
-  const cell = state.map.cellSize ?? 16;
-  // Show ~40–48 original tiles across — closer to 640×480 era framing
-  const targetWorldW = Math.min(state.map.width, cell * 42);
+  // Fixed world window — not map.cellSize — so planes stay large & consistent
+  const targetWorldW = Math.min(state.map.width, VIEW_WORLD_WIDTH);
   const viewScale = Math.min(cssW / targetWorldW, cssH / targetWorldW) * 1.02;
-  // Original is orthographic top-down (quarter-view was mild). Keep 1:1 so
-  // MAP+TIL tiles are not stretched into a “modern” look.
+  // Orthographic 1:1 (no fake quarter-view stretch)
   const yScale = viewScale;
   const ox = cssW / 2 - camX * viewScale + shakeX;
   const oy = cssH / 2 - camY * yScale + shakeY;

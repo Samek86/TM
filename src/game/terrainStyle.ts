@@ -111,9 +111,9 @@ export function buildStylizedTerrain(
   const cell = map.cellSize ?? 20;
   const worldW = map.width;
   const worldH = map.height;
-  // High-res bake: ~12–16 px per cell
-  const outTile = 14;
-  const cliffH = 10; // visual cliff face height in bake px
+  // Hi-res revival bake — crisp plateaus under modern zoom
+  const outTile = 28;
+  const cliffH = 18; // visual cliff face height in bake px
   const bw = map.cols * outTile;
   const bh = map.rows * outTile + cliffH;
 
@@ -173,71 +173,104 @@ export function buildStylizedTerrain(
       const baseX = cx * outTile;
       const baseY = cy * outTile + cliffH - lift;
 
-      // Micro variation (subtle, not muddy)
-      const n = noise2(cx * 1.7, cy * 2.3) * 0.06;
+      // Multi-octave micro detail
+      const n =
+        noise2(cx * 1.7, cy * 2.3) * 0.05 +
+        noise2(cx * 4.1, cy * 3.7) * 0.03 +
+        noise2(cx * 9.3 + 2, cy * 8.1) * 0.02;
       let r: number;
       let g: number;
       let b: number;
       if (isRamp) {
-        r = rr * (0.92 + n);
-        g = rg * (0.92 + n);
-        b = rb * (0.92 + n);
+        r = rr * (0.9 + n);
+        g = rg * (0.9 + n);
+        b = rb * (0.9 + n);
       } else if (isHigh) {
-        r = hr * (0.95 + n);
-        g = hg * (0.95 + n);
-        b = hb * (0.95 + n);
+        r = hr * (0.93 + n);
+        g = hg * (0.93 + n);
+        b = hb * (0.93 + n);
       } else {
-        r = gr * (0.95 + n);
-        g = gg * (0.95 + n);
-        b = gb * (0.95 + n);
+        r = gr * (0.93 + n);
+        g = gg * (0.93 + n);
+        b = gb * (0.93 + n);
       }
 
-      // Soft AO near cliffs
       const southLow = elev(cx, cy + 1) < 0.5 && isHigh;
       const northHigh = elev(cx, cy - 1) >= 0.5 && !isHigh;
+      const eastLow = elev(cx + 1, cy) < 0.5 && isHigh;
+      const westHigh = elev(cx - 1, cy) >= 0.5 && !isHigh;
 
       for (let py = 0; py < outTile; py++) {
         for (let px = 0; px < outTile; px++) {
           const dx = baseX + px;
           const dy = baseY + py;
           if (dx < 0 || dy < 0 || dx >= bw || dy >= bh) continue;
-          let pr = r;
-          let pg = g;
-          let pb = b;
-          // Edge bevel
-          const edge =
-            px === 0 || py === 0 || px === outTile - 1 || py === outTile - 1;
-          if (edge) {
+          // Intra-tile lighting (smooth gradient + fine noise)
+          const u = px / outTile;
+          const v = py / outTile;
+          const fine =
+            noise2(cx * 3 + u * 6, cy * 3 + v * 6) * 0.08 -
+            0.04 +
+            (0.5 - v) * 0.06;
+          let pr = r * (1 + fine);
+          let pg = g * (1 + fine);
+          let pb = b * (1 + fine);
+          // Soft bevel
+          if (px < 2 || py < 2) {
+            pr = Math.min(255, pr + 12);
+            pg = Math.min(255, pg + 11);
+            pb = Math.min(255, pb + 8);
+          }
+          if (px > outTile - 3 || py > outTile - 3) {
+            pr *= 0.9;
+            pg *= 0.9;
+            pb *= 0.9;
+          }
+          // Plateau rim highlight
+          if (isHigh && py < 3) {
+            pr = Math.min(255, pr + 22);
+            pg = Math.min(255, pg + 18);
+            pb = Math.min(255, pb + 12);
+          }
+          // Ramp diagonal chevrons (cleaner stripes)
+          if (isRamp) {
+            const stripe = ((px + py * 2 + cx * 3) % 7) === 0;
+            if (stripe) {
+              pr = Math.min(255, pr * 0.45 + ar * 0.55);
+              pg = Math.min(255, pg * 0.45 + ag * 0.55);
+              pb = Math.min(255, pb * 0.45 + ab * 0.55);
+            }
+          }
+          // Biome ground flecks
+          if (!isHigh && !isRamp && noise2(cx * 5 + px * 0.3, cy * 5 + py * 0.3) > 0.82) {
+            pr = Math.min(255, pr * 0.85 + ar * 0.12);
+            pg = Math.min(255, pg * 0.85 + ag * 0.12);
+            pb = Math.min(255, pb * 0.85 + ab * 0.12);
+          }
+          if (southLow && py > outTile - 4) {
+            pr *= 0.72;
+            pg *= 0.72;
+            pb *= 0.72;
+          }
+          if (northHigh && py < 3) {
+            pr *= 0.82;
+            pg *= 0.82;
+            pb *= 0.82;
+          }
+          if (eastLow && px > outTile - 3) {
+            pr *= 0.8;
+            pg *= 0.8;
+            pb *= 0.8;
+          }
+          if (westHigh && px < 2) {
             pr *= 0.88;
             pg *= 0.88;
             pb *= 0.88;
           }
-          // Top highlight on high ground
-          if (isHigh && py < 2) {
-            pr = Math.min(255, pr + 18);
-            pg = Math.min(255, pg + 16);
-            pb = Math.min(255, pb + 10);
-          }
-          // Ramp chevron stripe
-          if (isRamp && (px + py + cx + cy) % 5 === 0) {
-            pr = Math.min(255, pr * 0.5 + ar * 0.5);
-            pg = Math.min(255, pg * 0.5 + ag * 0.5);
-            pb = Math.min(255, pb * 0.5 + ab * 0.5);
-          }
-          if (southLow && py > outTile - 3) {
-            pr *= 0.75;
-            pg *= 0.75;
-            pb *= 0.75;
-          }
-          if (northHigh && py < 2) {
-            pr *= 0.85;
-            pg *= 0.85;
-            pb *= 0.85;
-          }
           const o = (dy * bw + dx) * 4;
-          data[o] = pr;
-          data[o + 1] = pg;
-          data[o + 2] = pb;
+          data[o] = Math.max(0, Math.min(255, pr));
+          data[o + 1] = Math.max(0, Math.min(255, pg));
+          data[o + 2] = Math.max(0, Math.min(255, pb));
           data[o + 3] = 255;
         }
       }
@@ -247,28 +280,33 @@ export function buildStylizedTerrain(
         for (let fy = 0; fy < cliffH; fy++) {
           const dy = baseY + outTile + fy;
           if (dy >= bh) break;
-          const shade = 0.45 + (fy / cliffH) * 0.35;
+          const t = fy / cliffH;
+          const shade = 0.38 + t * 0.4;
+          const band = noise2(cx * 2.1, cy + fy * 0.4) * 0.08;
           for (let px = 0; px < outTile; px++) {
             const dx = baseX + px;
             const o = (dy * bw + dx) * 4;
-            // Don't overwrite if already painted by lower cell later — paint cliff under
-            data[o] = cr * shade;
-            data[o + 1] = cg * shade;
-            data[o + 2] = cb * shade;
+            const rock = noise2(cx + px * 0.2, fy * 0.5) * 0.1;
+            data[o] = Math.min(255, cr * (shade + band + rock));
+            data[o + 1] = Math.min(255, cg * (shade + band + rock));
+            data[o + 2] = Math.min(255, cb * (shade + band + rock));
             data[o + 3] = 255;
           }
         }
       }
-      // East/west cliff hints
+      // East cliff strip
       if (isHigh && elev(cx + 1, cy) < 0.5 && !rampAt(cx + 1, cy)) {
         for (let py = 0; py < outTile; py++) {
-          const dx = baseX + outTile - 1;
-          const dy = baseY + py;
-          if (dy < 0 || dy >= bh) continue;
-          const o = (dy * bw + dx) * 4;
-          data[o] = cr * 0.55;
-          data[o + 1] = cg * 0.55;
-          data[o + 2] = cb * 0.55;
+          for (let k = 0; k < 2; k++) {
+            const dx = baseX + outTile - 1 - k;
+            const dy = baseY + py;
+            if (dy < 0 || dy >= bh) continue;
+            const o = (dy * bw + dx) * 4;
+            const sh = 0.5 + k * 0.08;
+            data[o] = cr * sh;
+            data[o + 1] = cg * sh;
+            data[o + 2] = cb * sh;
+          }
         }
       }
     }
@@ -276,8 +314,25 @@ export function buildStylizedTerrain(
 
   ctx.putImageData(img, 0, 0);
 
-  // Crisp grid (very subtle) for modern tactical readability
-  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  // Soft contact shadow under plateau edges (after raster for blend)
+  ctx.save();
+  for (let cy = 0; cy < map.rows; cy++) {
+    for (let cx = 0; cx < map.cols; cx++) {
+      const isHigh = elev(cx, cy) >= 0.5;
+      if (!isHigh || elev(cx, cy + 1) >= 0.5 || rampAt(cx, cy)) continue;
+      const baseX = cx * outTile;
+      const baseY = cy * outTile + cliffH;
+      const grad = ctx.createLinearGradient(0, baseY + outTile, 0, baseY + outTile + cliffH * 0.45);
+      grad.addColorStop(0, "rgba(0,0,0,0.35)");
+      grad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(baseX, baseY + outTile, outTile, cliffH * 0.45);
+    }
+  }
+  ctx.restore();
+
+  // Very subtle tactical grid
+  ctx.strokeStyle = "rgba(255,255,255,0.035)";
   ctx.lineWidth = 1;
   for (let x = 0; x <= map.cols; x++) {
     ctx.beginPath();
@@ -292,10 +347,26 @@ export function buildStylizedTerrain(
     ctx.stroke();
   }
 
-  // Outer frame
-  ctx.strokeStyle = `rgba(${ar},${ag},${ab},0.35)`;
+  // Outer frame + accent corner marks
+  ctx.strokeStyle = `rgba(${ar},${ag},${ab},0.4)`;
   ctx.lineWidth = 2;
   ctx.strokeRect(1, cliffH + 1, bw - 2, map.rows * outTile - 2);
+  ctx.strokeStyle = `rgba(${ar},${ag},${ab},0.55)`;
+  ctx.lineWidth = 3;
+  const mk = 14;
+  // corners
+  for (const [ox, oy, sx, sy] of [
+    [2, cliffH + 2, 1, 1],
+    [bw - 2, cliffH + 2, -1, 1],
+    [2, bh - 2, 1, -1],
+    [bw - 2, bh - 2, -1, -1],
+  ] as const) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy + sy * mk);
+    ctx.lineTo(ox, oy);
+    ctx.lineTo(ox + sx * mk, oy);
+    ctx.stroke();
+  }
 
   return {
     theme,

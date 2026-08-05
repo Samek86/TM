@@ -146,10 +146,10 @@ export function SprViewer() {
   const frame = sprite?.frames[frameIdx];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 lg:flex-row">
-      {/* Sidebar */}
-      <aside className="flex w-full shrink-0 flex-col gap-2 lg:w-64">
-        <div className="flex flex-wrap gap-1">
+    <div className="flex h-full min-h-0 max-h-full flex-col gap-3 overflow-hidden lg:flex-row">
+      {/* Sidebar — list scrolls inside viewport */}
+      <aside className="flex max-h-[40vh] w-full shrink-0 flex-col gap-2 overflow-hidden lg:max-h-full lg:w-64">
+        <div className="flex shrink-0 flex-wrap gap-1">
           {SPR_CATEGORIES.map((c) => (
             <button
               key={c.id}
@@ -172,7 +172,10 @@ export function SprViewer() {
             </button>
           ))}
         </div>
-        <ul className="tm-scroll max-h-48 space-y-0.5 overflow-y-auto rounded-xl border border-tm-border bg-tm-panel/80 p-1.5 lg:max-h-none lg:flex-1">
+        <p className="shrink-0 text-[10px] text-tm-dim">
+          {items.length}개 파일{cat === "all" ? " · 스크롤" : ""}
+        </p>
+        <ul className="tm-scroll min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain rounded-xl border border-tm-border bg-tm-panel/80 p-1.5">
           {items.map((item) => (
             <li key={item.id}>
               <button
@@ -192,14 +195,14 @@ export function SprViewer() {
         </ul>
       </aside>
 
-      {/* Main stage */}
-      <section className="flex min-h-0 flex-1 flex-col gap-3">
-        <header className="flex flex-wrap items-start justify-between gap-2">
-          <div>
+      {/* Main stage — fixed within parent; canvas pane scrolls */}
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
+        <header className="flex shrink-0 flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
             <h2 className="font-display text-lg text-tm-fg">
               {entry?.label ?? "SPR"}
             </h2>
-            <p className="mt-0.5 font-mono text-xs text-tm-dim">
+            <p className="mt-0.5 truncate font-mono text-xs text-tm-dim">
               {entry ? sprUrl(entry.file) : ""}
               {entry?.note ? ` · ${entry.note}` : ""}
             </p>
@@ -225,7 +228,7 @@ export function SprViewer() {
         </header>
 
         <div
-          className={`relative flex min-h-[220px] flex-1 items-center justify-center overflow-auto rounded-xl border border-tm-border p-4 ${
+          className={`relative flex min-h-0 flex-1 items-start justify-center overflow-auto overscroll-contain rounded-xl border border-tm-border p-4 ${
             checker
               ? "bg-[length:16px_16px] bg-[linear-gradient(45deg,#1a2332_25%,transparent_25%),linear-gradient(-45deg,#1a2332_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#1a2332_75%),linear-gradient(-45deg,transparent_75%,#1a2332_75%)] bg-[position:0_0,0_8px,8px_-8px,-8px_0] bg-tm-void"
               : "bg-tm-void"
@@ -237,19 +240,19 @@ export function SprViewer() {
             </p>
           )}
           {error && (
-            <p className="text-sm text-tm-danger">오류: {error}</p>
+            <p className="m-auto text-sm text-tm-danger">오류: {error}</p>
           )}
           {!loading && !error && (
             <canvas
               ref={canvasRef}
-              className="max-h-full max-w-full"
+              className="mx-auto my-auto block shrink-0"
               style={{ imageRendering: "pixelated" }}
             />
           )}
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col gap-2 rounded-xl border border-tm-border bg-tm-panel/90 p-3">
+        <div className="flex shrink-0 flex-col gap-2 rounded-xl border border-tm-border bg-tm-panel/90 p-3">
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"

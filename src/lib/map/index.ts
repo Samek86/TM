@@ -32,6 +32,8 @@ export {
 
 export {
   MAP_CATALOG,
+  ORIGINAL_MAP_CATALOG,
+  CREATIVE_MAP_CATALOG,
   MAP_CATALOG_COUNT,
   mapUrl,
   getMapEntry,

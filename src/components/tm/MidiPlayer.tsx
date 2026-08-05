@@ -71,7 +71,7 @@ export function MidiPlayer({
         </p>
         <p className="font-mono text-sm text-tm-fg">{title ?? src.split("/").pop()}</p>
         <p className="mt-1 text-[11px] text-tm-muted">
-          브라우저 기본 플레이어는 .mid 를 지원하지 않아 Tone.js 신스로 재생합니다.
+          Tone.js 앙상블(서브·베이스·패드·플럭·브라스·건반·리드) + 자동 베이스 보강. 원곡 멜로디·타이밍 유지.
           {duration > 0 ? ` · ${duration.toFixed(1)}s` : ""}
         </p>
       </div>

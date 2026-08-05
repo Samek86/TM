@@ -1,12 +1,12 @@
 /**
- * Play-tab previews: original craft SPR + map thumbnail (no video).
+ * Play-tab previews: original craft SPR + map thumbnail.
  */
 import { useEffect, useRef, useState } from "react";
 import { getVulture, type VultureDef } from "@/data/vultures";
 import type { VultureId } from "@/data/weapons";
 import { loadSpr, frameToRgba, loadSharedClientPalette } from "@/lib/spr";
 import { sprUrl } from "@/lib/spr/catalog";
-import { getMap } from "@/data/maps";
+import { formatMapSize, getMap } from "@/data/maps";
 import { buildStylizedTerrain } from "@/game/terrainStyle";
 
 const SPR_FILE: Record<VultureId, string> = {
@@ -27,13 +27,12 @@ export function CraftPreview({ vultureId }: { vultureId: VultureId }) {
         const pal = await loadSharedClientPalette();
         const spr = await loadSpr(sprUrl(SPR_FILE[vultureId]));
         if (cancelled || !spr.frames.length) return;
-        // Show east-facing frame (~0°) and a few neighbors as a mini turntable
         const c = canvasRef.current;
         if (!c) return;
         const ctx = c.getContext("2d");
         if (!ctx) return;
         const n = spr.frames.length;
-        const face = Math.floor(n * 0.0) % n; // frame 0
+        const face = Math.floor(n * 0.0) % n;
         const fr = spr.frames[face]!;
         const { data, width, height } = frameToRgba(fr, pal);
         const scale = Math.min(4, Math.floor(140 / Math.max(width, height)));
@@ -41,7 +40,6 @@ export function CraftPreview({ vultureId }: { vultureId: VultureId }) {
         c.height = height * scale;
         ctx.imageSmoothingEnabled = false;
         const img = new ImageData(new Uint8ClampedArray(data), width, height);
-        // draw scaled via temp
         const tmp = document.createElement("canvas");
         tmp.width = width;
         tmp.height = height;
@@ -90,7 +88,7 @@ export function MapPreview({ mapId }: { mapId: string }) {
       c.height = style.canvas.height;
       ctx.drawImage(style.canvas, 0, 0);
       setLabel(
-        `${map.name} · ${map.cols}×${map.rows} · ${map.features.join(" · ")}`,
+        `${map.name} · ${formatMapSize(map)} · ${map.features.slice(0, 2).join(" · ")}`,
       );
     } catch {
       if (!cancelled) setLabel("미리보기 실패");
@@ -134,7 +132,7 @@ export function CraftCardArt({
         const pal = await loadSharedClientPalette();
         const spr = await loadSpr(sprUrl(SPR_FILE[v.id]));
         if (cancelled || !spr.frames[0]) return;
-        const fr = spr.frames[Math.floor(spr.frames.length / 4)]!; // ~90° look
+        const fr = spr.frames[Math.floor(spr.frames.length / 4)]!;
         const { data, width, height } = frameToRgba(fr, pal);
         const c = canvasRef.current;
         if (!c) return;
