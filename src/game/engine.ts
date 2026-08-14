@@ -19,6 +19,7 @@ import {
 } from "@/data/weapons";
 import { weaponById } from "./weaponLookup";
 import { craftWorldRadius, craftWorldSpeed } from "./viewScale";
+import { approachVelocity, tryStep } from "./movement";
 
 export type GamePhase = "boot" | "select" | "playing" | "paused" | "over";
 
@@ -29,6 +30,8 @@ export interface Pilot {
   vultureId: VultureId;
   x: number;
   y: number;
+  vx: number;
+  vy: number;
   angle: number;
   hp: number;
   maxHp: number;
@@ -403,6 +406,8 @@ function spawnPilot(
     vultureId: opts.vultureId,
     x: pos.x,
     y: pos.y,
+    vx: 0,
+    vy: 0,
     angle: Math.random() * Math.PI * 2,
     hp: v.maxHp,
     maxHp: v.maxHp,
@@ -1019,6 +1024,10 @@ function canFlyTo(
   return canTraverseHeight(state.map, fromX, fromY, toX, toY);
 }
 
+function padFor(pilot: Pilot): number {
+  return Math.max(2, pilot.radius * 0.45);
+}
+
 /** Relative yaw offsets for obstacle sliding (desired → side → reverse). */
 const MOVE_SLIDE_YAW = [
   0, 0.32, -0.32, 0.64, -0.64, 0.95, -0.95, 1.3, -1.3, 1.57, -1.57, Math.PI,
@@ -1042,7 +1051,7 @@ function applyMove(
   const ux = mx / len;
   const uy = my / len;
   // Keep hull off the absolute map border
-  const pad = Math.max(2, pilot.radius * 0.45);
+  const pad = padFor(pilot);
   const ox = pilot.x;
   const oy = pilot.y;
 
@@ -1632,19 +1641,39 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
         ? 1.0 + 0.1 * prof.dodgeMul
         : 0.88 + 0.12 * prof.moveSkill;
   const moveSpd = pilot.speedStat * speedMul;
-  let moved = applyMove(state, pilot, mx, my, moveSpd, dt);
-
-  // Blocked (cliff face / edge / corner): slide, reverse, or fan free
+  const wishX = mx * moveSpd;
+  const wishY = my * moveSpd;
+  const nextV = approachVelocity(
+    pilot.vx,
+    pilot.vy,
+    wishX,
+    wishY,
+    moveSpd,
+    dt,
+  );
+  pilot.vx = nextV.vx;
+  pilot.vy = nextV.vy;
+  const stepped = tryStep(
+    pilot.x,
+    pilot.y,
+    pilot.vx,
+    pilot.vy,
+    dt,
+    (x0, y0, x1, y1) => canFlyTo(state, x0, y0, x1, y1, padFor(pilot)),
+  );
+  pilot.x = stepped.x;
+  pilot.y = stepped.y;
+  pilot.vx = stepped.vx;
+  pilot.vy = stepped.vy;
+  let moved = stepped.moved;
   if (!moved) {
-    // Prefer sideways along the blocked heading, then reverse
-    moved = applyMove(state, pilot, -my, mx, moveSpd, dt);
-    if (!moved) moved = applyMove(state, pilot, my, -mx, moveSpd, dt);
-    if (!moved) moved = applyMove(state, pilot, -mx, -my, moveSpd * 0.9, dt);
+    const map = state.map;
+    const toCx = map.width * 0.5 - pilot.x;
+    const toCy = map.height * 0.5 - pilot.y;
+    moved = tryUnstickMove(state, pilot, toCx, toCy, pilot.speedStat, dt);
     if (!moved) {
-      const map = state.map;
-      const toCx = map.width * 0.5 - pilot.x;
-      const toCy = map.height * 0.5 - pilot.y;
-      moved = tryUnstickMove(state, pilot, toCx, toCy, pilot.speedStat, dt);
+      pilot.vx = 0;
+      pilot.vy = 0;
     }
   }
   updateStillness(pilot, moved, dt);
@@ -1719,13 +1748,35 @@ function updatePlayer(state: GameState, pilot: Pilot, dt: number): void {
   if (k["KeyA"] || k["ArrowLeft"]) mx -= 1;
   if (k["KeyD"] || k["ArrowRight"]) mx += 1;
   const len = Math.hypot(mx, my);
-  let moved = false;
   if (len > 0) {
     mx /= len;
     my /= len;
-    moved = applyMove(state, pilot, mx, my, pilot.speedStat, dt);
   }
-  updateStillness(pilot, moved, dt);
+  const wishX = mx * pilot.speedStat;
+  const wishY = my * pilot.speedStat;
+  const nextV = approachVelocity(
+    pilot.vx,
+    pilot.vy,
+    wishX,
+    wishY,
+    pilot.speedStat,
+    dt,
+  );
+  pilot.vx = nextV.vx;
+  pilot.vy = nextV.vy;
+  const stepped = tryStep(
+    pilot.x,
+    pilot.y,
+    pilot.vx,
+    pilot.vy,
+    dt,
+    (x0, y0, x1, y1) => canFlyTo(state, x0, y0, x1, y1, padFor(pilot)),
+  );
+  pilot.x = stepped.x;
+  pilot.y = stepped.y;
+  pilot.vx = stepped.vx;
+  pilot.vy = stepped.vy;
+  updateStillness(pilot, stepped.moved, dt);
 
   // Fire: mouse click primary; Ctrl kept as original-doc alternate
   if (k["Mouse0"] || k["ControlLeft"] || k["ControlRight"]) {
