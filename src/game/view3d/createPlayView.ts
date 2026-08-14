@@ -36,13 +36,24 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
       alpha: false,
       powerPreference: "high-performance",
     });
-  } catch (e) {
+  } catch {
+    throw new Error("WebGL을 시작할 수 없습니다");
+  }
+  const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+  if (!gl) {
+    renderer.dispose();
     throw new Error("WebGL을 시작할 수 없습니다");
   }
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x05070c);
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 4000);
-  const terrain = createTerrainMesh(map);
+  let terrain: THREE.Mesh;
+  try {
+    terrain = createTerrainMesh(map);
+  } catch {
+    renderer.dispose();
+    throw new Error("지형을 만들 수 없습니다");
+  }
   scene.add(terrain);
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const sun = new THREE.DirectionalLight(0xfff1d6, 0.85);

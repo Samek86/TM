@@ -60,7 +60,7 @@ function HomePage() {
             TACTICS MERCENARY
           </h1>
           <p className="mt-1 text-sm text-tm-muted">
-            완전 부활 · 원본 MAP/TIL 지형 · 미사일·이펙트 SPR · tactics MIDI BGM · 21종 무기
+            완전 부활 · 3D 아레나 · 미사일·이펙트 SPR · tactics MIDI BGM · 21종 무기
           </p>
         </div>
         <nav className="flex flex-wrap gap-2">
