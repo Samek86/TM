@@ -22,3 +22,7 @@ dist/
 # Temp
 *.tmp
 tmp/
+
+# Isolated worktrees + SDD scratch
+.worktrees/
+.superpowers/
