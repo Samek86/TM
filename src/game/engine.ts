@@ -1856,6 +1856,8 @@ export function update(state: GameState, dt: number): void {
         pilot.hp = v.maxHp;
         pilot.x = pos.x;
         pilot.y = pos.y;
+        pilot.vx = 0;
+        pilot.vy = 0;
         pilot.angle = Math.random() * Math.PI * 2;
         pilot.caughtBy = null;
         pilot.catchTimer = 0;
@@ -1876,7 +1878,11 @@ export function update(state: GameState, dt: number): void {
         pilot.y += (dy / d) * pilot.speedStat * 0.9 * cap;
         pilot.angle = Math.atan2(dy, dx);
       }
-      if (pilot.catchTimer <= 0) pilot.caughtBy = null;
+      if (pilot.catchTimer <= 0) {
+        pilot.caughtBy = null;
+        pilot.vx = 0;
+        pilot.vy = 0;
+      }
       continue;
     }
     if (pilot.isPlayer) updatePlayer(state, pilot, cap);
@@ -2133,6 +2139,8 @@ export function update(state: GameState, dt: number): void {
       if (b.catcher) {
         hitPilot.caughtBy = owner;
         hitPilot.catchTimer = 2.5;
+        hitPilot.vx = 0;
+        hitPilot.vy = 0;
         state.message = `${hitPilot.name} caught!`;
         state.messageT = 1.2;
         spawnParticles(state, b.x, b.y, "#34d399", 10, 80, "spark");
