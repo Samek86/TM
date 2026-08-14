@@ -78,6 +78,7 @@
     "@types/pg": "^8.11.10",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9.20.0",
     "eslint-config-prettier": "^10.1.1",
