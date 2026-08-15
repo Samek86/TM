@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { VultureId } from "@/data/weapons";
 
-export const CRAFT_YAW_DIRS = 8;
+export const CRAFT_YAW_DIRS = 16;
 
 export type CraftArtKit = Partial<Record<VultureId, THREE.Texture[]>>;
 
