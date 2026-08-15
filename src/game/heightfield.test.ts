@@ -87,4 +87,25 @@ describe("heightfield", () => {
     const ySouth = sampleTerrainY(map, midX, southY);
     expect(yNorth).toBeGreaterThan(ySouth);
   });
+
+  it("N–S corridor with side flats still slopes toward the high rim", () => {
+    const cols = 7;
+    const rows = 7;
+    const elev: number[] = [];
+    const ramps: boolean[] = [];
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        elev.push(y === 6 ? 1 : 0);
+        ramps.push(x >= 2 && x <= 4 && y >= 1 && y <= 5);
+      }
+    }
+    const map = miniMap(elev, ramps);
+    map.width = cols * 30;
+    map.height = rows * 30;
+    map.cols = cols;
+    map.rows = rows;
+    const dir = rampDirection(map, 3, 3);
+    expect(dir.dx).toBe(0);
+    expect(dir.dy).toBe(1);
+  });
 });

@@ -15,6 +15,11 @@ import {
 import { applyCraftPose, createCraftGroup } from "./crafts";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
 import { createTerrainMesh } from "./terrainMesh";
+import {
+  disposeTerrainKit,
+  type TerrainKit,
+} from "./terrainTextures";
+import { biomeForMapId } from "@/game/terrainStyle";
 
 export type PlayView = {
   resize(cssW: number, cssH: number, dpr: number): void;
@@ -28,7 +33,11 @@ export type PlayView = {
   dispose(): void;
 };
 
-export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView {
+export function createPlayView(
+  canvas: HTMLCanvasElement,
+  map: MapDef,
+  kit: TerrainKit | null = null,
+): PlayView {
   let renderer: THREE.WebGLRenderer;
   try {
     renderer = new THREE.WebGLRenderer({
@@ -50,7 +59,14 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
   renderer.toneMappingExposure = 1.12;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x05070c);
+  const theme = biomeForMapId(map.id);
+  const fogColor = new THREE.Color(
+    theme.fog[0] / 255,
+    theme.fog[1] / 255,
+    theme.fog[2] / 255,
+  );
+  scene.background = fogColor.clone().lerp(new THREE.Color(0x87a0b4), 0.45);
+  scene.fog = new THREE.Fog(scene.background.getHex(), 380, 1600);
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 4000);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -58,7 +74,7 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
   scene.environmentIntensity = 0.9;
   let terrain: THREE.Mesh;
   try {
-    terrain = createTerrainMesh(map);
+    terrain = createTerrainMesh(map, kit);
   } catch {
     renderer.dispose();
     throw new Error("지형을 만들 수 없습니다");
@@ -156,6 +172,7 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
       } else {
         material.dispose();
       }
+      disposeTerrainKit(kit);
       env.dispose();
       pmrem.dispose();
       if (typeof renderer.forceContextLoss === "function") {

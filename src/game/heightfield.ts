@@ -84,26 +84,28 @@ export function rampDirection(map: MapDef, cx: number, cy: number): RampDir {
     return { dx: 0, dy: 0 };
   }
 
-  const high = floodNearest(map, cx, cy, (x, y) => isHighCell(map, x, y));
-  const low = floodNearest(map, cx, cy, (x, y) => isFlatLowCell(map, x, y));
-
-  let vx = 0;
-  let vy = 0;
-  if (high && low) {
-    vx = high.cx - low.cx;
-    vy = high.cy - low.cy;
-  } else if (high) {
-    vx = high.cx - cx;
-    vy = high.cy - cy;
-  } else if (low) {
-    vx = cx - low.cx;
-    vy = cy - low.cy;
-  } else {
-    return { dx: 0, dy: 0 };
+  // Adjacent high wins — climb toward the plateau, never a sideways flat.
+  for (const d of CARDINALS) {
+    const nx = cx + d.dx;
+    const ny = cy + d.dy;
+    if (inGrid(map, nx, ny) && isHighCell(map, nx, ny)) return d;
   }
 
-  if (vx === 0 && vy === 0) return { dx: 0, dy: 0 };
-  return dominantAxis(vx, vy);
+  const high = floodNearest(map, cx, cy, (x, y) => isHighCell(map, x, y));
+  if (high) {
+    const vx = high.cx - cx;
+    const vy = high.cy - cy;
+    if (vx !== 0 || vy !== 0) return dominantAxis(vx, vy);
+  }
+
+  for (const d of CARDINALS) {
+    const nx = cx + d.dx;
+    const ny = cy + d.dy;
+    if (inGrid(map, nx, ny) && isFlatLowCell(map, nx, ny)) {
+      return { dx: -d.dx, dy: -d.dy };
+    }
+  }
+  return { dx: 0, dy: 0 };
 }
 
 export function sampleTerrainY(map: MapDef, wx: number, wy: number): number {
