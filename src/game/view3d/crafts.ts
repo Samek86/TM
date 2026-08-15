@@ -268,12 +268,16 @@ function buildArtCraft(id: VultureId, texture: THREE.Texture): THREE.Group {
   mesh.castShadow = false;
   mesh.receiveShadow = false;
   group.add(mesh);
-  const visual = VISUAL_LENGTH_MUL * craftWorldRadius(getVulture(id).radiusTiles);
-  scaleToVisualLength(group, getVulture(id).radiusTiles * 1.35);
+  const radius = craftWorldRadius(getVulture(id).radiusTiles);
+  const target = radius * 1.08;
+  group.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(group);
+  const size = box.getSize(new THREE.Vector3());
+  const length = Math.max(size.x, size.y, 1e-6);
+  group.scale.setScalar(target / length);
   group.userData.artCard = true;
   group.userData.baseScale = group.scale.x;
-  // Art plane is tall and camera-facing; keep the painted hull above the terrain.
-  group.userData.hoverLift = visual * 0.48 + 10;
+  group.userData.hoverLift = target * 0.36 + 5;
   addShadow(group);
   return group;
 }
