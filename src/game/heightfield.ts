@@ -37,41 +37,73 @@ function dominantAxis(dx: number, dy: number): RampDir {
   return { dx: 0, dy: dy === 0 ? 0 : dy > 0 ? 1 : -1 };
 }
 
+function isRampCell(map: MapDef, cx: number, cy: number): boolean {
+  return map.ramps[cellIndex(map, cx, cy)] ?? false;
+}
+
+function isFlatLowCell(map: MapDef, cx: number, cy: number): boolean {
+  return !isHighCell(map, cx, cy) && !isRampCell(map, cx, cy);
+}
+
+/** Cardinal BFS to the first cell matching `pred`. */
+function floodNearest(
+  map: MapDef,
+  sx: number,
+  sy: number,
+  pred: (cx: number, cy: number) => boolean,
+): { cx: number; cy: number } | null {
+  if (pred(sx, sy)) return { cx: sx, cy: sy };
+  const cols = map.cols;
+  const rows = map.rows;
+  const seen = new Uint8Array(cols * rows);
+  const qx = [sx];
+  const qy = [sy];
+  seen[sy * cols + sx] = 1;
+  let head = 0;
+  while (head < qx.length) {
+    const x = qx[head]!;
+    const y = qy[head]!;
+    head += 1;
+    for (const d of CARDINALS) {
+      const nx = x + d.dx;
+      const ny = y + d.dy;
+      if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+      const i = ny * cols + nx;
+      if (seen[i]) continue;
+      seen[i] = 1;
+      if (pred(nx, ny)) return { cx: nx, cy: ny };
+      qx.push(nx);
+      qy.push(ny);
+    }
+  }
+  return null;
+}
+
 export function rampDirection(map: MapDef, cx: number, cy: number): RampDir {
-  if (!inGrid(map, cx, cy) || !(map.ramps[cellIndex(map, cx, cy)] ?? false)) {
+  if (!inGrid(map, cx, cy) || !isRampCell(map, cx, cy)) {
     return { dx: 0, dy: 0 };
   }
 
-  for (const d of CARDINALS) {
-    const nx = cx + d.dx;
-    const ny = cy + d.dy;
-    if (inGrid(map, nx, ny) && isHighCell(map, nx, ny)) {
-      return { dx: d.dx, dy: d.dy };
-    }
+  const high = floodNearest(map, cx, cy, (x, y) => isHighCell(map, x, y));
+  const low = floodNearest(map, cx, cy, (x, y) => isFlatLowCell(map, x, y));
+
+  let vx = 0;
+  let vy = 0;
+  if (high && low) {
+    vx = high.cx - low.cx;
+    vy = high.cy - low.cy;
+  } else if (high) {
+    vx = high.cx - cx;
+    vy = high.cy - cy;
+  } else if (low) {
+    vx = cx - low.cx;
+    vy = cy - low.cy;
+  } else {
+    return { dx: 0, dy: 0 };
   }
 
-  for (const d of CARDINALS) {
-    const nx = cx + d.dx;
-    const ny = cy + d.dy;
-    if (inGrid(map, nx, ny) && !isHighCell(map, nx, ny)) {
-      return { dx: -d.dx, dy: -d.dy };
-    }
-  }
-
-  // One extra chebyshev ring (distance 1 diagonals, then 2) for nearest high.
-  for (let dist = 1; dist <= 2; dist++) {
-    for (let oy = -dist; oy <= dist; oy++) {
-      for (let ox = -dist; ox <= dist; ox++) {
-        if (Math.max(Math.abs(ox), Math.abs(oy)) !== dist) continue;
-        const nx = cx + ox;
-        const ny = cy + oy;
-        if (!inGrid(map, nx, ny) || !isHighCell(map, nx, ny)) continue;
-        return dominantAxis(ox, oy);
-      }
-    }
-  }
-
-  return { dx: 0, dy: 0 };
+  if (vx === 0 && vy === 0) return { dx: 0, dy: 0 };
+  return dominantAxis(vx, vy);
 }
 
 export function sampleTerrainY(map: MapDef, wx: number, wy: number): number {

@@ -6,7 +6,9 @@ import { getPlayer, type GameState, type Pilot } from "@/game/engine";
 const MINI_W = 120;
 const MINI_H = 90;
 
-type Pip = { x: number; y: number; r: number; g: number; b: number; a: number };
+const PIP_R = 3;
+
+type Pip = { x: number; y: number; patch: ImageData };
 
 function paintElevation(ctx: CanvasRenderingContext2D, map: MapDef): void {
   const { cols, rows } = map;
@@ -50,8 +52,7 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
 
     const prev = pipRef.current;
     if (prev) {
-      ctx.fillStyle = `rgba(${prev.r},${prev.g},${prev.b},${prev.a / 255})`;
-      ctx.fillRect(prev.x, prev.y, 1, 1);
+      ctx.putImageData(prev.patch, prev.x, prev.y);
     }
 
     const player = getPlayer(state);
@@ -59,18 +60,23 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
       pipRef.current = null;
       return;
     }
-    const x = Math.max(
-      0,
-      Math.min(MINI_W - 1, Math.floor((player.x / Math.max(1, state.map.width)) * MINI_W)),
+    const cx = Math.max(
+      PIP_R,
+      Math.min(MINI_W - 1 - PIP_R, (player.x / Math.max(1, state.map.width)) * MINI_W),
     );
-    const y = Math.max(
-      0,
-      Math.min(MINI_H - 1, Math.floor((player.y / Math.max(1, state.map.height)) * MINI_H)),
+    const cy = Math.max(
+      PIP_R,
+      Math.min(MINI_H - 1 - PIP_R, (player.y / Math.max(1, state.map.height)) * MINI_H),
     );
-    const pix = ctx.getImageData(x, y, 1, 1).data;
-    pipRef.current = { x, y, r: pix[0]!, g: pix[1]!, b: pix[2]!, a: pix[3]! };
+    const px = Math.max(0, Math.floor(cx - PIP_R - 1));
+    const py = Math.max(0, Math.floor(cy - PIP_R - 1));
+    const pw = Math.min(MINI_W - px, Math.ceil(PIP_R * 2 + 2));
+    const ph = Math.min(MINI_H - py, Math.ceil(PIP_R * 2 + 2));
+    pipRef.current = { x: px, y: py, patch: ctx.getImageData(px, py, pw, ph) };
     ctx.fillStyle = "#facc15";
-    ctx.fillRect(x, y, 1, 1);
+    ctx.beginPath();
+    ctx.arc(cx, cy, PIP_R, 0, Math.PI * 2);
+    ctx.fill();
   }, [state, tick]);
 
   if (!state) return <></>;
@@ -171,9 +177,20 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
         </div>
       )}
 
-      {state.messageT > 0 && state.message && (
+      {state.phase !== "over" && state.messageT > 0 && state.message && (
         <div className="absolute left-1/2 top-[18%] w-[min(calc(100%-2.5rem),480px)] -translate-x-1/2 rounded border border-amber-400/50 bg-black/70 px-4 py-2 text-center text-sm font-semibold text-amber-200">
           {state.message}
+        </div>
+      )}
+
+      {state.phase === "over" && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-[min(92vw,360px)] rounded-2xl border border-white/15 bg-slate-950/95 p-6 shadow-2xl">
+            <h2 className="font-display text-center text-2xl text-white">
+              {state.message || "MATCH OVER"}
+            </h2>
+            <p className="mt-2 text-center text-xs text-slate-400">R 재시작 · Q 로비</p>
+          </div>
         </div>
       )}
     </div>

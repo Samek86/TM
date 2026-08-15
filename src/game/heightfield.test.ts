@@ -52,4 +52,39 @@ describe("heightfield", () => {
     expect(y0).toBeGreaterThan(0);
     expect(y1).toBeLessThan(27);
   });
+
+  it("5-wide N–S ramp band slopes north/south, not west", () => {
+    const cols = 7;
+    const rows = 7;
+    const elev: number[] = [];
+    const ramps: boolean[] = [];
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        elev.push(y === 0 ? 1 : 0);
+        ramps.push(y >= 1 && y <= 5);
+      }
+    }
+    const map = miniMap(elev, ramps);
+    map.width = cols * 30;
+    map.height = rows * 30;
+    map.cols = cols;
+    map.rows = rows;
+
+    for (const [cx, cy] of [
+      [3, 3],
+      [1, 2],
+      [5, 4],
+    ] as const) {
+      const dir = rampDirection(map, cx, cy);
+      expect(dir.dx).toBe(0);
+      expect(dir.dy).toBe(-1);
+    }
+
+    const midX = 3 * 30 + 15;
+    const northY = 3 * 30 + 1;
+    const southY = 4 * 30 - 1;
+    const yNorth = sampleTerrainY(map, midX, northY);
+    const ySouth = sampleTerrainY(map, midX, southY);
+    expect(yNorth).toBeGreaterThan(ySouth);
+  });
 });

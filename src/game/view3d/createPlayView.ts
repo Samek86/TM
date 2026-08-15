@@ -4,7 +4,7 @@ import type { VultureId } from "@/data/weapons";
 import { getPlayer, type GameState } from "@/game/engine";
 import { sampleTerrainY } from "@/game/heightfield";
 import { VIEW_WORLD_WIDTH } from "@/game/viewScale";
-import { pickAimOnHeightfield } from "./aimPick";
+import { orthoAimRay, pickAimOnHeightfield } from "./aimPick";
 import {
   CAMERA_PITCH_RAD,
   MAX_DPR,
@@ -133,20 +133,22 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
     pickAim(cssX, cssY, cssW, cssH) {
       const ndcX = (cssX / cssW) * 2 - 1;
       const ndcY = -(cssY / cssH) * 2 + 1;
-      const origin = new THREE.Vector3();
-      const dir = new THREE.Vector3();
-      origin.setFromMatrixPosition(camera.matrixWorld);
-      dir.set(ndcX, ndcY, 0.5).unproject(camera).sub(origin).normalize();
-      return pickAimOnHeightfield(
-        map,
-        { x: origin.x, y: origin.y, z: origin.z },
-        { x: dir.x, y: dir.y, z: dir.z },
-      );
+      const { origin, dir } = orthoAimRay(camera, ndcX, ndcY);
+      return pickAimOnHeightfield(map, origin, dir);
     },
     dispose() {
       shots.dispose();
       picks.dispose();
       terrain.geometry.dispose();
+      const { material } = terrain;
+      if (Array.isArray(material)) {
+        for (const m of material) m.dispose();
+      } else {
+        material.dispose();
+      }
+      if (typeof renderer.forceContextLoss === "function") {
+        renderer.forceContextLoss();
+      }
       renderer.dispose();
     },
   };
