@@ -120,7 +120,8 @@ function add(
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(x, y, z);
   mesh.rotation.set(rx, ry, rz);
-  mesh.castShadow = false;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
 }
@@ -162,7 +163,7 @@ function rbox(
 ): THREE.BufferGeometry {
   return geom(
     key,
-    () => new RoundedBoxGeometry(w, h, d, 3, radius),
+    () => new RoundedBoxGeometry(w, h, d, 5, radius),
   );
 }
 

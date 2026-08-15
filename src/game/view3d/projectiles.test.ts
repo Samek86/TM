@@ -5,7 +5,7 @@ describe("projectiles", () => {
   it("builds a group of style layers", () => {
     const layer = createProjectileLayer(8);
     expect(layer.mesh.type).toBe("Group");
-    expect(layer.mesh.children.length).toBe(5);
+    expect(layer.mesh.children.length).toBe(6);
     layer.dispose();
   });
 });

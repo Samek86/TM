@@ -6,6 +6,7 @@ export type TerrainLayer = "ground" | "high" | "cliff" | "ramp";
 export type TerrainKit = {
   biome: BiomeId;
   maps: Record<TerrainLayer, THREE.Texture>;
+  normals: Partial<Record<TerrainLayer, THREE.Texture>>;
 };
 
 const LAYERS: TerrainLayer[] = ["ground", "high", "cliff", "ramp"];
@@ -39,7 +40,13 @@ export async function loadTerrainKit(mapId: string): Promise<TerrainKit | null> 
         return [layer, tex] as const;
       }),
     );
-    return { biome, maps: Object.fromEntries(entries) as TerrainKit["maps"] };
+    const maps = Object.fromEntries(entries) as TerrainKit["maps"];
+    const normals: TerrainKit["normals"] = {};
+    for (const layer of LAYERS) {
+      const n = makeNormalFromAlbedo(maps[layer]);
+      if (n) normals[layer] = n;
+    }
+    return { biome, maps, normals };
   } catch (err) {
     console.warn("[terrain] texture kit skip", err);
     return null;
@@ -55,12 +62,15 @@ export function createTerrainMaterials(kit: TerrainKit | null): THREE.Material[]
   };
   return LAYERS.map((layer) => {
     const map = kit?.maps[layer];
+    const nrm = kit?.normals[layer];
     return new THREE.MeshStandardMaterial({
       map: map ?? null,
+      normalMap: nrm ?? null,
+      normalScale: new THREE.Vector2(1.15, 1.15),
       color: map ? 0xffffff : 0x445544,
       roughness: roughness[layer],
       metalness: 0.04,
-      envMapIntensity: 0.35,
+      envMapIntensity: 0.45,
     });
   });
 }
@@ -68,4 +78,67 @@ export function createTerrainMaterials(kit: TerrainKit | null): THREE.Material[]
 export function disposeTerrainKit(kit: TerrainKit | null): void {
   if (!kit) return;
   for (const tex of Object.values(kit.maps)) tex.dispose();
+  for (const tex of Object.values(kit.normals)) tex?.dispose();
+}
+
+/** Sobel normal map from an albedo so cliffs and turf pick up light. */
+export function makeNormalFromAlbedo(tex: THREE.Texture): THREE.Texture | null {
+  const img = tex.image as CanvasImageSource | undefined;
+  if (!img || typeof document === "undefined") return null;
+  const w = "width" in img ? Number(img.width) : 0;
+  const h = "height" in img ? Number(img.height) : 0;
+  if (w < 8 || h < 8) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0);
+  const src = ctx.getImageData(0, 0, w, h);
+  const dst = ctx.createImageData(w, h);
+  const s = src.data;
+  const d = dst.data;
+  const lum = (i: number) =>
+    (s[i]! * 0.299 + s[i + 1]! * 0.587 + s[i + 2]! * 0.114) / 255;
+  const at = (x: number, y: number) => {
+    const xx = ((x % w) + w) % w;
+    const yy = ((y % h) + h) % h;
+    return lum((yy * w + xx) * 4);
+  };
+  const strength = 3.2;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx =
+        -at(x - 1, y - 1) -
+        2 * at(x - 1, y) -
+        at(x - 1, y + 1) +
+        at(x + 1, y - 1) +
+        2 * at(x + 1, y) +
+        at(x + 1, y + 1);
+      const dy =
+        -at(x - 1, y - 1) -
+        2 * at(x, y - 1) -
+        at(x + 1, y - 1) +
+        at(x - 1, y + 1) +
+        2 * at(x, y + 1) +
+        at(x + 1, y + 1);
+      const nx = -dx * strength;
+      const ny = -dy * strength;
+      const nz = 1;
+      const inv = 1 / Math.hypot(nx, ny, nz);
+      const o = (y * w + x) * 4;
+      d[o] = (nx * inv * 0.5 + 0.5) * 255;
+      d[o + 1] = (ny * inv * 0.5 + 0.5) * 255;
+      d[o + 2] = (nz * inv * 0.5 + 0.5) * 255;
+      d[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(dst, 0, 0);
+  const nrm = new THREE.CanvasTexture(canvas);
+  nrm.wrapS = THREE.RepeatWrapping;
+  nrm.wrapT = THREE.RepeatWrapping;
+  nrm.colorSpace = THREE.NoColorSpace;
+  nrm.anisotropy = 4;
+  nrm.needsUpdate = true;
+  return nrm;
 }

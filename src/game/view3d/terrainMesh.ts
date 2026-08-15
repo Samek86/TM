@@ -317,5 +317,8 @@ export function createTerrainMesh(
 ): THREE.Mesh {
   const geometry = buildTerrainGeometry(map);
   const materials = createTerrainMaterials(kit);
-  return new THREE.Mesh(geometry, materials);
+  const mesh = new THREE.Mesh(geometry, materials);
+  mesh.receiveShadow = true;
+  mesh.castShadow = true;
+  return mesh;
 }

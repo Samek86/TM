@@ -151,15 +151,29 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
   const bombs = makeInstanced(bombGeom, bombMat, maxShots);
   const mines = makeInstanced(mineGeom, mineMat, maxShots);
 
+  const trailGeom = new THREE.CylinderGeometry(0.08, 0.28, 1, 6, 1, true);
+  trailGeom.rotateZ(-Math.PI / 2);
+  const trailMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false,
+  });
+  const trails = makeInstanced(trailGeom, trailMat, maxShots);
+  const prevX = new Float32Array(maxShots);
+  const prevY = new Float32Array(maxShots);
+
   const group = new THREE.Group();
-  group.add(missiles, bolts, clouds, bombs, mines);
+  group.add(missiles, bolts, clouds, bombs, mines, trails);
 
   return {
     mesh: group,
     sync(state: GameState) {
       const map = state.map;
       const n = { missile: 0, bolt: 0, cloud: 0, bomb: 0, mine: 0 };
-      for (const b of state.bullets) {
+      let tN = 0;
+      for (let bi = 0; bi < state.bullets.length; bi++) {
+        const b = state.bullets[bi]!;
         if (!b.alive) continue;
         const fam = familyOf(b);
         if (n[fam] >= maxShots) continue;
@@ -239,12 +253,43 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
           );
         }
         n[fam] += 1;
+        if (fam !== "mine" && fam !== "cloud" && tN < maxShots) {
+          const px = prevX[bi] || b.x;
+          const py = prevY[bi] || b.y;
+          const dx = b.x - px;
+          const dy = b.y - py;
+          const len = Math.hypot(dx, dy);
+          if (len > 0.8) {
+            const mid = engineToThree(
+              (b.x + px) * 0.5,
+              (b.y + py) * 0.5,
+              h,
+            );
+            writeInstance(
+              trails,
+              tN,
+              mid.x,
+              mid.y,
+              mid.z,
+              Math.min(28, len * 1.15),
+              s * 0.45,
+              s * 0.45,
+              Math.atan2(dy, dx),
+              true,
+              b.color,
+            );
+            tN += 1;
+          }
+          prevX[bi] = b.x;
+          prevY[bi] = b.y;
+        }
       }
       hideFrom(missiles, n.missile, maxShots);
       hideFrom(bolts, n.bolt, maxShots);
       hideFrom(clouds, n.cloud, maxShots);
       hideFrom(bombs, n.bomb, maxShots);
       hideFrom(mines, n.mine, maxShots);
+      hideFrom(trails, tN, maxShots);
     },
     dispose() {
       missileGeom.dispose();
@@ -257,6 +302,8 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
       cloudMat.dispose();
       bombMat.dispose();
       mineMat.dispose();
+      trailGeom.dispose();
+      trailMat.dispose();
     },
   };
 }
