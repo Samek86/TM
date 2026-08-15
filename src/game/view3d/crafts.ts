@@ -31,6 +31,7 @@ export type CraftPoseArgs = {
   hoverPhase: number;
   time: number;
   dt: number;
+  camera?: THREE.Camera;
 };
 
 const _worldPos = new THREE.Vector3();
@@ -250,8 +251,34 @@ function buildProceduralCraft(id: VultureId): THREE.Group {
   return group;
 }
 
-export function createCraftGroup(id: VultureId): THREE.Group {
+function buildArtCraft(id: VultureId, texture: THREE.Texture): THREE.Group {
+  const group = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.06,
+    side: THREE.DoubleSide,
+    depthWrite: true,
+    toneMapped: true,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.55, 2.55), mat);
+  mesh.name = "art";
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  group.add(mesh);
+  scaleToVisualLength(group, getVulture(id).radiusTiles * 1.35);
+  group.userData.artCard = true;
+  group.userData.baseScale = group.scale.x;
+  addShadow(group);
+  return group;
+}
+
+export function createCraftGroup(
+  id: VultureId,
+  art?: THREE.Texture | null,
+): THREE.Group {
   try {
+    if (art) return buildArtCraft(id, art);
     return buildProceduralCraft(id);
   } catch {
     const vulture = getVulture(id);
@@ -288,6 +315,7 @@ export function applyCraftPose(group: THREE.Group, args: CraftPoseArgs): void {
     hoverPhase,
     time,
     dt,
+    camera,
   } = args;
   const terrainY = sampleTerrainY(map, x, y);
   const hover = 2 + stillness * Math.sin(time * 4.2 + hoverPhase) * 1.2;
@@ -310,8 +338,23 @@ export function applyCraftPose(group: THREE.Group, args: CraftPoseArgs): void {
   group.userData.bank = bank;
   group.userData.pitch = pitch;
 
-  group.rotation.order = "YXZ";
-  group.rotation.set(bank, -angle, pitch);
+  if (group.userData.artCard && camera) {
+    group.lookAt(camera.position.x, group.position.y, camera.position.z);
+    const aimX = Math.cos(angle);
+    const aimZ = Math.sin(angle);
+    const toCamX = camera.position.x - group.position.x;
+    const toCamZ = camera.position.z - group.position.z;
+    const rightX = -toCamZ;
+    const rightZ = toCamX;
+    const flip = aimX * rightX + aimZ * rightZ < 0 ? -1 : 1;
+    const s = Number(group.userData.baseScale) || 1;
+    group.scale.set(s * flip, s, s);
+    group.rotateZ(bank);
+    group.rotateX(pitch * 0.4);
+  } else {
+    group.rotation.order = "YXZ";
+    group.rotation.set(bank, -angle, pitch);
+  }
 
   const shadow = group.getObjectByName("shadow");
   if (shadow) applyShadowPose(group, shadow, terrainY);

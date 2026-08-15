@@ -123,43 +123,6 @@ export function CraftCardArt({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const pal = await loadSharedClientPalette();
-        const spr = await loadSpr(sprUrl(SPR_FILE[v.id]));
-        if (cancelled || !spr.frames[0]) return;
-        const fr = spr.frames[Math.floor(spr.frames.length / 4)]!;
-        const { data, width, height } = frameToRgba(fr, pal);
-        const c = canvasRef.current;
-        if (!c) return;
-        const ctx = c.getContext("2d");
-        if (!ctx) return;
-        const sc = Math.min(3, Math.floor(72 / Math.max(width, height, 1)));
-        c.width = width * sc;
-        c.height = height * sc;
-        ctx.imageSmoothingEnabled = false;
-        const tmp = document.createElement("canvas");
-        tmp.width = width;
-        tmp.height = height;
-        tmp.getContext("2d")!.putImageData(
-          new ImageData(new Uint8ClampedArray(data), width, height),
-          0,
-          0,
-        );
-        ctx.drawImage(tmp, 0, 0, c.width, c.height);
-      } catch {
-        /* ignore */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [v.id]);
-
   return (
     <button
       type="button"
@@ -170,8 +133,12 @@ export function CraftCardArt({
           : "border-tm-border bg-tm-elevated/50 hover:border-tm-muted"
       }`}
     >
-      <div className="mb-2 flex h-20 items-center justify-center rounded-lg bg-black/50">
-        <canvas ref={canvasRef} className="max-h-18" />
+      <div className="mb-2 flex h-24 items-center justify-center overflow-hidden rounded-lg bg-black/70">
+        <img
+          src={`/assets/crafts/${v.id}/hero.jpg`}
+          alt={v.name}
+          className="h-full w-full object-contain"
+        />
       </div>
       <div
         className="mb-1 h-1.5 w-full rounded-full"

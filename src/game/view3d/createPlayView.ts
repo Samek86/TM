@@ -18,6 +18,7 @@ import {
   computeOrthoHalfExtents,
   followTarget,
 } from "./cameraRig";
+import { disposeCraftArt, type CraftArtKit } from "./craftAssets";
 import { applyCraftPose, createCraftGroup } from "./crafts";
 import { createParticleLayer } from "./particles3d";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
@@ -44,6 +45,7 @@ export function createPlayView(
   canvas: HTMLCanvasElement,
   map: MapDef,
   kit: TerrainKit | null = null,
+  craftArt: CraftArtKit = {},
 ): PlayView {
   let renderer: THREE.WebGLRenderer;
   try {
@@ -132,7 +134,7 @@ export function createPlayView(
   function ensureCraft(id: string, vultureId: VultureId): THREE.Group {
     let g = crafts.get(id);
     if (!g) {
-      g = createCraftGroup(vultureId);
+      g = createCraftGroup(vultureId, craftArt[vultureId]);
       crafts.set(id, g);
       scene.add(g);
     }
@@ -192,6 +194,7 @@ export function createPlayView(
           hoverPhase: p.hoverPhase,
           time: state.time,
           dt,
+          camera,
         });
         g.visible = p.respawn <= 0 || true;
         if (p.respawn > 0) g.visible = false;
@@ -225,6 +228,7 @@ export function createPlayView(
         material.dispose();
       }
       disposeTerrainKit(kit);
+      disposeCraftArt(craftArt);
       env.dispose();
       pmrem.dispose();
       if (typeof renderer.forceContextLoss === "function") {

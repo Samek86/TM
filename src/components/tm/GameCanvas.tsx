@@ -11,6 +11,7 @@ import {
 } from "@/game/engine";
 import { getMap } from "@/data/maps";
 import { createPlayView, type PlayView } from "@/game/view3d";
+import { loadCraftArt } from "@/game/view3d/craftAssets";
 import { loadTerrainKit } from "@/game/view3d/terrainTextures";
 import type { VultureId } from "@/data/weapons";
 import { PlayHud } from "./PlayHud";
@@ -400,14 +401,17 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       startMatch(state);
       stateRef.current = state;
 
-      report("지형 텍스처…", 55);
+      report("지형 텍스처…", 50);
       const kit = await loadTerrainKit(mapId);
+      if (cancelled) return;
+      report("기체 에셋…", 62);
+      const craftArt = await loadCraftArt();
       if (cancelled) return;
 
       report("3D 뷰 시작…", 70);
       let playView: PlayView;
       try {
-        playView = createPlayView(canvas, map, kit);
+        playView = createPlayView(canvas, map, kit, craftArt);
       } catch (err) {
         if (!cancelled) {
           const msg =
