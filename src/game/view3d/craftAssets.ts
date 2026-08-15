@@ -1,9 +1,17 @@
 import * as THREE from "three";
 import type { VultureId } from "@/data/weapons";
 
-export type CraftArtKit = Partial<Record<VultureId, THREE.Texture>>;
+export const CRAFT_YAW_DIRS = 8;
+
+export type CraftArtKit = Partial<Record<VultureId, THREE.Texture[]>>;
 
 const IDS: VultureId[] = ["born_armor", "killers_pot", "sorcerer"];
+
+export function yawFrameIndex(angle: number, dirs = CRAFT_YAW_DIRS): number {
+  const tau = Math.PI * 2;
+  const u = ((angle % tau) + tau) % tau;
+  return Math.round(u / (tau / dirs)) % dirs;
+}
 
 function keyBlackToAlpha(img: HTMLImageElement, cut = 22): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
@@ -31,8 +39,7 @@ function loadKeyed(url: string): Promise<THREE.Texture> {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const canvas = keyBlackToAlpha(img);
-      const tex = new THREE.CanvasTexture(canvas);
+      const tex = new THREE.CanvasTexture(keyBlackToAlpha(img));
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 8;
       tex.needsUpdate = true;
@@ -47,16 +54,30 @@ export async function loadCraftArt(): Promise<CraftArtKit> {
   const kit: CraftArtKit = {};
   await Promise.all(
     IDS.map(async (id) => {
-      try {
-        kit[id] = await loadKeyed(`/assets/crafts/${id}/hero.jpg`);
-      } catch (err) {
-        console.warn("[craft-art] skip", id, err);
+      const frames: THREE.Texture[] = [];
+      for (let i = 0; i < CRAFT_YAW_DIRS; i++) {
+        const n = String(i).padStart(2, "0");
+        try {
+          frames.push(await loadKeyed(`/assets/crafts/${id}/yaw_${n}.jpg`));
+        } catch {
+          break;
+        }
       }
+      if (frames.length === 0) {
+        try {
+          frames.push(await loadKeyed(`/assets/crafts/${id}/hero.jpg`));
+        } catch (err) {
+          console.warn("[craft-art] skip", id, err);
+        }
+      }
+      if (frames.length) kit[id] = frames;
     }),
   );
   return kit;
 }
 
 export function disposeCraftArt(kit: CraftArtKit): void {
-  for (const tex of Object.values(kit)) tex?.dispose();
+  for (const frames of Object.values(kit)) {
+    for (const tex of frames ?? []) tex.dispose();
+  }
 }

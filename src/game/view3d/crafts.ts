@@ -9,6 +9,7 @@ import type { VultureId } from "@/data/weapons";
 import { getVulture } from "@/data/vultures";
 import { sampleTerrainY } from "@/game/heightfield";
 import { craftWorldRadius } from "@/game/viewScale";
+import { yawFrameIndex } from "./craftAssets";
 import { engineToThree } from "./coords";
 import {
   BANK_CAP_DEG,
@@ -253,10 +254,10 @@ function buildProceduralCraft(id: VultureId): THREE.Group {
   return group;
 }
 
-function buildArtCraft(id: VultureId, texture: THREE.Texture): THREE.Group {
+function buildArtCraft(id: VultureId, frames: THREE.Texture[]): THREE.Group {
   const group = new THREE.Group();
   const mat = new THREE.MeshBasicMaterial({
-    map: texture,
+    map: frames[0] ?? null,
     transparent: true,
     alphaTest: 0.06,
     side: THREE.DoubleSide,
@@ -268,6 +269,7 @@ function buildArtCraft(id: VultureId, texture: THREE.Texture): THREE.Group {
   mesh.castShadow = false;
   mesh.receiveShadow = false;
   group.add(mesh);
+  group.userData.yawFrames = frames;
   const radius = craftWorldRadius(getVulture(id).radiusTiles);
   const target = radius * 1.08;
   group.updateMatrixWorld(true);
@@ -284,10 +286,11 @@ function buildArtCraft(id: VultureId, texture: THREE.Texture): THREE.Group {
 
 export function createCraftGroup(
   id: VultureId,
-  art?: THREE.Texture | null,
+  art?: THREE.Texture[] | THREE.Texture | null,
 ): THREE.Group {
   try {
-    if (art) return buildArtCraft(id, art);
+    const frames = Array.isArray(art) ? art : art ? [art] : [];
+    if (frames.length) return buildArtCraft(id, frames);
     return buildProceduralCraft(id);
   } catch {
     const vulture = getVulture(id);
@@ -349,16 +352,20 @@ export function applyCraftPose(group: THREE.Group, args: CraftPoseArgs): void {
   group.userData.pitch = pitch;
 
   if (group.userData.artCard && camera) {
+    const frames = group.userData.yawFrames as THREE.Texture[] | undefined;
+    if (frames && frames.length > 0) {
+      const fi = yawFrameIndex(angle, frames.length);
+      const art = group.getObjectByName("art") as THREE.Mesh | undefined;
+      const mat = art?.material as THREE.MeshBasicMaterial | undefined;
+      const next = frames[fi];
+      if (mat && next && mat.map !== next) {
+        mat.map = next;
+        mat.needsUpdate = true;
+      }
+    }
     group.lookAt(camera.position.x, group.position.y, camera.position.z);
-    const aimX = Math.cos(angle);
-    const aimZ = Math.sin(angle);
-    const toCamX = camera.position.x - group.position.x;
-    const toCamZ = camera.position.z - group.position.z;
-    const rightX = -toCamZ;
-    const rightZ = toCamX;
-    const flip = aimX * rightX + aimZ * rightZ < 0 ? -1 : 1;
     const s = Number(group.userData.baseScale) || 1;
-    group.scale.set(s * flip, s, s);
+    group.scale.set(s, s, s);
     group.rotateZ(bank);
     group.rotateX(pitch * 0.4);
   } else {
