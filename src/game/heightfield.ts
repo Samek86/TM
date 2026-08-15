@@ -1,7 +1,7 @@
 import type { MapDef } from "@/data/maps";
 
 export function cliffHeight(cellSize: number): number {
-  return 0.9 * cellSize;
+  return 1.55 * cellSize;
 }
 
 export function cellSizeOf(map: MapDef): number {

@@ -7,7 +7,7 @@ import {
   type TerrainKit,
 } from "./terrainTextures";
 
-const TILE = 72;
+const TILE = 110;
 const LAYER_COUNT = 4;
 const GROUND = 0;
 const HIGH = 1;
@@ -50,7 +50,14 @@ export function buildTerrainGeometry(map: MapDef): THREE.BufferGeometry {
   const layers = Array.from({ length: LAYER_COUNT }, () => ({
     pos: [] as number[],
     uv: [] as number[],
+    col: [] as number[],
   }));
+  const LAYER_RGB: [number, number, number][] = [
+    [0.55, 0.62, 0.42],
+    [1.0, 0.96, 0.72],
+    [0.42, 0.36, 0.32],
+    [1.0, 0.82, 0.42],
+  ];
 
   function push(
     layer: number,
@@ -61,6 +68,8 @@ export function buildTerrainGeometry(map: MapDef): THREE.BufferGeometry {
   ): void {
     const p = engineToThree(ex, ey, h);
     layers[layer]!.pos.push(p.x, p.y, p.z);
+    const rgb = LAYER_RGB[layer] ?? [1, 1, 1];
+    layers[layer]!.col.push(rgb[0], rgb[1], rgb[2]);
     if (face === "top") {
       layers[layer]!.uv.push(ex / TILE, ey / TILE);
     } else if (face === "xwall") {
@@ -295,6 +304,7 @@ export function buildTerrainGeometry(map: MapDef): THREE.BufferGeometry {
 
   const positions: number[] = [];
   const uvs: number[] = [];
+  const colors: number[] = [];
   const geometry = new THREE.BufferGeometry();
   let offset = 0;
   for (let i = 0; i < LAYER_COUNT; i++) {
@@ -302,11 +312,13 @@ export function buildTerrainGeometry(map: MapDef): THREE.BufferGeometry {
     const count = layer.pos.length / 3;
     positions.push(...layer.pos);
     uvs.push(...layer.uv);
+    colors.push(...layer.col);
     geometry.addGroup(offset, count, i);
     offset += count;
   }
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
   return geometry;
 }

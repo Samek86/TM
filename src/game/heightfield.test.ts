@@ -26,8 +26,8 @@ function miniMap(elev: number[], ramps: boolean[]): MapDef {
 }
 
 describe("heightfield", () => {
-  it("cliffHeight is 0.9 cell", () => {
-    expect(cliffHeight(30)).toBeCloseTo(27);
+  it("cliffHeight is 1.55 cell", () => {
+    expect(cliffHeight(30)).toBeCloseTo(46.5);
   });
 
   it("flat low is 0 and flat high is cliff", () => {
@@ -36,7 +36,7 @@ describe("heightfield", () => {
       [false, false, false, false, false, false, false, false, false],
     );
     expect(sampleTerrainY(map, 15, 45)).toBeCloseTo(0);
-    expect(sampleTerrainY(map, 75, 45)).toBeCloseTo(27);
+    expect(sampleTerrainY(map, 75, 45)).toBeCloseTo(46.5);
   });
 
   it("ramp slopes from low toward high along +X", () => {
@@ -50,7 +50,7 @@ describe("heightfield", () => {
     const y1 = sampleTerrainY(map, 60 - 1, 45);
     expect(y0).toBeLessThan(y1);
     expect(y0).toBeGreaterThan(0);
-    expect(y1).toBeLessThan(27);
+    expect(y1).toBeLessThan(46.5);
   });
 
   it("5-wide N–S ramp band slopes north/south, not west", () => {

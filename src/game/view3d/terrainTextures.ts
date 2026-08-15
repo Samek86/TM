@@ -53,12 +53,39 @@ export async function loadTerrainKit(mapId: string): Promise<TerrainKit | null> 
   }
 }
 
+const TINT: Record<
+  Exclude<BiomeId, "default">,
+  Record<TerrainLayer, number>
+> = {
+  jungle: {
+    ground: 0x3a5a28,
+    high: 0xe8d98a,
+    cliff: 0x4a3c34,
+    ramp: 0xffd27a,
+  },
+  desert: {
+    ground: 0xb88848,
+    high: 0xffe8b0,
+    cliff: 0x6a4a30,
+    ramp: 0xffc96a,
+  },
+  outpost: {
+    ground: 0x4a5058,
+    high: 0xc8d0d8,
+    cliff: 0x2a2e34,
+    ramp: 0xe8b060,
+  },
+};
+
 export function createTerrainMaterials(kit: TerrainKit | null): THREE.Material[] {
+  const biome: Exclude<BiomeId, "default"> =
+    kit?.biome === "desert" || kit?.biome === "outpost" ? kit.biome : "jungle";
+  const tint = TINT[biome];
   const roughness: Record<TerrainLayer, number> = {
-    ground: 0.92,
-    high: 0.88,
-    cliff: 0.72,
-    ramp: 0.9,
+    ground: 0.94,
+    high: 0.82,
+    cliff: 0.68,
+    ramp: 0.88,
   };
   return LAYERS.map((layer) => {
     const map = kit?.maps[layer];
@@ -66,11 +93,14 @@ export function createTerrainMaterials(kit: TerrainKit | null): THREE.Material[]
     return new THREE.MeshStandardMaterial({
       map: map ?? null,
       normalMap: nrm ?? null,
-      normalScale: new THREE.Vector2(1.15, 1.15),
-      color: map ? 0xffffff : 0x445544,
+      normalScale: new THREE.Vector2(1.4, 1.4),
+      color: tint[layer],
       roughness: roughness[layer],
-      metalness: 0.04,
-      envMapIntensity: 0.45,
+      metalness: layer === "cliff" ? 0.08 : 0.02,
+      envMapIntensity: 0.35,
+      vertexColors: true,
+      emissive: layer === "ramp" ? 0x3a2208 : 0x000000,
+      emissiveIntensity: layer === "ramp" ? 0.22 : 0,
     });
   });
 }

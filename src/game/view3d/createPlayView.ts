@@ -77,7 +77,7 @@ export function createPlayView(
     theme.fog[2] / 255,
   );
   scene.background = fogColor.clone().lerp(new THREE.Color(0x87a0b4), 0.45);
-  scene.fog = new THREE.Fog(scene.background.getHex(), 380, 1600);
+  scene.fog = new THREE.Fog(scene.background.getHex(), 700, 2400);
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 4000);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;

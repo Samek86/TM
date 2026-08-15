@@ -42,7 +42,7 @@ describe("terrainMesh", () => {
       maxY = Math.max(maxY, y);
     }
     expect(minY).toBeCloseTo(0);
-    expect(maxY).toBeCloseTo(27);
+    expect(maxY).toBeCloseTo(46.5);
     expect(pos.count).toBeGreaterThan(8);
   });
 });
