@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { MapDef } from "@/data/maps";
 import type { VultureId } from "@/data/weapons";
 import { getPlayer, type GameState } from "@/game/engine";
@@ -44,9 +45,17 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
     renderer.dispose();
     throw new Error("WebGL을 시작할 수 없습니다");
   }
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x05070c);
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 4000);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = env;
+  scene.environmentIntensity = 0.9;
   let terrain: THREE.Mesh;
   try {
     terrain = createTerrainMesh(map);
@@ -55,8 +64,9 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
     throw new Error("지형을 만들 수 없습니다");
   }
   scene.add(terrain);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const sun = new THREE.DirectionalLight(0xfff1d6, 0.85);
+  scene.add(new THREE.HemisphereLight(0xb8d4ff, 0x3a2a18, 0.55));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+  const sun = new THREE.DirectionalLight(0xfff1d6, 1.35);
   sun.position.set(200, 320, 280);
   scene.add(sun);
 
@@ -146,6 +156,8 @@ export function createPlayView(canvas: HTMLCanvasElement, map: MapDef): PlayView
       } else {
         material.dispose();
       }
+      env.dispose();
+      pmrem.dispose();
       if (typeof renderer.forceContextLoss === "function") {
         renderer.forceContextLoss();
       }

@@ -1,4 +1,9 @@
+/**
+ * In-match crafts: bake identity (silhouette + palette) with PBR materials.
+ * Nose is +X. applyCraftPose is visual-only (bank / pitch / hover).
+ */
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { MapDef } from "@/data/maps";
 import type { VultureId } from "@/data/weapons";
 import { getVulture } from "@/data/vultures";
@@ -28,55 +33,6 @@ export type CraftPoseArgs = {
   dt: number;
 };
 
-type CraftSpec = {
-  fuse: readonly [number, number, number];
-  wing: readonly [number, number, number];
-  canopy: readonly [number, number, number];
-  canopyPos: readonly [number, number, number];
-  canopyColor: number;
-};
-
-type CraftGeoms = {
-  fuselage: THREE.BufferGeometry;
-  wing: THREE.BufferGeometry;
-  canopy: THREE.BufferGeometry;
-};
-
-type CraftMats = {
-  hull: THREE.MeshLambertMaterial;
-  canopy: THREE.MeshLambertMaterial;
-};
-
-const SPECS: Record<VultureId, CraftSpec> = {
-  born_armor: {
-    fuse: [1.0, 0.28, 0.45],
-    wing: [0.34, 0.05, 1.02],
-    canopy: [0.28, 0.12, 0.22],
-    canopyPos: [0.18, 0.17, 0],
-    canopyColor: 0xf59e0b,
-  },
-  killers_pot: {
-    fuse: [0.85, 0.38, 0.7],
-    wing: [0.22, 0.08, 1.18],
-    canopy: [0.22, 0.12, 0.3],
-    canopyPos: [0.14, 0.22, 0],
-    canopyColor: 0x22d3ee,
-  },
-  sorcerer: {
-    fuse: [1.25, 0.2, 0.32],
-    wing: [0.4, 0.04, 1.55],
-    canopy: [0.32, 0.09, 0.16],
-    canopyPos: [0.28, 0.125, 0],
-    canopyColor: 0xa78bfa,
-  },
-};
-
-const GEOM_CACHE = new Map<VultureId, CraftGeoms>();
-const MAT_CACHE = new Map<VultureId, CraftMats>();
-
-let shadowGeom: THREE.CircleGeometry | undefined;
-let shadowMat: THREE.MeshBasicMaterial | undefined;
-
 const _worldPos = new THREE.Vector3();
 const _parentQ = new THREE.Quaternion();
 const _flatQ = new THREE.Quaternion().setFromAxisAngle(
@@ -84,45 +40,103 @@ const _flatQ = new THREE.Quaternion().setFromAxisAngle(
   -Math.PI / 2,
 );
 
-function ensureParts(id: VultureId): { geoms: CraftGeoms; mats: CraftMats } {
-  let geoms = GEOM_CACHE.get(id);
-  let mats = MAT_CACHE.get(id);
-  if (geoms && mats) return { geoms, mats };
-  const spec = SPECS[id];
-  const vulture = getVulture(id);
-  geoms = {
-    fuselage: new THREE.BoxGeometry(spec.fuse[0], spec.fuse[1], spec.fuse[2]),
-    wing: new THREE.BoxGeometry(spec.wing[0], spec.wing[1], spec.wing[2]),
-    canopy: new THREE.BoxGeometry(
-      spec.canopy[0],
-      spec.canopy[1],
-      spec.canopy[2],
-    ),
-  };
-  mats = {
-    hull: new THREE.MeshLambertMaterial({ color: vulture.color }),
-    canopy: new THREE.MeshLambertMaterial({ color: spec.canopyColor }),
-  };
-  GEOM_CACHE.set(id, geoms);
-  MAT_CACHE.set(id, mats);
-  return { geoms, mats };
+const MAT_CACHE = new Map<string, THREE.Material>();
+const GEOM_CACHE = new Map<string, THREE.BufferGeometry>();
+
+function geom(
+  key: string,
+  make: () => THREE.BufferGeometry,
+): THREE.BufferGeometry {
+  let g = GEOM_CACHE.get(key);
+  if (!g) {
+    g = make();
+    GEOM_CACHE.set(key, g);
+  }
+  return g;
 }
 
-function getShadowGeom(): THREE.CircleGeometry {
-  return (shadowGeom ??= new THREE.CircleGeometry(0.5, 24));
+function metal(
+  key: string,
+  color: number,
+  extras: ConstructorParameters<typeof THREE.MeshStandardMaterial>[0] = {},
+): THREE.MeshStandardMaterial {
+  const cached = MAT_CACHE.get(key);
+  if (cached) return cached as THREE.MeshStandardMaterial;
+  const m = new THREE.MeshStandardMaterial({
+    color,
+    metalness: 0.82,
+    roughness: 0.32,
+    envMapIntensity: 1.15,
+    ...extras,
+  });
+  MAT_CACHE.set(key, m);
+  return m;
 }
 
-function getShadowMat(): THREE.MeshBasicMaterial {
-  return (shadowMat ??= new THREE.MeshBasicMaterial({
-    color: 0x000000,
+function glass(key: string, color: number): THREE.MeshPhysicalMaterial {
+  const cached = MAT_CACHE.get(key);
+  if (cached) return cached as THREE.MeshPhysicalMaterial;
+  const m = new THREE.MeshPhysicalMaterial({
+    color,
+    metalness: 0.05,
+    roughness: 0.08,
+    transmission: 0.35,
+    thickness: 0.35,
+    clearcoat: 1,
+    clearcoatRoughness: 0.08,
+    envMapIntensity: 1.4,
     transparent: true,
-    opacity: 0.38,
-    depthWrite: false,
-  }));
+    opacity: 0.92,
+  });
+  MAT_CACHE.set(key, m);
+  return m;
 }
+
+function glow(key: string, color: number): THREE.MeshStandardMaterial {
+  const cached = MAT_CACHE.get(key);
+  if (cached) return cached as THREE.MeshStandardMaterial;
+  const m = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 2.4,
+    metalness: 0.2,
+    roughness: 0.45,
+  });
+  MAT_CACHE.set(key, m);
+  return m;
+}
+
+function add(
+  parent: THREE.Object3D,
+  geometry: THREE.BufferGeometry,
+  material: THREE.Material,
+  x = 0,
+  y = 0,
+  z = 0,
+  rx = 0,
+  ry = 0,
+  rz = 0,
+): THREE.Mesh {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(x, y, z);
+  mesh.rotation.set(rx, ry, rz);
+  mesh.castShadow = false;
+  parent.add(mesh);
+  return mesh;
+}
+
+let shadowGeom: THREE.CircleGeometry | undefined;
+let shadowMat: THREE.MeshBasicMaterial | undefined;
 
 function addShadow(group: THREE.Group): void {
-  const mesh = new THREE.Mesh(getShadowGeom(), getShadowMat());
+  shadowGeom ??= new THREE.CircleGeometry(0.55, 28);
+  shadowMat ??= new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.42,
+    depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(shadowGeom, shadowMat);
   mesh.name = "shadow";
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = 0.02;
@@ -139,11 +153,89 @@ function scaleToVisualLength(group: THREE.Group, radiusTiles: number): void {
   group.scale.setScalar(target / length);
 }
 
+function rbox(
+  key: string,
+  w: number,
+  h: number,
+  d: number,
+  radius = 0.045,
+): THREE.BufferGeometry {
+  return geom(
+    key,
+    () => new RoundedBoxGeometry(w, h, d, 3, radius),
+  );
+}
+
+function buildBorn(): THREE.Group {
+  const g = new THREE.Group();
+  const hull = metal("born.hull", 0x8b93a0, { roughness: 0.38, metalness: 0.78 });
+  const trim = metal("born.trim", 0xc4cad3, { roughness: 0.22, metalness: 0.9 });
+  const nose = metal("born.nose", 0xf59e0b, { roughness: 0.4, metalness: 0.55 });
+  const dome = glass("born.glass", 0x2563eb);
+  const jet = glow("born.jet", 0x22d3ee);
+
+  add(g, rbox("born.fuse", 1.05, 0.26, 0.48, 0.055), hull);
+  add(g, rbox("born.spine", 0.72, 0.08, 0.22, 0.03), trim, -0.04, 0.14, 0);
+  add(g, rbox("born.nose", 0.22, 0.2, 0.28, 0.04), nose, 0.56, 0, 0);
+  add(g, geom("sph.med", () => new THREE.SphereGeometry(0.16, 24, 16)), dome, 0.12, 0.2, 0);
+  add(g, rbox("born.wing", 0.38, 0.05, 1.08, 0.03), hull, -0.06, -0.02, 0);
+  add(g, rbox("born.wingTip", 0.1, 0.04, 0.18, 0.02), trim, -0.18, -0.01, 0.48);
+  add(g, rbox("born.wingTip", 0.1, 0.04, 0.18, 0.02), trim, -0.18, -0.01, -0.48);
+  const cyl = geom("cyl.eng", () => new THREE.CylinderGeometry(0.07, 0.08, 0.28, 14));
+  add(g, cyl, jet, -0.58, 0.01, 0.14, 0, 0, Math.PI / 2);
+  add(g, cyl, jet, -0.58, 0.01, -0.14, 0, 0, Math.PI / 2);
+  return g;
+}
+
+function buildKillers(): THREE.Group {
+  const g = new THREE.Group();
+  const hull = metal("kill.hull", 0x1a8aa8, { roughness: 0.36, metalness: 0.72 });
+  const dark = metal("kill.dark", 0x0e4d62, { roughness: 0.42, metalness: 0.7 });
+  const dome = glass("kill.glass", 0x67e8f9);
+  const jet = glow("kill.jet", 0x22d3ee);
+
+  add(g, rbox("kill.fuse", 0.92, 0.4, 0.78, 0.08), hull);
+  add(g, rbox("kill.skirt", 0.7, 0.1, 0.92, 0.04), dark, -0.04, -0.16, 0);
+  add(g, rbox("kill.nose", 0.2, 0.26, 0.36, 0.05), dark, 0.5, 0.02, 0);
+  add(g, geom("sph.lg", () => new THREE.SphereGeometry(0.22, 28, 18)), dome, 0.04, 0.26, 0);
+  add(g, rbox("kill.wing", 0.28, 0.08, 1.22, 0.04), hull, -0.08, 0, 0);
+  const cyl = geom("cyl.eng", () => new THREE.CylinderGeometry(0.07, 0.08, 0.28, 14));
+  add(g, cyl, jet, -0.52, -0.02, 0.18, 0, 0, Math.PI / 2);
+  add(g, cyl, jet, -0.52, -0.02, -0.18, 0, 0, Math.PI / 2);
+  return g;
+}
+
+function buildSorcerer(): THREE.Group {
+  const g = new THREE.Group();
+  const hull = metal("sorc.hull", 0x7c3aed, { roughness: 0.28, metalness: 0.8 });
+  const dark = metal("sorc.dark", 0x3b0764, { roughness: 0.34, metalness: 0.75 });
+  const dome = glass("sorc.glass", 0x2e1065);
+  const jet = glow("sorc.jet", 0xf0abfc);
+
+  add(g, rbox("sorc.fuse", 1.38, 0.16, 0.26, 0.04), hull);
+  add(g, rbox("sorc.nose", 0.28, 0.12, 0.14, 0.03), dark, 0.72, 0, 0);
+  add(g, geom("sph.sm", () => new THREE.SphereGeometry(0.11, 22, 14)), dome, 0.18, 0.12, 0);
+  const wing = rbox("sorc.wing", 0.55, 0.035, 0.22, 0.02);
+  add(g, wing, hull, -0.08, 0, 0.38, 0, 0.42, 0);
+  add(g, wing, hull, -0.08, 0, -0.38, 0, -0.42, 0);
+  add(g, rbox("sorc.tail", 0.18, 0.08, 0.12, 0.02), dark, -0.62, 0.04, 0);
+  const cyl = geom("cyl.thin", () => new THREE.CylinderGeometry(0.035, 0.045, 0.2, 12));
+  add(g, cyl, jet, -0.72, 0, 0.06, 0, 0, Math.PI / 2);
+  add(g, cyl, jet, -0.72, 0, -0.06, 0, 0, Math.PI / 2);
+  return g;
+}
+
+const BUILDERS: Record<VultureId, () => THREE.Group> = {
+  born_armor: buildBorn,
+  killers_pot: buildKillers,
+  sorcerer: buildSorcerer,
+};
+
 function createCapsuleCraft(color: string): THREE.Group {
   const group = new THREE.Group();
   const mesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.22, 0.7, 4, 10),
-    new THREE.MeshLambertMaterial({ color }),
+    new THREE.CapsuleGeometry(0.22, 0.7, 6, 12),
+    metal(`cap.${color}`, new THREE.Color(color).getHex()),
   );
   mesh.rotation.z = -Math.PI / 2;
   group.add(mesh);
@@ -151,14 +243,7 @@ function createCapsuleCraft(color: string): THREE.Group {
 }
 
 function buildProceduralCraft(id: VultureId): THREE.Group {
-  const spec = SPECS[id];
-  const { geoms, mats } = ensureParts(id);
-  const group = new THREE.Group();
-  group.add(new THREE.Mesh(geoms.fuselage, mats.hull));
-  group.add(new THREE.Mesh(geoms.wing, mats.hull));
-  const canopy = new THREE.Mesh(geoms.canopy, mats.canopy);
-  canopy.position.set(spec.canopyPos[0], spec.canopyPos[1], spec.canopyPos[2]);
-  group.add(canopy);
+  const group = BUILDERS[id]();
   scaleToVisualLength(group, getVulture(id).radiusTiles);
   addShadow(group);
   return group;
@@ -224,7 +309,6 @@ export function applyCraftPose(group: THREE.Group, args: CraftPoseArgs): void {
   group.userData.bank = bank;
   group.userData.pitch = pitch;
 
-  // +X nose: YXZ x=bank (roll about nose), y=-angle, z=pitch (nose up about Z).
   group.rotation.order = "YXZ";
   group.rotation.set(bank, -angle, pitch);
 

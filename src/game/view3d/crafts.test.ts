@@ -31,8 +31,23 @@ describe("crafts", () => {
     for (const id of ["born_armor", "killers_pot", "sorcerer"] as const) {
       const g = createCraftGroup(id);
       expect(g.type).toBe("Group");
-      expect(g.children.length).toBeGreaterThan(0);
+      expect(g.children.length).toBeGreaterThan(4);
     }
+  });
+
+  it("uses PBR hull and glass materials, not Lambert", () => {
+    const g = createCraftGroup("born_armor");
+    const types = new Set<string>();
+    g.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const mat = mesh.material as THREE.Material;
+      types.add(mat.type);
+    });
+    expect(types.has("MeshLambertMaterial")).toBe(false);
+    expect(
+      types.has("MeshStandardMaterial") || types.has("MeshPhysicalMaterial"),
+    ).toBe(true);
   });
 
   it("angle 0 keeps the group's +X aligned with world +X", () => {
