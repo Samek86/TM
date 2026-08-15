@@ -247,6 +247,8 @@ function createCapsuleCraft(color: string): THREE.Group {
 function buildProceduralCraft(id: VultureId): THREE.Group {
   const group = BUILDERS[id]();
   scaleToVisualLength(group, getVulture(id).radiusTiles);
+  group.userData.hoverLift =
+    VISUAL_LENGTH_MUL * craftWorldRadius(getVulture(id).radiusTiles) * 0.22 + 6;
   addShadow(group);
   return group;
 }
@@ -266,9 +268,12 @@ function buildArtCraft(id: VultureId, texture: THREE.Texture): THREE.Group {
   mesh.castShadow = false;
   mesh.receiveShadow = false;
   group.add(mesh);
+  const visual = VISUAL_LENGTH_MUL * craftWorldRadius(getVulture(id).radiusTiles);
   scaleToVisualLength(group, getVulture(id).radiusTiles * 1.35);
   group.userData.artCard = true;
   group.userData.baseScale = group.scale.x;
+  // Art plane is tall and camera-facing; keep the painted hull above the terrain.
+  group.userData.hoverLift = visual * 0.48 + 10;
   addShadow(group);
   return group;
 }
@@ -318,7 +323,8 @@ export function applyCraftPose(group: THREE.Group, args: CraftPoseArgs): void {
     camera,
   } = args;
   const terrainY = sampleTerrainY(map, x, y);
-  const hover = 2 + stillness * Math.sin(time * 4.2 + hoverPhase) * 1.2;
+  const lift = Number(group.userData.hoverLift) || 10;
+  const hover = lift + stillness * Math.sin(time * 4.2 + hoverPhase) * 2.2;
   const pos = engineToThree(x, y, terrainY + hover);
   group.position.set(pos.x, pos.y, pos.z);
 
