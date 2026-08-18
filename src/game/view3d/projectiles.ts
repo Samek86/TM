@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { WEAPONS } from "@/data/weapons";
 import { getPlayer, type Bullet, type GameState } from "@/game/engine";
 import { sculptedHeight } from "@/game/heightfield";
 import { engineToThree } from "./coords";
@@ -11,81 +13,176 @@ export type LayerHandle = {
 };
 
 const PICKUP_WORLD = 52;
-const SHOT_WORLD = 62;
-
-function makeCard(name: string, size: number): THREE.Mesh {
-  const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 1),
-    new THREE.MeshBasicMaterial({
-      map: null,
-      transparent: true,
-      alphaTest: 0.08,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      toneMapped: false,
-    }),
-  );
-  mesh.name = name;
-  mesh.visible = false;
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  mesh.scale.setScalar(size);
-  return mesh;
-}
-
-function setCard(
-  mesh: THREE.Mesh,
-  tex: THREE.Texture | undefined,
-  show: boolean,
-  world: number,
-): void {
-  const mat = mesh.material as THREE.MeshBasicMaterial;
-  if (tex && mat.map !== tex) {
-    mat.map = tex;
-    mat.needsUpdate = true;
-  }
-  mesh.visible = show && !!tex;
-  const img = tex?.image as { width?: number; height?: number } | undefined;
-  const w = Math.max(1, Number(img?.width) || 1);
-  const h = Math.max(1, Number(img?.height) || 1);
-  const m = Math.max(w, h);
-  mesh.scale.set((world * w) / m, (world * h) / m, 1);
-}
-
-/** Lie on the map plane. Heading 0 = east, same as engine angle. */
-function layFlat(mesh: THREE.Object3D, heading = 0): void {
-  mesh.rotation.set(-Math.PI / 2, 0, -heading);
-}
-
-type Family = "missile" | "bolt" | "cloud" | "bomb" | "mine";
+type ShotShape =
+  | "dart"
+  | "cruise"
+  | "scatter"
+  | "bomb"
+  | "nuke"
+  | "bolt"
+  | "pierce"
+  | "heavy"
+  | "frost"
+  | "cloud"
+  | "mine"
+  | "default";
 
 const _dummy = new THREE.Object3D();
 const _color = new THREE.Color();
 const _axisX = new THREE.Vector3(1, 0, 0);
 const _dir = new THREE.Vector3();
 
-function familyOf(b: Bullet): Family {
-  const s = b.style;
-  if (s === "storm" || s === "frost" || b.ammo === "cloud") return "cloud";
-  if (s === "lob") return "bomb";
-  if (b.ammo === "mine") return "mine";
-  if (
-    s === "twin_beam" ||
-    s === "pierce" ||
-    s === "poke" ||
-    s === "heavy" ||
-    b.ammo === "beam" ||
-    b.ammo === "energy"
-  ) {
+function shapeFor(style: string | undefined, ammo: Bullet["ammo"]): ShotShape {
+  if (ammo === "mine") return "mine";
+  if (style === "storm") return "cloud";
+  if (style === "frost") return "frost";
+  if (ammo === "cloud") return "cloud";
+  if (style === "lob") return "bomb";
+  if (style === "nuke") return "nuke";
+  if (style === "dart") return "dart";
+  if (style === "cruise") return "cruise";
+  if (style === "scatter") return "scatter";
+  if (style === "pierce") return "pierce";
+  if (style === "heavy") return "heavy";
+  if (style === "poke" || style === "twin_beam" || ammo === "beam" || ammo === "energy") {
     return "bolt";
   }
-  return "missile";
+  return "default";
+}
+
+function shapeForBullet(bullet: Bullet): ShotShape {
+  return shapeFor(bullet.style, bullet.ammo);
 }
 
 function hover(b: Bullet, terrainY: number): number {
   if (b.ammo === "mine") return terrainY + 0.9;
-  if (familyOf(b) === "cloud") return terrainY + 4 + b.radius * 0.15;
+  if (shapeForBullet(b) === "cloud" || shapeForBullet(b) === "frost") {
+    return terrainY + 4 + b.radius * 0.15;
+  }
   return terrainY + 3.2;
+}
+
+function shotScale(shape: ShotShape, radius: number): number {
+  const multiplier =
+    shape === "cloud" || shape === "frost"
+      ? 1
+      : shape === "bomb" || shape === "nuke"
+        ? 1.25
+        : shape === "scatter"
+          ? 1.8
+          : 2.25;
+  return radius * multiplier;
+}
+
+function orientX(geometry: THREE.BufferGeometry): THREE.BufferGeometry {
+  geometry.rotateZ(-Math.PI / 2);
+  return geometry;
+}
+
+function finGeometry(length: number, span: number): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+      [
+        -length / 2, 0, 0,
+        length / 2, 0, 0,
+        -length / 2, span, 0,
+        -length / 2, 0, 0,
+        -length / 2, -span, 0,
+        length / 2, 0, 0,
+      ],
+      3,
+    ),
+  );
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function merge(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
+  const compatible = parts.map((part) => {
+    part.deleteAttribute("uv");
+    return part.index ? part.toNonIndexed() : part;
+  });
+  const result = mergeGeometries(compatible, false);
+  for (const part of compatible) {
+    if (!parts.includes(part)) part.dispose();
+  }
+  for (const part of parts) part.dispose();
+  if (!result) throw new Error("Unable to assemble ordnance geometry");
+  result.computeVertexNormals();
+  return result;
+}
+
+/** Volumetric silhouette, pointing along local +X. */
+function makeShapeGeometry(shape: ShotShape): THREE.BufferGeometry {
+  switch (shape) {
+    case "dart":
+      return merge([
+        orientX(new THREE.CylinderGeometry(0.13, 0.19, 1.25, 8)),
+        orientX(new THREE.ConeGeometry(0.19, 0.55, 8).translate(0, 0.9, 0)),
+        finGeometry(0.36, 0.28).translate(-0.55, 0, 0),
+      ]);
+    case "cruise":
+      return merge([
+        orientX(new THREE.CylinderGeometry(0.33, 0.38, 1.35, 10)),
+        orientX(new THREE.ConeGeometry(0.33, 0.62, 10).translate(0, 0.98, 0)),
+        finGeometry(0.58, 0.5).translate(-0.48, 0, 0),
+      ]);
+    case "scatter":
+      return merge([
+        orientX(new THREE.CylinderGeometry(0.22, 0.25, 0.84, 8)),
+        orientX(new THREE.ConeGeometry(0.22, 0.38, 8).translate(0, 0.59, 0)),
+        finGeometry(0.28, 0.34).translate(-0.3, 0, 0),
+      ]);
+    case "bomb":
+      return merge([
+        new THREE.SphereGeometry(0.53, 12, 8).scale(1.15, 0.85, 0.85),
+        orientX(new THREE.CylinderGeometry(0.18, 0.23, 0.48, 8).translate(0, -0.6, 0)),
+        finGeometry(0.42, 0.36).translate(-0.72, 0, 0),
+      ]);
+    case "nuke":
+      return merge([
+        orientX(new THREE.CylinderGeometry(0.48, 0.58, 1.65, 12)),
+        orientX(new THREE.ConeGeometry(0.48, 0.78, 12).translate(0, 1.2, 0)),
+        finGeometry(0.72, 0.72).translate(-0.65, 0, 0),
+      ]);
+    case "bolt":
+      return merge([
+        orientX(new THREE.CapsuleGeometry(0.14, 1.05, 4, 8)),
+        orientX(new THREE.ConeGeometry(0.14, 0.4, 8).translate(0, 0.72, 0)),
+      ]);
+    case "pierce":
+      return merge([
+        orientX(new THREE.CylinderGeometry(0.11, 0.16, 1.48, 8)),
+        orientX(new THREE.ConeGeometry(0.11, 0.68, 8).translate(0, 1.08, 0)),
+      ]);
+    case "heavy":
+      return merge([
+        orientX(new THREE.CapsuleGeometry(0.3, 1.15, 4, 10)),
+        orientX(new THREE.ConeGeometry(0.3, 0.5, 10).translate(0, 0.9, 0)),
+      ]);
+    case "frost":
+      return new THREE.DodecahedronGeometry(0.95, 1);
+    case "cloud":
+      return merge([
+        new THREE.IcosahedronGeometry(0.86, 1),
+        new THREE.IcosahedronGeometry(0.62, 1).translate(0.56, 0.15, 0),
+        new THREE.IcosahedronGeometry(0.55, 1).translate(-0.42, -0.22, 0.18),
+      ]);
+    case "mine":
+      return merge([
+        new THREE.IcosahedronGeometry(0.57, 1),
+        new THREE.CylinderGeometry(0.11, 0.11, 1.55, 6).rotateX(Math.PI / 2),
+        new THREE.CylinderGeometry(0.11, 0.11, 1.55, 6).rotateZ(Math.PI / 2),
+      ]);
+    default:
+      return merge([
+        orientX(new THREE.CylinderGeometry(0.26, 0.3, 1.1, 9)),
+        orientX(new THREE.ConeGeometry(0.26, 0.48, 9).translate(0, 0.78, 0)),
+        finGeometry(0.42, 0.38).translate(-0.42, 0, 0),
+      ]);
+  }
 }
 
 function makeInstanced(
@@ -145,62 +242,36 @@ function hideFrom(mesh: THREE.InstancedMesh, start: number, cap: number): void {
 
 export function createProjectileLayer(
   maxShots: number,
-  art: OrdnanceArtKit | null = null,
+  _art: OrdnanceArtKit | null = null,
 ): LayerHandle {
-  const missileGeom = new THREE.ConeGeometry(0.38, 1.55, 8, 1);
-  missileGeom.rotateZ(-Math.PI / 2);
-  const boltGeom = new THREE.CapsuleGeometry(0.16, 1.35, 4, 8);
-  boltGeom.rotateZ(-Math.PI / 2);
-  const cloudGeom = new THREE.SphereGeometry(1, 14, 10);
-  const bombGeom = new THREE.SphereGeometry(1, 12, 8);
-  const mineGeom = new THREE.CylinderGeometry(1, 1, 0.28, 12);
-
-  const missileMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0.55,
-    roughness: 0.28,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.28,
-    envMapIntensity: 0.25,
-  });
-  const boltMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0.1,
-    roughness: 0.22,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.5,
-    envMapIntensity: 0.15,
-  });
-  const cloudMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0,
-    roughness: 0.85,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.28,
-    transparent: true,
-    opacity: 0.55,
-    depthWrite: false,
-  });
-  const bombMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0.35,
-    roughness: 0.4,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.4,
-  });
-  const mineMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0.5,
-    roughness: 0.45,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.25,
-  });
-
-  const missiles = makeInstanced(missileGeom, missileMat, maxShots);
-  const bolts = makeInstanced(boltGeom, boltMat, maxShots);
-  const clouds = makeInstanced(cloudGeom, cloudMat, maxShots);
-  const bombs = makeInstanced(bombGeom, bombMat, maxShots);
-  const mines = makeInstanced(mineGeom, mineMat, maxShots);
+  const shapes: ShotShape[] = [
+    "dart", "cruise", "scatter", "bomb", "nuke", "bolt",
+    "pierce", "heavy", "frost", "cloud", "mine", "default",
+  ];
+  const geometries = new Map<ShotShape, THREE.BufferGeometry>();
+  const meshes = new Map<ShotShape, THREE.InstancedMesh>();
+  for (const shape of shapes) {
+    const cloud = shape === "cloud" || shape === "frost";
+    const bolt = shape === "bolt" || shape === "pierce" || shape === "heavy";
+    const geometry = makeShapeGeometry(shape);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: cloud ? 0.05 : bolt ? 0.16 : 0.58,
+      roughness: cloud ? 0.72 : bolt ? 0.2 : 0.3,
+      emissive: 0xffffff,
+      emissiveIntensity: cloud ? 0.24 : bolt ? 0.42 : 0.18,
+      envMapIntensity: cloud ? 0.1 : 0.3,
+      transparent: cloud,
+      opacity: cloud ? 0.72 : 1,
+      depthWrite: !cloud,
+    });
+    geometries.set(shape, geometry);
+    const mesh = makeInstanced(geometry, material, maxShots);
+    mesh.name = `shot-${shape}`;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    meshes.set(shape, mesh);
+  }
 
   const trailGeom = new THREE.CylinderGeometry(0.08, 0.28, 1, 6, 1, true);
   trailGeom.rotateZ(-Math.PI / 2);
@@ -215,125 +286,41 @@ export function createProjectileLayer(
   const prevY = new Float32Array(maxShots);
 
   const group = new THREE.Group();
-  const shotCards: THREE.Mesh[] = [];
-  for (let i = 0; i < maxShots; i++) {
-    const card = makeCard(`shot${i}`, SHOT_WORLD);
-    shotCards.push(card);
-    group.add(card);
-  }
-  group.add(missiles, bolts, clouds, bombs, mines, trails);
+  group.add(...meshes.values(), trails);
 
   return {
     mesh: group,
-    sync(state: GameState, camera?: THREE.Camera) {
+    sync(state: GameState, _camera?: THREE.Camera) {
       const map = state.map;
-      const n = { missile: 0, bolt: 0, cloud: 0, bomb: 0, mine: 0 };
+      const n = new Map<ShotShape, number>(shapes.map((shape) => [shape, 0]));
       let tN = 0;
-      let cardN = 0;
-      for (const card of shotCards) card.visible = false;
       for (let bi = 0; bi < state.bullets.length; bi++) {
         const b = state.bullets[bi]!;
         if (!b.alive) continue;
-        const fam = familyOf(b);
-        if (n[fam] >= maxShots) continue;
+        const shape = shapeForBullet(b);
+        const count = n.get(shape)!;
+        if (count >= maxShots) continue;
         const h = hover(b, sculptedHeight(map, b.x, b.y));
         const pos = engineToThree(b.x, b.y, h);
         const s = Math.max(1.2, b.radius * (b.drawScale || 1));
-        const shotFrames = art?.shots[b.weaponId];
-        const useArt =
-          !!shotFrames?.length &&
-          fam !== "cloud" &&
-          fam !== "mine" &&
-          cardN < shotCards.length;
-        if (useArt && shotFrames) {
-          const card = shotCards[cardN]!;
-          card.position.set(pos.x, pos.y, pos.z);
-          setCard(
-            card,
-            shotFrames[0],
-            true,
-            SHOT_WORLD * Math.max(0.9, b.drawScale || 1),
-          );
-          layFlat(card, b.angle);
-          cardN += 1;
-        } else if (fam === "missile") {
-          writeInstance(
-            missiles,
-            n.missile,
-            pos.x,
-            pos.y,
-            pos.z,
-            s * 2.4,
-            s * 0.7,
-            s * 0.7,
-            b.angle,
-            true,
-            b.color,
-          );
-          n.missile += 1;
-        } else if (fam === "bolt") {
-          writeInstance(
-            bolts,
-            n.bolt,
-            pos.x,
-            pos.y,
-            pos.z,
-            s * 3.1,
-            s * 0.55,
-            s * 0.55,
-            b.angle,
-            true,
-            b.color,
-          );
-          n.bolt += 1;
-        } else if (fam === "cloud") {
-          const r = Math.max(s, b.radius);
-          writeInstance(
-            clouds,
-            n.cloud,
-            pos.x,
-            pos.y,
-            pos.z,
-            r,
-            r,
-            r,
-            0,
-            false,
-            b.color,
-          );
-          n.cloud += 1;
-        } else if (fam === "bomb") {
-          writeInstance(
-            bombs,
-            n.bomb,
-            pos.x,
-            pos.y,
-            pos.z,
-            s * 1.15,
-            s * 1.15,
-            s * 1.15,
-            0,
-            false,
-            b.color,
-          );
-          n.bomb += 1;
-        } else {
-          writeInstance(
-            mines,
-            n.mine,
-            pos.x,
-            pos.y,
-            pos.z,
-            s * 1.5,
-            s,
-            s * 1.5,
-            0,
-            false,
-            b.color,
-          );
-          n.mine += 1;
-        }
-        if (fam !== "mine" && fam !== "cloud" && tN < maxShots) {
+        const cloud = shape === "cloud" || shape === "frost";
+        const mine = shape === "mine";
+        const scale = cloud ? Math.max(s, b.radius) : shotScale(shape, s);
+        writeInstance(
+          meshes.get(shape)!,
+          count,
+          pos.x,
+          pos.y,
+          pos.z,
+          scale,
+          scale,
+          scale,
+          b.angle,
+          !cloud && !mine && shape !== "bomb" && shape !== "nuke",
+          b.color,
+        );
+        n.set(shape, count + 1);
+        if (!mine && !cloud && tN < maxShots) {
           const px = prevX[bi] || b.x;
           const py = prevY[bi] || b.y;
           const dx = b.x - px;
@@ -364,30 +351,14 @@ export function createProjectileLayer(
           prevY[bi] = b.y;
         }
       }
-      hideFrom(missiles, n.missile, maxShots);
-      hideFrom(bolts, n.bolt, maxShots);
-      hideFrom(clouds, n.cloud, maxShots);
-      hideFrom(bombs, n.bomb, maxShots);
-      hideFrom(mines, n.mine, maxShots);
+      for (const shape of shapes) hideFrom(meshes.get(shape)!, n.get(shape)!, maxShots);
       hideFrom(trails, tN, maxShots);
     },
     dispose() {
-      missileGeom.dispose();
-      boltGeom.dispose();
-      cloudGeom.dispose();
-      bombGeom.dispose();
-      mineGeom.dispose();
-      missileMat.dispose();
-      boltMat.dispose();
-      cloudMat.dispose();
-      bombMat.dispose();
-      mineMat.dispose();
+      for (const geometry of geometries.values()) geometry.dispose();
+      for (const mesh of meshes.values()) (mesh.material as THREE.Material).dispose();
       trailGeom.dispose();
       trailMat.dispose();
-      for (const card of shotCards) {
-        card.geometry.dispose();
-        (card.material as THREE.Material).dispose();
-      }
     },
   };
 }
@@ -412,28 +383,14 @@ function makeLootRing(): THREE.Mesh {
 
 export function createPickupLayer(
   maxPickups: number,
-  art: OrdnanceArtKit | null = null,
+  _art: OrdnanceArtKit | null = null,
 ): LayerHandle {
-  const fallbackGeom = new THREE.OctahedronGeometry(6, 0);
-  const fallbackMat = new THREE.MeshStandardMaterial({
-    color: 0xfbbf24,
-    metalness: 0.35,
-    roughness: 0.3,
-    emissive: 0xf59e0b,
-    emissiveIntensity: 0.45,
-  });
   const group = new THREE.Group();
   const slots: THREE.Group[] = [];
-  const useArt = !!(art && Object.keys(art.bodies).length);
   for (let i = 0; i < maxPickups; i++) {
     const slot = new THREE.Group();
     slot.name = `pickup${i}`;
     slot.visible = false;
-    const icon = useArt
-      ? makeCard("icon", PICKUP_WORLD)
-      : new THREE.Mesh(fallbackGeom, fallbackMat);
-    if (!useArt) icon.name = "icon";
-    slot.add(icon);
     slot.add(makeLootRing());
     group.add(slot);
     slots.push(slot);
@@ -456,35 +413,54 @@ export function createPickupLayer(
         const pos = engineToThree(pk.x, pk.y, h);
         slot.position.set(pos.x, pos.y, pos.z);
         slot.visible = true;
-        const icon = slot.getObjectByName("icon") as THREE.Mesh;
         const ring = slot.getObjectByName("lootRing") as THREE.Mesh;
         const pulse = 1.05 + Math.sin(pk.bob * 2) * 0.12;
         ring.scale.setScalar(PICKUP_WORLD * 0.62 * pulse);
         ring.visible = eligible;
         const ringMat = ring.material as THREE.MeshBasicMaterial;
         ringMat.opacity = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(pk.bob * 2));
-        if (useArt && art) {
-          setCard(icon, art.bodies[pk.weaponId]?.[0], true, PICKUP_WORLD);
-          layFlat(icon, pk.bob * 0.35);
-        } else {
-          icon.visible = true;
-          icon.rotation.y = pk.bob * 1.2;
+        let icon = slot.getObjectByName("icon") as THREE.Mesh | undefined;
+        if (!icon || icon.userData.weaponId !== pk.weaponId) {
+          if (icon) {
+            slot.remove(icon);
+            icon.geometry.dispose();
+            (icon.material as THREE.Material).dispose();
+          }
+          const weapon = WEAPONS.find((candidate) => candidate.id === pk.weaponId);
+          const shape = shapeFor(weapon?.style, weapon?.ammo ?? "special");
+          icon = new THREE.Mesh(
+            makeShapeGeometry(shape),
+            new THREE.MeshStandardMaterial({
+              color: 0xffffff,
+              metalness: shape === "cloud" || shape === "frost" ? 0.1 : 0.6,
+              roughness: shape === "cloud" || shape === "frost" ? 0.7 : 0.28,
+              emissive: 0xffffff,
+              emissiveIntensity: 0.28,
+              transparent: shape === "cloud" || shape === "frost",
+              opacity: 1,
+            }),
+          );
+          icon.name = "icon";
+          icon.userData.weaponId = pk.weaponId;
+          icon.castShadow = true;
+          icon.receiveShadow = true;
+          icon.scale.setScalar(13);
+          slot.add(icon);
         }
-        const iconMat = icon.material as THREE.MeshBasicMaterial;
+        icon.visible = true;
+        icon.rotation.y = pk.bob * 1.2;
+        const iconMat = icon.material as THREE.MeshStandardMaterial;
         iconMat.transparent = true;
         iconMat.opacity = eligible ? 1 : 0.42;
       }
     },
     dispose() {
-      fallbackGeom.dispose();
-      fallbackMat.dispose();
       for (const slot of slots) {
         slot.traverse((obj) => {
           const mesh = obj as THREE.Mesh;
           if (!mesh.isMesh) return;
-          if (mesh.geometry !== fallbackGeom) mesh.geometry.dispose();
-          const mat = mesh.material as THREE.Material;
-          if (mat !== fallbackMat) mat.dispose();
+          mesh.geometry.dispose();
+          (mesh.material as THREE.Material).dispose();
         });
       }
     },

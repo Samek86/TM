@@ -89,14 +89,17 @@ function bullet(over: Partial<Bullet> = {}): Bullet {
 }
 
 describe("projectiles", () => {
-  it("builds a group of style layers", () => {
+  it("builds instanced, shadow-casting volumetric shot layers", () => {
     const layer = createProjectileLayer(8);
     expect(layer.mesh.type).toBe("Group");
-    expect(layer.mesh.children.length).toBeGreaterThanOrEqual(6);
+    const dart = layer.mesh.getObjectByName("shot-dart") as THREE.InstancedMesh;
+    expect(dart.isInstancedMesh).toBe(true);
+    expect(dart.castShadow).toBe(true);
+    expect(dart.geometry.type).not.toBe("PlaneGeometry");
     layer.dispose();
   });
 
-  it("shows the weapon-body sprite for a live field pickup", () => {
+  it("builds a 3D weapon mesh for a live field pickup", () => {
     const tex = new THREE.Texture();
     const layer = createPickupLayer(4, {
       bodies: { 12: [tex] },
@@ -108,7 +111,9 @@ describe("projectiles", () => {
     const icon = slot.getObjectByName("icon") as THREE.Mesh;
     const ring = slot.getObjectByName("lootRing") as THREE.Object3D;
     expect(slot.visible).toBe(true);
-    expect((icon.material as THREE.MeshBasicMaterial).map).toBe(tex);
+    expect(icon.geometry.type).not.toBe("PlaneGeometry");
+    expect((icon.material as THREE.MeshStandardMaterial).isMeshStandardMaterial).toBe(true);
+    expect(icon.castShadow).toBe(true);
     expect(ring.visible).toBe(true);
     layer.dispose();
   });
@@ -131,7 +136,7 @@ describe("projectiles", () => {
     const ring = slot.getObjectByName("lootRing") as THREE.Object3D;
     expect(slot.visible).toBe(true);
     expect(ring.visible).toBe(false);
-    expect((icon.material as THREE.MeshBasicMaterial).opacity).toBeLessThan(0.7);
+    expect((icon.material as THREE.MeshStandardMaterial).opacity).toBeLessThan(0.7);
     layer.dispose();
   });
 
@@ -150,7 +155,7 @@ describe("projectiles", () => {
     layer.dispose();
   });
 
-  it("shows the shot sprite for a live flying missile", () => {
+  it("uses a volumetric dart instead of a supplied shot card", () => {
     const tex = new THREE.Texture();
     const layer = createProjectileLayer(4, {
       bodies: {},
@@ -158,9 +163,31 @@ describe("projectiles", () => {
       items: [],
     });
     layer.sync(miniState({ bullets: [bullet({ weaponId: 12 })] }));
-    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
-    expect(card.visible).toBe(true);
-    expect((card.material as THREE.MeshBasicMaterial).map).toBe(tex);
+    const dart = layer.mesh.getObjectByName("shot-dart") as THREE.InstancedMesh;
+    expect(dart.count).toBe(1);
+    expect(dart.geometry.type).not.toBe("PlaneGeometry");
+    expect((dart.material as THREE.MeshStandardMaterial).map).toBeNull();
+    layer.dispose();
+  });
+
+  it("assigns distinct 3D shot layers to weapon families", () => {
+    const layer = createProjectileLayer(4);
+    layer.sync(
+      miniState({
+        bullets: [
+          bullet({ style: "dart", ammo: "missile" }),
+          bullet({ style: "cruise", ammo: "missile" }),
+          bullet({ style: "pierce", ammo: "special" }),
+          bullet({ style: "lob", ammo: "explosive" }),
+          bullet({ style: "frost", ammo: "cloud" }),
+          bullet({ style: "default", ammo: "mine" }),
+        ],
+      }),
+    );
+    for (const name of ["dart", "cruise", "pierce", "bomb", "frost", "mine"]) {
+      const mesh = layer.mesh.getObjectByName(`shot-${name}`) as THREE.InstancedMesh;
+      expect(mesh.count).toBe(1);
+    }
     layer.dispose();
   });
 });
