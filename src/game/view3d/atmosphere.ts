@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { BiomeId } from "@/game/terrainStyle";
+import { PLAY_LOOK } from "./look";
 
 const SKY_VERT = /* glsl */ `
   varying vec3 vWorld;
@@ -22,10 +23,10 @@ const SKY_FRAG = /* glsl */ `
     float h = n.y;
     vec3 col = mix(uHorizon, uZenith, smoothstep(-0.05, 0.72, h));
     col = mix(uGround, col, smoothstep(-0.35, 0.08, h));
-    float sun = pow(max(dot(n, normalize(uSunDir)), 0.0), 48.0);
-    float haze = pow(max(dot(n, normalize(uSunDir)), 0.0), 4.0);
-    col += uSunColor * sun * 1.35;
-    col += uSunColor * haze * 0.18;
+    float sun = pow(max(dot(n, normalize(uSunDir)), 0.0), 72.0);
+    float haze = pow(max(dot(n, normalize(uSunDir)), 0.0), 8.0);
+    col += uSunColor * sun * ${PLAY_LOOK.skySunDisc.toFixed(2)};
+    col += uSunColor * haze * ${PLAY_LOOK.skySunHaze.toFixed(2)};
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -53,6 +54,12 @@ const PALETTE: Record<
     sun: 0xdde6f5,
   },
 };
+
+/** Haze color where land meets sky — fog must match it to hide the horizon. */
+export function horizonColor(biome: BiomeId): THREE.Color {
+  const pal = PALETTE[biome === "default" ? "jungle" : biome];
+  return new THREE.Color(pal.horizon);
+}
 
 export function createSkyDome(
   biome: BiomeId,

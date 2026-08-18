@@ -1,13 +1,61 @@
 import * as THREE from "three";
-import type { Bullet, GameState } from "@/game/engine";
-import { sampleTerrainY } from "@/game/heightfield";
+import { getPlayer, type Bullet, type GameState } from "@/game/engine";
+import { sculptedHeight } from "@/game/heightfield";
 import { engineToThree } from "./coords";
+import type { OrdnanceArtKit } from "./ordnanceArt";
 
 export type LayerHandle = {
   mesh: THREE.Object3D;
-  sync(state: GameState): void;
+  sync(state: GameState, camera?: THREE.Camera): void;
   dispose(): void;
 };
+
+const PICKUP_WORLD = 52;
+const SHOT_WORLD = 62;
+
+function makeCard(name: string, size: number): THREE.Mesh {
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      map: null,
+      transparent: true,
+      alphaTest: 0.08,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  mesh.name = name;
+  mesh.visible = false;
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  mesh.scale.setScalar(size);
+  return mesh;
+}
+
+function setCard(
+  mesh: THREE.Mesh,
+  tex: THREE.Texture | undefined,
+  show: boolean,
+  world: number,
+): void {
+  const mat = mesh.material as THREE.MeshBasicMaterial;
+  if (tex && mat.map !== tex) {
+    mat.map = tex;
+    mat.needsUpdate = true;
+  }
+  mesh.visible = show && !!tex;
+  const img = tex?.image as { width?: number; height?: number } | undefined;
+  const w = Math.max(1, Number(img?.width) || 1);
+  const h = Math.max(1, Number(img?.height) || 1);
+  const m = Math.max(w, h);
+  mesh.scale.set((world * w) / m, (world * h) / m, 1);
+}
+
+/** Lie on the map plane. Heading 0 = east, same as engine angle. */
+function layFlat(mesh: THREE.Object3D, heading = 0): void {
+  mesh.rotation.set(-Math.PI / 2, 0, -heading);
+}
 
 type Family = "missile" | "bolt" | "cloud" | "bomb" | "mine";
 
@@ -95,7 +143,10 @@ function hideFrom(mesh: THREE.InstancedMesh, start: number, cap: number): void {
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 }
 
-export function createProjectileLayer(maxShots: number): LayerHandle {
+export function createProjectileLayer(
+  maxShots: number,
+  art: OrdnanceArtKit | null = null,
+): LayerHandle {
   const missileGeom = new THREE.ConeGeometry(0.38, 1.55, 8, 1);
   missileGeom.rotateZ(-Math.PI / 2);
   const boltGeom = new THREE.CapsuleGeometry(0.16, 1.35, 4, 8);
@@ -109,23 +160,23 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
     metalness: 0.55,
     roughness: 0.28,
     emissive: 0xffffff,
-    emissiveIntensity: 0.55,
-    envMapIntensity: 0.8,
+    emissiveIntensity: 0.28,
+    envMapIntensity: 0.25,
   });
   const boltMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     metalness: 0.1,
     roughness: 0.22,
     emissive: 0xffffff,
-    emissiveIntensity: 1.35,
-    envMapIntensity: 0.4,
+    emissiveIntensity: 0.5,
+    envMapIntensity: 0.15,
   });
   const cloudMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     metalness: 0,
     roughness: 0.85,
     emissive: 0xffffff,
-    emissiveIntensity: 0.7,
+    emissiveIntensity: 0.28,
     transparent: true,
     opacity: 0.55,
     depthWrite: false,
@@ -164,23 +215,48 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
   const prevY = new Float32Array(maxShots);
 
   const group = new THREE.Group();
+  const shotCards: THREE.Mesh[] = [];
+  for (let i = 0; i < maxShots; i++) {
+    const card = makeCard(`shot${i}`, SHOT_WORLD);
+    shotCards.push(card);
+    group.add(card);
+  }
   group.add(missiles, bolts, clouds, bombs, mines, trails);
 
   return {
     mesh: group,
-    sync(state: GameState) {
+    sync(state: GameState, camera?: THREE.Camera) {
       const map = state.map;
       const n = { missile: 0, bolt: 0, cloud: 0, bomb: 0, mine: 0 };
       let tN = 0;
+      let cardN = 0;
+      for (const card of shotCards) card.visible = false;
       for (let bi = 0; bi < state.bullets.length; bi++) {
         const b = state.bullets[bi]!;
         if (!b.alive) continue;
         const fam = familyOf(b);
         if (n[fam] >= maxShots) continue;
-        const h = hover(b, sampleTerrainY(map, b.x, b.y));
+        const h = hover(b, sculptedHeight(map, b.x, b.y));
         const pos = engineToThree(b.x, b.y, h);
         const s = Math.max(1.2, b.radius * (b.drawScale || 1));
-        if (fam === "missile") {
+        const shotFrames = art?.shots[b.weaponId];
+        const useArt =
+          !!shotFrames?.length &&
+          fam !== "cloud" &&
+          fam !== "mine" &&
+          cardN < shotCards.length;
+        if (useArt && shotFrames) {
+          const card = shotCards[cardN]!;
+          card.position.set(pos.x, pos.y, pos.z);
+          setCard(
+            card,
+            shotFrames[0],
+            true,
+            SHOT_WORLD * Math.max(0.9, b.drawScale || 1),
+          );
+          layFlat(card, b.angle);
+          cardN += 1;
+        } else if (fam === "missile") {
           writeInstance(
             missiles,
             n.missile,
@@ -194,6 +270,7 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
             true,
             b.color,
           );
+          n.missile += 1;
         } else if (fam === "bolt") {
           writeInstance(
             bolts,
@@ -208,6 +285,7 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
             true,
             b.color,
           );
+          n.bolt += 1;
         } else if (fam === "cloud") {
           const r = Math.max(s, b.radius);
           writeInstance(
@@ -223,6 +301,7 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
             false,
             b.color,
           );
+          n.cloud += 1;
         } else if (fam === "bomb") {
           writeInstance(
             bombs,
@@ -237,6 +316,7 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
             false,
             b.color,
           );
+          n.bomb += 1;
         } else {
           writeInstance(
             mines,
@@ -251,8 +331,8 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
             false,
             b.color,
           );
+          n.mine += 1;
         }
-        n[fam] += 1;
         if (fam !== "mine" && fam !== "cloud" && tN < maxShots) {
           const px = prevX[bi] || b.x;
           const py = prevY[bi] || b.y;
@@ -304,13 +384,38 @@ export function createProjectileLayer(maxShots: number): LayerHandle {
       mineMat.dispose();
       trailGeom.dispose();
       trailMat.dispose();
+      for (const card of shotCards) {
+        card.geometry.dispose();
+        (card.material as THREE.Material).dispose();
+      }
     },
   };
 }
 
-export function createPickupLayer(maxPickups: number): LayerHandle {
-  const geom = new THREE.OctahedronGeometry(2.6, 0);
-  const mat = new THREE.MeshStandardMaterial({
+function makeLootRing(): THREE.Mesh {
+  const mesh = new THREE.Mesh(
+    new THREE.RingGeometry(0.72, 0.92, 40),
+    new THREE.MeshBasicMaterial({
+      color: 0x67e8f9,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  mesh.name = "lootRing";
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.visible = false;
+  return mesh;
+}
+
+export function createPickupLayer(
+  maxPickups: number,
+  art: OrdnanceArtKit | null = null,
+): LayerHandle {
+  const fallbackGeom = new THREE.OctahedronGeometry(6, 0);
+  const fallbackMat = new THREE.MeshStandardMaterial({
     color: 0xfbbf24,
     metalness: 0.35,
     roughness: 0.3,
@@ -318,35 +423,70 @@ export function createPickupLayer(maxPickups: number): LayerHandle {
     emissiveIntensity: 0.45,
   });
   const group = new THREE.Group();
-  const slots: THREE.Mesh[] = [];
+  const slots: THREE.Group[] = [];
+  const useArt = !!(art && Object.keys(art.bodies).length);
   for (let i = 0; i < maxPickups; i++) {
-    const m = new THREE.Mesh(geom, mat);
-    m.visible = false;
-    group.add(m);
-    slots.push(m);
+    const slot = new THREE.Group();
+    slot.name = `pickup${i}`;
+    slot.visible = false;
+    const icon = useArt
+      ? makeCard("icon", PICKUP_WORLD)
+      : new THREE.Mesh(fallbackGeom, fallbackMat);
+    if (!useArt) icon.name = "icon";
+    slot.add(icon);
+    slot.add(makeLootRing());
+    group.add(slot);
+    slots.push(slot);
   }
 
   return {
     mesh: group,
     sync(state: GameState) {
       const map = state.map;
+      const player = getPlayer(state);
       for (let i = 0; i < maxPickups; i++) {
         const pk = state.pickups[i];
-        const m = slots[i]!;
+        const slot = slots[i]!;
         if (!pk?.alive) {
-          m.visible = false;
+          slot.visible = false;
           continue;
         }
-        const h = sampleTerrainY(map, pk.x, pk.y) + 4 + Math.sin(pk.bob) * 1.5;
+        const eligible = !!player && player.weapons.indexOf(pk.weaponId) >= 1;
+        const h = sculptedHeight(map, pk.x, pk.y) + 7 + Math.sin(pk.bob) * 2;
         const pos = engineToThree(pk.x, pk.y, h);
-        m.position.set(pos.x, pos.y, pos.z);
-        m.rotation.y = pk.bob * 1.2;
-        m.visible = true;
+        slot.position.set(pos.x, pos.y, pos.z);
+        slot.visible = true;
+        const icon = slot.getObjectByName("icon") as THREE.Mesh;
+        const ring = slot.getObjectByName("lootRing") as THREE.Mesh;
+        const pulse = 1.05 + Math.sin(pk.bob * 2) * 0.12;
+        ring.scale.setScalar(PICKUP_WORLD * 0.62 * pulse);
+        ring.visible = eligible;
+        const ringMat = ring.material as THREE.MeshBasicMaterial;
+        ringMat.opacity = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(pk.bob * 2));
+        if (useArt && art) {
+          setCard(icon, art.bodies[pk.weaponId]?.[0], true, PICKUP_WORLD);
+          layFlat(icon, pk.bob * 0.35);
+        } else {
+          icon.visible = true;
+          icon.rotation.y = pk.bob * 1.2;
+        }
+        const iconMat = icon.material as THREE.MeshBasicMaterial;
+        iconMat.transparent = true;
+        iconMat.opacity = eligible ? 1 : 0.42;
       }
     },
     dispose() {
-      geom.dispose();
-      mat.dispose();
+      fallbackGeom.dispose();
+      fallbackMat.dispose();
+      for (const slot of slots) {
+        slot.traverse((obj) => {
+          const mesh = obj as THREE.Mesh;
+          if (!mesh.isMesh) return;
+          if (mesh.geometry !== fallbackGeom) mesh.geometry.dispose();
+          const mat = mesh.material as THREE.Material;
+          if (mat !== fallbackMat) mat.dispose();
+        });
+      }
     },
   };
 }

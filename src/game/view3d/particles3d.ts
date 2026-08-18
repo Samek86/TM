@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import type { GameState } from "@/game/engine";
-import { sampleTerrainY } from "@/game/heightfield";
+import { sculptedHeight } from "@/game/heightfield";
 import { engineToThree } from "./coords";
+import { PLAY_LOOK } from "./look";
 
 const _dummy = new THREE.Object3D();
 const _color = new THREE.Color();
@@ -15,7 +16,7 @@ export function createParticleLayer(maxN = 280): {
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     emissive: 0xffffff,
-    emissiveIntensity: 1.1,
+    emissiveIntensity: PLAY_LOOK.particleEmissive,
     roughness: 0.45,
     metalness: 0.05,
     transparent: true,
@@ -35,7 +36,7 @@ export function createParticleLayer(maxN = 280): {
       for (const p of state.particles) {
         if (!p.alive || live >= maxN) continue;
         const fade = Math.max(0.15, p.life / Math.max(0.001, p.maxLife));
-        const h = sampleTerrainY(map, p.x, p.y) + 3.4;
+        const h = sculptedHeight(map, p.x, p.y) + 3.4;
         const pos = engineToThree(p.x, p.y, h);
         const s = Math.max(0.6, p.size * 0.12) * fade;
         _dummy.position.set(pos.x, pos.y, pos.z);

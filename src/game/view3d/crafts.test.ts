@@ -75,4 +75,84 @@ describe("crafts", () => {
     expect(dir.y).toBeCloseTo(0);
     expect(dir.z).toBeCloseTo(0);
   });
+
+  describe("art card", () => {
+    const map = miniMap(
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [false, false, false, false, false, false, false, false, false],
+    );
+    const deg = (d: number) => (d * Math.PI) / 180;
+
+    function rig() {
+      const frames = Array.from({ length: 16 }, () => new THREE.Texture());
+      const g = createCraftGroup("born_armor", frames);
+      const camera = new THREE.OrthographicCamera(-80, 80, 80, -80, 0.1, 4000);
+      camera.position.set(45, 200, 245);
+      const args = {
+        x: 45,
+        y: 45,
+        vx: 0,
+        vy: 0,
+        vultureId: "born_armor" as const,
+        map,
+        stillness: 0,
+        hoverPhase: 0,
+        time: 0,
+        camera,
+      };
+      const art = g.getObjectByName("art") as THREE.Mesh;
+      const settle = (angle: number) => {
+        for (let i = 0; i < 60; i++) {
+          applyCraftPose(g, { ...args, angle, dt: 0.05 });
+        }
+      };
+      return {
+        g,
+        frames,
+        settle,
+        step: (angle: number, dt = 1 / 60) =>
+          applyCraftPose(g, { ...args, angle, dt }),
+        shown: () => (art.material as THREE.MeshBasicMaterial).map,
+      };
+    }
+
+    it("eases the visual heading instead of snapping to the aim angle", () => {
+      const { settle, step, g } = rig();
+      settle(0);
+      step(deg(90));
+      const yaw = g.userData.yaw as number;
+      expect(yaw).toBeGreaterThan(0);
+      expect(yaw).toBeLessThan(deg(90));
+    });
+
+    it("picks the frame nearest the settled heading", () => {
+      const { settle, shown, frames } = rig();
+      settle(deg(8));
+      expect(shown()).toBe(frames[0]);
+      settle(deg(22.5));
+      expect(shown()).toBe(frames[1]);
+      settle(deg(90));
+      expect(shown()).toBe(frames[4]);
+      settle(deg(-22.5));
+      expect(shown()).toBe(frames[15]);
+    });
+
+    it("sweeps through neighbouring frames instead of jumping on a flick", () => {
+      const { step, shown, frames } = rig();
+      const indexOf = () => frames.indexOf(shown() as THREE.Texture);
+      step(0);
+      let prev = indexOf();
+      let moved = 0;
+      for (let i = 0; i < 90; i++) {
+        step(deg(180));
+        const now = indexOf();
+        const hop = Math.abs(now - prev);
+        expect(Math.min(hop, frames.length - hop)).toBeLessThanOrEqual(1);
+        if (now !== prev) moved++;
+        prev = now;
+      }
+      expect(moved).toBeGreaterThan(4);
+      expect(indexOf()).toBe(8);
+    });
+  });
 });

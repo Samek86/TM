@@ -20,6 +20,7 @@ import {
 import { weaponById } from "./weaponLookup";
 import { craftWorldRadius, craftWorldSpeed } from "./viewScale";
 import { approachVelocity, tryStep } from "./movement";
+import { AIM_LEAD } from "./touchStick";
 
 export type GamePhase = "boot" | "select" | "playing" | "paused" | "over";
 
@@ -230,6 +231,12 @@ export interface GameState {
    */
   pointer: { x: number; y: number; active: boolean };
   /**
+   * Twin-stick override. Screen/engine Y-down, −1..1. Null = keyboard / mouse.
+   * Aim stick also writes `pointer` so the neon cue stays on the nose line.
+   */
+  moveStick: { x: number; y: number } | null;
+  aimStick: { x: number; y: number } | null;
+  /**
    * Optional fidelity assets (HTMLCanvasElement / sprite frames).
    * Populated by GameCanvas after loadGameAssets — kept loosely typed to
    * avoid circular imports with the renderer.
@@ -242,7 +249,10 @@ const BULLET_POOL = 200;
 const PARTICLE_POOL = 280;
 const PICKUP_COUNT = 12;
 
-export function createGame(mapId = "jungle", vulture: VultureId = "born_armor"): GameState {
+export function createGame(
+  mapId = "jungle",
+  vulture: VultureId = "born_armor",
+): GameState {
   const map = getMap(mapId);
   const bullets: Bullet[] = Array.from({ length: BULLET_POOL }, () => ({
     alive: false,
@@ -302,6 +312,8 @@ export function createGame(mapId = "jungle", vulture: VultureId = "born_armor"):
     shake: 0,
     keys: {},
     pointer: { x: map.width / 2, y: map.height / 2, active: false },
+    moveStick: null,
+    aimStick: null,
   };
 }
 
@@ -497,7 +509,9 @@ function spawnPickups(state: GameState): void {
     for (const id of v.loadoutWeaponIds) fieldIds.add(id);
   }
   const list = WEAPONS.filter((w) => fieldIds.has(w.id));
-  const pool = list.length ? list : WEAPONS.filter((w) => w.id > 1 && w.bodySpr);
+  const pool = list.length
+    ? list
+    : WEAPONS.filter((w) => w.id > 1 && w.bodySpr);
   for (let i = 0; i < PICKUP_COUNT; i++) {
     const w = pool[i % pool.length]!;
     state.pickups.push({
@@ -787,7 +801,15 @@ function tryFire(state: GameState, pilot: Pilot): void {
       ammo: "mine",
       ...props,
     });
-    spawnParticles(state, pilot.x + Math.cos(base) * drop, pilot.y + Math.sin(base) * drop, w.color, 4, 40, "muzzle");
+    spawnParticles(
+      state,
+      pilot.x + Math.cos(base) * drop,
+      pilot.y + Math.sin(base) * drop,
+      w.color,
+      4,
+      40,
+      "muzzle",
+    );
     if (pilot.isPlayer) {
       state.shake = Math.min(2, state.shake + 0.35);
       playShootSfx(w.sfxId ?? wid, wid);
@@ -827,9 +849,20 @@ function tryFire(state: GameState, pilot: Pilot): void {
       ammo: "cloud",
       ...props,
     });
-    spawnCloudPuffs(state, ox, oy, w.color, w.style === "frost" ? 4 : 3, base, crawl * 0.22);
+    spawnCloudPuffs(
+      state,
+      ox,
+      oy,
+      w.color,
+      w.style === "frost" ? 4 : 3,
+      base,
+      crawl * 0.22,
+    );
     if (pilot.isPlayer) {
-      state.shake = Math.min(3, state.shake + (w.style === "frost" ? 0.75 : 0.5));
+      state.shake = Math.min(
+        3,
+        state.shake + (w.style === "frost" ? 0.75 : 0.5),
+      );
       playShootSfx(w.sfxId ?? wid, wid);
     }
     return;
@@ -843,9 +876,7 @@ function tryFire(state: GameState, pilot: Pilot): void {
     // Twin / multi: fixed angular offset only (no random drift)
     // Scatter uses wider fan; twin_beam uses side offset + modest angle
     const spread =
-      w.pellets > 1
-        ? (i - (w.pellets - 1) / 2) * (w.spread || 0.12)
-        : 0;
+      w.pellets > 1 ? (i - (w.pellets - 1) / 2) * (w.spread || 0.12) : 0;
     const ang = base + spread;
     // Twin laser offset from centerline (position only — velocity stays on ang)
     const side =
@@ -1030,7 +1061,18 @@ function padFor(pilot: Pilot): number {
 
 /** Relative yaw offsets for obstacle sliding (desired → side → reverse). */
 const MOVE_SLIDE_YAW = [
-  0, 0.32, -0.32, 0.64, -0.64, 0.95, -0.95, 1.3, -1.3, 1.57, -1.57, Math.PI,
+  0,
+  0.32,
+  -0.32,
+  0.64,
+  -0.64,
+  0.95,
+  -0.95,
+  1.3,
+  -1.3,
+  1.57,
+  -1.57,
+  Math.PI,
 ] as const;
 
 /**
@@ -1160,7 +1202,12 @@ function updateStillness(pilot: Pilot, moved: boolean, dt: number): void {
   }
 }
 
-function damagePilot(state: GameState, target: Pilot, amount: number, attackerId: string): void {
+function damagePilot(
+  state: GameState,
+  target: Pilot,
+  amount: number,
+  attackerId: string,
+): void {
   if (target.respawn > 0) return;
   target.hp -= amount;
   spawnParticles(state, target.x, target.y, "#fda4af", 4, 120, "spark");
@@ -1176,7 +1223,9 @@ function damagePilot(state: GameState, target: Pilot, amount: number, attackerId
       if (killer.isPlayer) state.shake = 8;
       if (killer.score >= state.killLimit) {
         state.phase = "over";
-        state.message = killer.isPlayer ? "MISSION COMPLETE" : `${killer.name} WINS`;
+        state.message = killer.isPlayer
+          ? "MISSION COMPLETE"
+          : `${killer.name} WINS`;
         state.messageT = 99;
       }
     }
@@ -1334,7 +1383,10 @@ function pickAiWeapon(state: GameState, pilot: Pilot, dist: number): void {
     if (w.style === "heavy" && dist < reach * 0.85) score += 12;
     if (i > 0) score += 10;
     if (i === 0 && dist > pilot.speedStat * 2.2) score += 8;
-    if ((w.style === "nuke" || w.style === "cruise") && (pilot.ammo[w.id] ?? 0) <= 2) {
+    if (
+      (w.style === "nuke" || w.style === "cruise") &&
+      (pilot.ammo[w.id] ?? 0) <= 2
+    ) {
       score -= dist > reach * 0.5 ? 0 : 6;
     }
     cands.push({ slot: i, score });
@@ -1413,11 +1465,7 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
     const tgt = pickAiTarget(state, pilot);
     pilot.aiTarget = tgt?.id ?? null;
     if (tgt) {
-      pickAiWeapon(
-        state,
-        pilot,
-        Math.hypot(tgt.x - pilot.x, tgt.y - pilot.y),
-      );
+      pickAiWeapon(state, pilot, Math.hypot(tgt.x - pilot.x, tgt.y - pilot.y));
     }
     const fieldAmmo = pilot.weapons
       .slice(1)
@@ -1571,8 +1619,8 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
     } else if (dist < engage * 0.42) {
       if (ms < 0.35) {
         // Noobs keep pushing in
-        mx = dx / dist * 0.4;
-        my = dy / dist * 0.4;
+        mx = (dx / dist) * 0.4;
+        my = (dy / dist) * 0.4;
       } else {
         mx = -dx / dist + (-dy / dist) * 0.55 * side;
         my = -dy / dist + (dx / dist) * 0.55 * side;
@@ -1580,10 +1628,8 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
     } else {
       // Strafe quality scales with skill
       const radial = dist > engage ? 0.2 : dist < engage * 0.75 ? -0.25 : 0;
-      mx =
-        (-dy / dist) * side * (0.35 + 0.65 * ms) + (dx / dist) * radial * ms;
-      my =
-        (dx / dist) * side * (0.35 + 0.65 * ms) + (dy / dist) * radial * ms;
+      mx = (-dy / dist) * side * (0.35 + 0.65 * ms) + (dx / dist) * radial * ms;
+      my = (dx / dist) * side * (0.35 + 0.65 * ms) + (dy / dist) * radial * ms;
       // Low skill still drifts toward target
       if (ms < 0.5) {
         mx += (dx / dist) * (0.5 - ms);
@@ -1643,14 +1689,7 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
   const moveSpd = pilot.speedStat * speedMul;
   const wishX = mx * moveSpd;
   const wishY = my * moveSpd;
-  const nextV = approachVelocity(
-    pilot.vx,
-    pilot.vy,
-    wishX,
-    wishY,
-    moveSpd,
-    dt,
-  );
+  const nextV = approachVelocity(pilot.vx, pilot.vy, wishX, wishY, moveSpd, dt);
   pilot.vx = nextV.vx;
   pilot.vy = nextV.vy;
   const stepped = tryStep(
@@ -1709,7 +1748,11 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
         );
 
   if (distAim < fireRange && linedUp && hasLos) {
-    if (pilot.aiMode === "flee" && distAim > engage * 0.7 && prof.tactics > 0.4) {
+    if (
+      pilot.aiMode === "flee" &&
+      distAim > engage * 0.7 &&
+      prof.tactics > 0.4
+    ) {
       return;
     }
     // Skill gates fire rate / trigger discipline
@@ -1729,28 +1772,48 @@ function updateAI(state: GameState, pilot: Pilot, dt: number): void {
 function updatePlayer(state: GameState, pilot: Pilot, dt: number): void {
   const k = state.keys;
 
-  // --- Aim: continuous angle toward mouse (or last pointer) ---
-  // Not snapped to 45°; SPR sheet still quantizes display to 3° (120 frames).
-  const aimX = state.pointer.x;
-  const aimY = state.pointer.y;
-  const adx = aimX - pilot.x;
-  const ady = aimY - pilot.y;
-  if (adx * adx + ady * ady > 4) {
-    // Full-precision facing for shots (~sub-degree; Math.atan2 float)
-    pilot.angle = Math.atan2(ady, adx);
+  // --- Aim: right stick first, otherwise mouse / last pointer ---
+  const aimStick = state.aimStick;
+  if (aimStick) {
+    const sl = Math.hypot(aimStick.x, aimStick.y);
+    if (sl > 1e-6) {
+      pilot.angle = Math.atan2(aimStick.y, aimStick.x);
+      state.pointer.x = pilot.x + (aimStick.x / sl) * AIM_LEAD;
+      state.pointer.y = pilot.y + (aimStick.y / sl) * AIM_LEAD;
+      state.pointer.active = true;
+    }
+  } else {
+    const aimX = state.pointer.x;
+    const aimY = state.pointer.y;
+    const adx = aimX - pilot.x;
+    const ady = aimY - pilot.y;
+    if (adx * adx + ady * ady > 4) {
+      pilot.angle = Math.atan2(ady, adx);
+    }
   }
 
-  // --- Move: WASD / arrows only — independent of aim (strafe ok) ---
+  // --- Move: left stick, else WASD / arrows (independent of aim) ---
   let mx = 0;
   let my = 0;
-  if (k["KeyW"] || k["ArrowUp"]) my -= 1;
-  if (k["KeyS"] || k["ArrowDown"]) my += 1;
-  if (k["KeyA"] || k["ArrowLeft"]) mx -= 1;
-  if (k["KeyD"] || k["ArrowRight"]) mx += 1;
-  const len = Math.hypot(mx, my);
-  if (len > 0) {
-    mx /= len;
-    my /= len;
+  const moveStick = state.moveStick;
+  if (
+    moveStick &&
+    moveStick.x * moveStick.x + moveStick.y * moveStick.y > 1e-6
+  ) {
+    const sl = Math.hypot(moveStick.x, moveStick.y);
+    const mag = Math.min(1, sl);
+    mx = (moveStick.x / sl) * mag;
+    my = (moveStick.y / sl) * mag;
+  } else {
+    if (k["KeyW"] || k["ArrowUp"]) my -= 1;
+    if (k["KeyS"] || k["ArrowDown"]) my += 1;
+    if (k["KeyA"] || k["ArrowLeft"]) mx -= 1;
+    if (k["KeyD"] || k["ArrowRight"]) mx += 1;
+    const len = Math.hypot(mx, my);
+    if (len > 0) {
+      mx /= len;
+      my /= len;
+    }
   }
   const wishX = mx * pilot.speedStat;
   const wishY = my * pilot.speedStat;
@@ -1796,11 +1859,28 @@ export function setPointerWorld(
   state.pointer.active = active;
 }
 
+export function setMoveStick(
+  state: GameState,
+  stick: { x: number; y: number } | null,
+): void {
+  state.moveStick = stick;
+}
+
+export function setAimStick(
+  state: GameState,
+  stick: { x: number; y: number } | null,
+): void {
+  state.aimStick = stick;
+}
+
 export function setKey(state: GameState, code: string, down: boolean): void {
   // Pause is handled by GameCanvas UI (Esc menu). Only KeyP still toggles here
   // if UI did not intercept — avoid double-toggle with Escape.
   if (down) {
-    if (code === "KeyP" && (state.phase === "playing" || state.phase === "paused")) {
+    if (
+      code === "KeyP" &&
+      (state.phase === "playing" || state.phase === "paused")
+    ) {
       state.phase = state.phase === "paused" ? "playing" : "paused";
     }
     if (code === "KeyR" && state.phase === "over") {
@@ -2080,7 +2160,13 @@ export function update(state: GameState, dt: number): void {
           skipId,
         );
       } else if (b.ammo === "explosive" || b.ammo === "missile") {
-        spawnExplosion(state, b.x, b.y, b.color, b.style === "nuke" ? 1.6 : 0.55);
+        spawnExplosion(
+          state,
+          b.x,
+          b.y,
+          b.color,
+          b.style === "nuke" ? 1.6 : 0.55,
+        );
       }
     };
 

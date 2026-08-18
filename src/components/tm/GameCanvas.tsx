@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   bindSfxModule,
   createGame,
+  setAimStick,
   setKey,
+  setMoveStick,
   setPointerWorld,
   setSfxMuted,
   startMatch,
@@ -12,9 +14,13 @@ import {
 import { getMap } from "@/data/maps";
 import { createPlayView, type PlayView } from "@/game/view3d";
 import { loadCraftArt } from "@/game/view3d/craftAssets";
+import { CRAFT_IDS, loadCraftModels } from "@/game/view3d/craftModels";
+import { detectQuality } from "@/game/view3d/quality";
+import { loadOrdnanceArt } from "@/game/view3d/ordnanceArt";
 import { loadTerrainKit } from "@/game/view3d/terrainTextures";
 import type { VultureId } from "@/data/weapons";
 import { PlayHud } from "./PlayHud";
+import { TouchSticks } from "./TouchSticks";
 
 interface Props {
   mapId: string;
@@ -23,12 +29,17 @@ interface Props {
   onExit?: () => void;
 }
 
-const TOUCH_DIRS = [
-  { code: "KeyW", label: "▲", className: "col-start-2 row-start-1" },
-  { code: "KeyA", label: "◀", className: "col-start-1 row-start-2" },
-  { code: "KeyS", label: "▼", className: "col-start-2 row-start-2" },
-  { code: "KeyD", label: "▶", className: "col-start-3 row-start-2" },
-] as const;
+function readQuality() {
+  const nav = navigator as Navigator & {
+    connection?: { saveData?: boolean };
+  };
+  return detectQuality({
+    coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+    innerWidth: window.innerWidth,
+    hardwareConcurrency: navigator.hardwareConcurrency,
+    saveData: nav.connection?.saveData,
+  });
+}
 
 async function enterBrowserFullscreen(el: HTMLElement): Promise<void> {
   try {
@@ -85,6 +96,8 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
   const [fatal, setFatal] = useState<string | null>(null);
   const [hudTick, setHudTick] = useState(0);
   const [isFs, setIsFs] = useState(false);
+  const showTouchRef = useRef(false);
+  showTouchRef.current = showTouch;
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse), (max-width: 768px)");
@@ -99,12 +112,6 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     document.addEventListener("fullscreenchange", onFs);
     onFs();
     return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
-
-  const holdKey = useCallback((code: string, down: boolean) => {
-    const state = stateRef.current;
-    if (!state) return;
-    setKey(state, code, down);
   }, []);
 
   const exitToMenu = useCallback(() => {
@@ -165,11 +172,12 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     setPausedUi(false);
     setHudTick(0);
     setSfxMuted(true);
+    const quality = readQuality();
 
     // Cache layout metrics — never read clientWidth/getBoundingClientRect in the hot path
     let cssW = shell.clientWidth || window.innerWidth;
     let cssH = shell.clientHeight || window.innerHeight;
-    let dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    let dpr = Math.min(window.devicePixelRatio || 1, quality.maxDpr);
     let rectLeft = 0;
     let rectTop = 0;
     let rectW = cssW;
@@ -190,7 +198,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     const resize = () => {
       const nextW = shell.clientWidth || window.innerWidth;
       const nextH = shell.clientHeight || window.innerHeight;
-      const nextDpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const nextDpr = Math.min(window.devicePixelRatio || 1, quality.maxDpr);
       cssW = nextW;
       cssH = nextH;
       dpr = nextDpr;
@@ -247,7 +255,11 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         return;
       }
 
-      if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+      if (
+        ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+          e.code,
+        )
+      ) {
         e.preventDefault();
       }
       ensureAudio();
@@ -266,12 +278,20 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     };
     const onBlur = () => {
       const state = stateRef.current;
-      if (state) state.keys = {};
+      if (!state) return;
+      state.keys = {};
+      state.moveStick = null;
+      state.aimStick = null;
     };
     const syncPointer = (clientX: number, clientY: number) => {
       const state = stateRef.current;
       if (!state || !view) return;
-      const aim = view.pickAim(clientX - rectLeft, clientY - rectTop, rectW, rectH);
+      const aim = view.pickAim(
+        clientX - rectLeft,
+        clientY - rectTop,
+        rectW,
+        rectH,
+      );
       if (!aim) return;
       setPointerWorld(state, aim.x, aim.y, true);
     };
@@ -297,6 +317,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     };
     const onContextMenu = (e: Event) => e.preventDefault();
     const onTouchMove = (e: TouchEvent) => {
+      if (showTouchRef.current) return;
       const t = e.touches[0];
       if (!t) return;
       syncPointer(t.clientX, t.clientY);
@@ -391,7 +412,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       }
       if (cancelled) return;
 
-      // --- Phase B: play map + match (no SPR / TIL / craft frames) ---
+      // --- Phase B: play map + 3D view (terrain, craft art, weapon SPR) ---
       report("전장 준비…", 40);
       const map = getMap(mapId);
       const state = createGame(mapId, vultureId);
@@ -400,18 +421,35 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       state.map = map;
       startMatch(state);
       stateRef.current = state;
+      if (import.meta.env.DEV) {
+        (window as unknown as { __tmState?: GameState }).__tmState = state;
+      }
 
       report("지형 텍스처…", 50);
       const kit = await loadTerrainKit(mapId);
       if (cancelled) return;
       report("기체 에셋…", 62);
-      const craftArt = await loadCraftArt();
+      const craftModels = await loadCraftModels();
+      if (cancelled) return;
+      const spriteIds = CRAFT_IDS.filter((id) => !craftModels[id]);
+      const craftArt = await loadCraftArt(spriteIds);
+      if (cancelled) return;
+      report("무기 스프라이트…", 66);
+      const ordnance = await loadOrdnanceArt();
       if (cancelled) return;
 
       report("3D 뷰 시작…", 70);
       let playView: PlayView;
       try {
-        playView = createPlayView(canvas, map, kit, craftArt);
+        playView = createPlayView(
+          canvas,
+          map,
+          kit,
+          craftArt,
+          ordnance,
+          craftModels,
+          quality,
+        );
       } catch (err) {
         if (!cancelled) {
           const msg =
@@ -543,7 +581,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         <canvas
           ref={canvasRef}
           className={`h-full w-full touch-none bg-black outline-none ${
-            loading || fatal ? "cursor-wait" : "cursor-crosshair"
+            loading || fatal ? "cursor-wait" : "cursor-none"
           }`}
           tabIndex={0}
           aria-hidden={loading || !!fatal}
@@ -607,7 +645,9 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         {pausedUi && (
           <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="w-[min(92vw,360px)] rounded-2xl border border-white/15 bg-slate-950/95 p-6 shadow-2xl">
-              <h2 className="font-display text-center text-2xl text-white">PAUSED</h2>
+              <h2 className="font-display text-center text-2xl text-white">
+                PAUSED
+              </h2>
               <p className="mt-2 text-center text-xs text-slate-400">
                 Esc / Enter 계속 · Q / F10 종료
               </p>
@@ -639,50 +679,29 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         )}
 
         {showTouch && !loading && !fatal && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 p-3 pb-24">
-            <div className="pointer-events-auto grid grid-cols-3 grid-rows-2 gap-1.5">
-              {TOUCH_DIRS.map((d) => (
-                <button
-                  key={d.code}
-                  type="button"
-                  className={`${d.className} flex h-12 w-12 items-center justify-center rounded-xl border border-white/20 bg-black/60 text-lg text-white backdrop-blur-sm active:bg-amber-400 active:text-black`}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    (e.target as HTMLButtonElement).setPointerCapture(e.pointerId);
-                    holdKey(d.code, true);
-                  }}
-                  onPointerUp={() => holdKey(d.code, false)}
-                  onPointerCancel={() => holdKey(d.code, false)}
-                  onPointerLeave={() => holdKey(d.code, false)}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-            <div className="pointer-events-auto flex flex-col gap-2">
-              <button
-                type="button"
-                className="rounded-lg border border-rose-400/40 bg-rose-600/90 px-3 py-2 text-xs font-bold text-white"
-                onClick={exitToMenu}
-              >
-                종료
-              </button>
-              <button
-                type="button"
-                className="flex h-16 w-16 items-center justify-center rounded-full border border-amber-400/50 bg-amber-400/90 font-display text-sm font-bold text-slate-900 shadow-lg active:scale-95"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  (e.target as HTMLButtonElement).setPointerCapture(e.pointerId);
-                  holdKey("ControlLeft", true);
-                }}
-                onPointerUp={() => holdKey("ControlLeft", false)}
-                onPointerCancel={() => holdKey("ControlLeft", false)}
-                onPointerLeave={() => holdKey("ControlLeft", false)}
-              >
-                FIRE
-              </button>
-            </div>
-          </div>
+          <>
+            <button
+              type="button"
+              className="pointer-events-auto absolute right-3 top-3 z-20 rounded-lg border border-rose-400/40 bg-rose-600/90 px-3 py-1.5 text-xs font-bold text-white"
+              onClick={exitToMenu}
+            >
+              종료
+            </button>
+            <TouchSticks
+              onMove={(vec) => {
+                const state = stateRef.current;
+                if (state) setMoveStick(state, vec);
+              }}
+              onAim={(vec) => {
+                const state = stateRef.current;
+                if (state) setAimStick(state, vec);
+              }}
+              onAimHeld={(down) => {
+                const state = stateRef.current;
+                if (state) setKey(state, "Mouse0", down);
+              }}
+            />
+          </>
         )}
       </div>
 

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { MapDef } from "@/data/maps";
-import { cliffHeight, rampDirection, sampleTerrainY } from "./heightfield";
+import {
+  cliffHeight,
+  cornerHeight,
+  rampDirection,
+  sampleTerrainY,
+  sculptedHeight,
+} from "./heightfield";
 
 function miniMap(elev: number[], ramps: boolean[]): MapDef {
   return {
@@ -81,11 +87,24 @@ describe("heightfield", () => {
     }
 
     const midX = 3 * 30 + 15;
-    const northY = 3 * 30 + 1;
-    const southY = 4 * 30 - 1;
-    const yNorth = sampleTerrainY(map, midX, northY);
-    const ySouth = sampleTerrainY(map, midX, southY);
-    expect(yNorth).toBeGreaterThan(ySouth);
+    const yNearHigh = sampleTerrainY(map, midX, 1 * 30 + 8);
+    const yMid = sampleTerrainY(map, midX, 3 * 30 + 15);
+    const yNearLow = sampleTerrainY(map, midX, 5 * 30 + 22);
+    expect(yNearHigh).toBeGreaterThan(yMid);
+    expect(yMid).toBeGreaterThan(yNearLow);
+    expect(yNearHigh).toBeGreaterThan(cliffHeight(30) * 0.45);
+    expect(yNearLow).toBeLessThan(cliffHeight(30) * 0.55);
+  });
+
+  it("ramp corners meet the plateau and the valley", () => {
+    const elev = [0, 0, 1, 0, 0, 1, 0, 0, 1];
+    const ramps = [false, true, false, false, true, false, false, true, false];
+    const map = miniMap(elev, ramps);
+    const H = cliffHeight(30);
+    expect(cornerHeight(map, 1, 1)).toBeCloseTo(0);
+    expect(cornerHeight(map, 2, 1)).toBeCloseTo(H);
+    expect(cornerHeight(map, 1, 2)).toBeCloseTo(0);
+    expect(cornerHeight(map, 2, 2)).toBeCloseTo(H);
   });
 
   it("N–S corridor with side flats still slopes toward the high rim", () => {
@@ -107,5 +126,37 @@ describe("heightfield", () => {
     const dir = rampDirection(map, 3, 3);
     expect(dir.dx).toBe(0);
     expect(dir.dy).toBe(1);
+  });
+
+  it("sculpted high interior stays up and valley stays down", () => {
+    const map = miniMap(
+      [1, 1, 1, 0, 0, 0, 0, 0, 0],
+      [false, false, false, false, false, false, false, false, false],
+    );
+    const H = cliffHeight(30);
+    expect(sculptedHeight(map, 15, 8)).toBeCloseTo(H);
+    expect(sculptedHeight(map, 45, 75)).toBeCloseTo(0);
+  });
+
+  it("sculpted cliff is a bank, not a hard step", () => {
+    const map = miniMap(
+      [1, 1, 1, 0, 0, 0, 0, 0, 0],
+      [false, false, false, false, false, false, false, false, false],
+    );
+    const H = cliffHeight(30);
+    const rim = sculptedHeight(map, 45, 28);
+    expect(rim).toBeGreaterThan(0);
+    expect(rim).toBeLessThan(H);
+    expect(sculptedHeight(map, 45, 32)).toBeCloseTo(0);
+  });
+
+  it("sculpted ramp still climbs toward high", () => {
+    const map = miniMap(
+      [0, 0, 1, 0, 0, 1, 0, 0, 1],
+      [false, true, false, false, true, false, false, true, false],
+    );
+    const y0 = sculptedHeight(map, 32, 45);
+    const y1 = sculptedHeight(map, 58, 45);
+    expect(y0).toBeLessThan(y1);
   });
 });

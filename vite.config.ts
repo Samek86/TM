@@ -129,6 +129,13 @@ export default defineConfig(({ command }) => ({
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
+    allowedHosts: true,
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 8080,
+    strictPort: true,
+    allowedHosts: true,
   },
   resolve: { tsconfigPaths: true },
   plugins: [
@@ -137,7 +144,12 @@ export default defineConfig(({ command }) => ({
     authPopupPlugin(),
     tailwindcss(),
     tanstackStart(),
-    ...(command === "build" ? [nitro({ preset: "vercel" })] : []),
+    // Vercel sets VERCEL=1. Local `vite build` + `vite preview` need the
+    // default TanStack server at dist/server/server.js — the Vercel preset
+    // only writes .vercel/output, which preview cannot load.
+    ...(command === "build" && process.env.VERCEL
+      ? [nitro({ preset: "vercel" })]
+      : []),
     viteReact(),
   ],
 }));

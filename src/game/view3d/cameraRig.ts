@@ -2,7 +2,7 @@ import { engineToThree } from "./coords";
 
 export const CAMERA_PITCH_RAD = Math.PI / 6;
 export const MAX_SHAKE = 6;
-export const MAX_DPR = 1.5;
+export const MAX_DPR = 1.25;
 
 export function computeOrthoHalfExtents(
   cssW: number,

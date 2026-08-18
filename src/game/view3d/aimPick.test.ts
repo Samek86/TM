@@ -92,4 +92,44 @@ describe("pickAimOnHeightfield", () => {
     expect(Math.abs(hit!.x - expectedX)).toBeLessThan(30);
     expect(Math.abs(hit!.x - target.x)).toBeGreaterThan(120);
   });
+
+  it("still reaches ground that sits behind a negative near plane", () => {
+    const halfW = 360;
+    const halfH = 202.5;
+    const camera = new THREE.OrthographicCamera(
+      -halfW,
+      halfW,
+      halfH,
+      -halfH,
+      -2500,
+      4000,
+    );
+    const target = { x: 400, y: 0, z: 400 };
+    const dist = 420;
+    camera.position.set(
+      target.x,
+      target.y + dist * Math.sin(CAMERA_PITCH_RAD),
+      target.z + dist * Math.cos(CAMERA_PITCH_RAD),
+    );
+    camera.lookAt(target.x, target.y, target.z);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
+
+    const cols = 28;
+    const rows = 28;
+    const map = miniMap(
+      new Array(cols * rows).fill(0),
+      new Array(cols * rows).fill(false),
+    );
+    map.width = cols * 30;
+    map.height = rows * 30;
+    map.cols = cols;
+    map.rows = rows;
+
+    // Bottom of the screen: ground there is nearer than the camera plane.
+    const { origin, dir } = orthoAimRay(camera, 0, -1);
+    const hit = pickAimOnHeightfield(map, origin, dir);
+    expect(hit).not.toBeNull();
+    expect(hit!.y).toBeGreaterThan(target.z);
+  });
 });
