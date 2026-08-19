@@ -12,6 +12,26 @@ export const ORIENTED_WEAPON_IDS = new Set([
   1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 ]);
 
+/**
+ * Engine heading painted in `yaw_00` (0 = nose east / +X).
+ * Several missile sheets were authored nose-left, so they need a π flip
+ * before the card is yawed onto the flight vector.
+ */
+export const SHOT_BASE_HEADING: Readonly<Record<number, number>> = {
+  13: Math.PI,
+  14: Math.PI,
+  15: Math.PI,
+};
+
+export function shotBaseHeading(weaponId: number): number {
+  return SHOT_BASE_HEADING[weaponId] ?? 0;
+}
+
+/** Mesh yaw so the painted nose tracks `flightAngle` (engine, Y-down). */
+export function shotCardHeading(weaponId: number, flightAngle: number): number {
+  return flightAngle - shotBaseHeading(weaponId);
+}
+
 export function shotYawFrameIndex(angle: number, frameCount: number): number {
   const count = Math.max(1, frameCount);
   const turn = Math.PI * 2;

@@ -1,8 +1,13 @@
 import * as THREE from "three";
+import { getWeaponById } from "@/data/weapons";
 import { getPlayer, type Bullet, type GameState } from "@/game/engine";
 import { sculptedHeight } from "@/game/heightfield";
+import { opaqueBounds } from "@/game/missileDraw";
 import { engineToThree } from "./coords";
-import { shotYawFrameIndex, type OrdnanceArtKit } from "./ordnanceArt";
+import {
+  shotCardHeading,
+  type OrdnanceArtKit,
+} from "./ordnanceArt";
 
 export type LayerHandle = {
   mesh: THREE.Object3D;
@@ -16,7 +21,12 @@ const PICKUP_WORLD = 52;
  * Visual-only world lengths. The painted frames include transparent padding,
  * so these compensate for their visible silhouette on phone-sized screens.
  * Cruise/nuclear ordnance may approach a craft size but never exceed it.
+ *
+ * Slim shots (missiles, beams, poke/pierce bolts) get an extra 1.5× — their
+ * painted glyphs sit in a lot of empty frame and otherwise read as specks.
  */
+export const MISSILE_VISUAL_MUL = 1.5;
+
 export const SHOT_WORLD_BY_WEAPON: Readonly<Record<number, number>> = {
   1: 12,
   2: 14,
@@ -41,11 +51,86 @@ export const SHOT_WORLD_BY_WEAPON: Readonly<Record<number, number>> = {
   21: 14,
 };
 
+function isSlimShot(weaponId: number): boolean {
+  const w = getWeaponById(weaponId);
+  return (
+    w.ammo === "missile" ||
+    w.ammo === "beam" ||
+    w.style === "pierce" ||
+    w.style === "poke" ||
+    w.style === "twin_beam"
+  );
+}
+
+/** Padded energy/dart art — fit the glyph, not the empty 512² frame. */
+function needsOpaqueFit(weaponId: number): boolean {
+  const w = getWeaponById(weaponId);
+  return (
+    w.ammo === "beam" ||
+    w.style === "pierce" ||
+    w.style === "poke" ||
+    w.style === "twin_beam" ||
+    w.style === "dart" ||
+    w.style === "scatter"
+  );
+}
+
 export function shotWorldSize(weaponId: number, drawScale = 1): number {
+  const visualMul = isSlimShot(weaponId) ? MISSILE_VISUAL_MUL : 1;
   return Math.min(
     42,
-    (SHOT_WORLD_BY_WEAPON[weaponId] ?? 12) * Math.max(0.82, drawScale),
+    (SHOT_WORLD_BY_WEAPON[weaponId] ?? 12) *
+      visualMul *
+      Math.max(0.82, drawScale),
   );
+}
+
+/** Scale a 1×1 card so `world` is the opaque silhouette's longest side. */
+export function cardScaleForOpaque(
+  world: number,
+  imageW: number,
+  imageH: number,
+  opaqueW: number,
+  opaqueH: number,
+): { x: number; y: number } {
+  const largest = Math.max(opaqueW, opaqueH, 1);
+  return {
+    x: (world * Math.max(1, imageW)) / largest,
+    y: (world * Math.max(1, imageH)) / largest,
+  };
+}
+
+type OpaqueSpan = { w: number; h: number };
+
+function measureImageOpaque(image: unknown): OpaqueSpan | null {
+  if (typeof document === "undefined" || !image) return null;
+  const img = image as { width?: number; height?: number };
+  const width = Math.max(0, Number(img.width) || 0);
+  const height = Math.max(0, Number(img.height) || 0);
+  if (!width || !height) return null;
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(image as CanvasImageSource, 0, 0);
+    const { data } = ctx.getImageData(0, 0, width, height);
+    const box = opaqueBounds(data, width, height);
+    if (!box) return null;
+    return { w: box.w, h: box.h };
+  } catch {
+    return null;
+  }
+}
+
+function textureOpaqueSpan(texture: THREE.Texture, fallback: OpaqueSpan): OpaqueSpan {
+  const cached = texture.userData.opaqueSpan as OpaqueSpan | undefined;
+  if (cached && cached.w > 0 && cached.h > 0) return cached;
+  const measured = measureImageOpaque(texture.image);
+  const span = measured ?? fallback;
+  texture.userData.opaqueSpan = span;
+  return span;
 }
 
 function makeCard(name: string): THREE.Mesh {
@@ -68,6 +153,7 @@ function setCard(
   mesh: THREE.Mesh,
   texture: THREE.Texture,
   world: number,
+  fitOpaque = false,
 ): void {
   const material = mesh.material as THREE.MeshBasicMaterial;
   if (material.map !== texture) {
@@ -78,8 +164,11 @@ function setCard(
     { width?: number; height?: number } | undefined;
   const width = Math.max(1, Number(image?.width) || 1);
   const height = Math.max(1, Number(image?.height) || 1);
-  const largest = Math.max(width, height);
-  mesh.scale.set((world * width) / largest, (world * height) / largest, 1);
+  const span = fitOpaque
+    ? textureOpaqueSpan(texture, { w: width, h: height })
+    : { w: width, h: height };
+  const scale = cardScaleForOpaque(world, width, height, span.w, span.h);
+  mesh.scale.set(scale.x, scale.y, 1);
   mesh.visible = true;
 }
 
@@ -118,16 +207,22 @@ export function createProjectileLayer(
         if (!b.alive) continue;
         if (shotN >= maxShots) continue;
         const frames = art?.shots[b.weaponId];
-        const texture = frames?.[shotYawFrameIndex(b.angle, frames.length)];
+        // Side-view frame (yaw_00). The 16-way sheets do not share a compass:
+        // some nose east, some west, some advance opposite engine Y-down.
+        // Yawing this one card onto the flight vector keeps the nose honest.
+        const texture = frames?.[0];
         if (!texture) continue;
         const h = hover(b, sculptedHeight(map, b.x, b.y));
         const pos = engineToThree(b.x, b.y, h);
         const card = cards[shotN]!;
         card.position.set(pos.x, pos.y, pos.z);
-        setCard(card, texture, shotWorldSize(b.weaponId, b.drawScale || 1));
-        // A 16-way painting already contains its heading; rotating it again
-        // would make the east/north/west artwork drift out of sync.
-        layFlat(card, frames.length > 1 ? 0 : b.angle);
+        setCard(
+          card,
+          texture,
+          shotWorldSize(b.weaponId, b.drawScale || 1),
+          needsOpaqueFit(b.weaponId),
+        );
+        layFlat(card, shotCardHeading(b.weaponId, b.angle));
         shotN += 1;
       }
     },

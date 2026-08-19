@@ -3,6 +3,7 @@ import * as THREE from "three";
 import type { MapDef } from "@/data/maps";
 import type { Bullet, GameState, Pickup } from "@/game/engine";
 import {
+  cardScaleForOpaque,
   createPickupLayer,
   createProjectileLayer,
   shotWorldSize,
@@ -175,7 +176,7 @@ describe("projectiles", () => {
     layer.dispose();
   });
 
-  it("selects a different painted yaw frame as a missile changes heading", () => {
+  it("yaws the side-view card with the missile's flight heading", () => {
     const frames = Array.from({ length: 16 }, () => new THREE.Texture());
     const kit: OrdnanceArtKit = {
       bodies: {},
@@ -186,9 +187,29 @@ describe("projectiles", () => {
     layer.sync(miniState({ bullets: [bullet({ angle: 0 })] }));
     const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
     expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[0]);
-    layer.sync(miniState({ bullets: [bullet({ angle: Math.PI })] }));
-    expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[8]);
-    expect(Math.abs(card.rotation.z)).toBe(0);
+    expect(card.rotation.z).toBeCloseTo(0);
+    layer.sync(miniState({ bullets: [bullet({ angle: Math.PI / 2 })] }));
+    expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[0]);
+    expect(card.rotation.z).toBeCloseTo(-Math.PI / 2);
+    layer.dispose();
+  });
+
+  it("spins a west-facing Tomahawk so it flies nose-first", () => {
+    const frames = Array.from({ length: 16 }, () => new THREE.Texture());
+    const kit: OrdnanceArtKit = {
+      bodies: {},
+      shots: { 15: frames },
+      items: [],
+    };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [bullet({ weaponId: 15, style: "cruise", angle: 0 })],
+      }),
+    );
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[0]);
+    expect(Math.abs(card.rotation.z)).toBeCloseTo(Math.PI);
     layer.dispose();
   });
 
@@ -200,13 +221,82 @@ describe("projectiles", () => {
   });
 
   it("compensates padded painted shots while capping heavy ordnance", () => {
-    expect(shotWorldSize(12)).toBeCloseTo(16);
-    expect(shotWorldSize(13)).toBeCloseTo(16);
-    expect(shotWorldSize(19)).toBeCloseTo(16);
-    expect(shotWorldSize(14)).toBeCloseTo(22);
+    // Missiles are 1.5× their table length so the silhouette reads in play.
+    expect(shotWorldSize(12)).toBeCloseTo(24);
+    expect(shotWorldSize(13)).toBeCloseTo(24);
+    expect(shotWorldSize(19)).toBeCloseTo(24);
+    expect(shotWorldSize(14)).toBeCloseTo(33);
     expect(shotWorldSize(11)).toBeCloseTo(22);
-    expect(shotWorldSize(15)).toBeCloseTo(34);
+    expect(shotWorldSize(15)).toBeCloseTo(42);
     expect(shotWorldSize(16)).toBeLessThanOrEqual(42);
+  });
+
+  it("leaves chunky non-laser shots at their table world length", () => {
+    expect(shotWorldSize(1)).toBeCloseTo(12);
+    expect(shotWorldSize(8)).toBeCloseTo(20);
+    expect(shotWorldSize(11)).toBeCloseTo(22);
+  });
+
+  it("enlarges laser-like bolts the same 1.5× as missiles", () => {
+    expect(shotWorldSize(6)).toBeCloseTo(24);
+    expect(shotWorldSize(17)).toBeCloseTo(24);
+    expect(shotWorldSize(2)).toBeCloseTo(21);
+    expect(shotWorldSize(4)).toBeCloseTo(18);
+  });
+
+  it("maps world length onto the opaque silhouette, not the padded frame", () => {
+    // Laser yaw art is 512² with a ~180px bolt. The card must grow so that
+    // bolt, not the empty frame, is `world` units long.
+    const scale = cardScaleForOpaque(16, 512, 512, 180, 102);
+    expect(scale.x).toBeCloseTo((16 * 512) / 180);
+    expect(scale.y).toBeCloseTo((16 * 512) / 180);
+    const filled = cardScaleForOpaque(16, 256, 256, 227, 58);
+    expect(filled.x).toBeCloseTo((16 * 256) / 227);
+  });
+
+  it("applies opaque-span scale to a live laser card", () => {
+    const texture = new THREE.Texture();
+    texture.image = { width: 512, height: 512 };
+    texture.userData.opaqueSpan = { w: 180, h: 102 };
+    const kit: OrdnanceArtKit = { bodies: {}, shots: { 6: [texture] }, items: [] };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [bullet({ weaponId: 6, ammo: "beam", drawScale: 1 })],
+      }),
+    );
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    const world = shotWorldSize(6);
+    expect(card.visible).toBe(true);
+    expect(card.scale.x).toBeCloseTo((world * 512) / 180);
+    layer.dispose();
+  });
+
+  it("does not opaque-fit fat cruise cards", () => {
+    const texture = new THREE.Texture();
+    texture.image = { width: 512, height: 512 };
+    texture.userData.opaqueSpan = { w: 239, h: 109 };
+    const kit: OrdnanceArtKit = {
+      bodies: {},
+      shots: { 15: [texture] },
+      items: [],
+    };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [
+          bullet({
+            weaponId: 15,
+            ammo: "missile",
+            style: "cruise",
+            drawScale: 1,
+          }),
+        ],
+      }),
+    );
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect(card.scale.x).toBeCloseTo(shotWorldSize(15));
+    layer.dispose();
   });
 
   it("registers every traveling projectile for alpha yaw sprites", () => {
