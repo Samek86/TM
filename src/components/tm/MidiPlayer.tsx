@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { playMidiUrl, stopMidi, isMidiPlaying } from "@/lib/audio/midiPlayer";
+import {
+  isBgmPlaying,
+  oggForMidiPath,
+  playBgm,
+  stopBgm,
+} from "@/lib/audio/bgm";
 
 interface Props {
   src: string;
@@ -24,7 +29,7 @@ export function MidiPlayer({
   const [duration, setDuration] = useState(0);
 
   const stop = useCallback(() => {
-    stopMidi();
+    stopBgm();
     setStatus("idle");
   }, []);
 
@@ -32,6 +37,14 @@ export function MidiPlayer({
     setStatus("loading");
     setError(null);
     try {
+      const ogg = oggForMidiPath(src);
+      if (ogg) {
+        await playBgm(ogg, { volume: 0.42 });
+        setDuration(0);
+        setStatus("playing");
+        return;
+      }
+      const { playMidiUrl } = await import("@/lib/audio/midiPlayer");
       const handle = await playMidiUrl(src, { loop, volumeDb: -6 });
       setDuration(handle.duration);
       setStatus("playing");
@@ -42,9 +55,8 @@ export function MidiPlayer({
   }, [src, loop]);
 
   useEffect(() => {
-    // Stop when src changes / unmount
     return () => {
-      stopMidi();
+      stopBgm();
     };
   }, [src]);
 
@@ -56,7 +68,7 @@ export function MidiPlayer({
   useEffect(() => {
     if (status !== "playing") return;
     const id = window.setInterval(() => {
-      if (!isMidiPlaying()) setStatus("idle");
+      if (!isBgmPlaying()) setStatus("idle");
     }, 500);
     return () => clearInterval(id);
   }, [status]);
@@ -67,11 +79,11 @@ export function MidiPlayer({
     >
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider text-tm-dim">
-          MIDI BGM
+          BGM
         </p>
         <p className="font-mono text-sm text-tm-fg">{title ?? src.split("/").pop()}</p>
         <p className="mt-1 text-[11px] text-tm-muted">
-          Tone.js 앙상블(서브·베이스·패드·플럭·브라스·건반·리드) + 자동 베이스 보강. 원곡 멜로디·타이밍 유지.
+          원곡 MIDI를 미리 뽑아 둔 OGG 루프. 전투 중에도 끊기지 않습니다.
           {duration > 0 ? ` · ${duration.toFixed(1)}s` : ""}
         </p>
       </div>

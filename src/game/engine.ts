@@ -228,6 +228,8 @@ export interface GameState {
   /**
    * Mouse / touch aim point in world space.
    * Player facing + shots use this (continuous angle, not 8-way).
+   * While the mouse is still, the engine translates this with the craft so
+   * heading stays put (a frozen map pin would swing the nose as you fly).
    */
   pointer: { x: number; y: number; active: boolean };
   /**
@@ -952,7 +954,7 @@ function playShootSfx(prefer: number, wid: number): void {
   if (sfxMuted) return;
   const run = (mod: typeof import("@/lib/audio/sfx")) => {
     void mod.resumeAudio();
-    const vol = mod.SHOOT_VOLUME ?? 0.52;
+    const vol = mod.SHOOT_VOLUME ?? 0.26;
     const rate = 0.94 + Math.random() * 0.12;
     // Prefer combat pack, then original client WAV
     for (const n of [prefer, wid, 1, 6]) {
@@ -1835,6 +1837,12 @@ function updatePlayer(state: GameState, pilot: Pilot, dt: number): void {
     dt,
     (x0, y0, x1, y1) => canFlyTo(state, x0, y0, x1, y1, padFor(pilot)),
   );
+  // Mouse aim is a heading, not a world pin. Without this, a still cursor
+  // leaves pointer frozen on the map and the nose swings as the craft flies.
+  if (!aimStick && state.pointer.active) {
+    state.pointer.x += stepped.x - pilot.x;
+    state.pointer.y += stepped.y - pilot.y;
+  }
   pilot.x = stepped.x;
   pilot.y = stepped.y;
   pilot.vx = stepped.vx;

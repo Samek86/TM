@@ -29,6 +29,8 @@ interface Props {
   vultureId: VultureId;
   active: boolean;
   onExit?: () => void;
+  /** Browser Fullscreen API on match start. False = stay in the tab (창 모드). */
+  startFullscreen?: boolean;
 }
 
 function readQuality() {
@@ -81,8 +83,16 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   });
 }
 
-export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
+export function GameCanvas({
+  mapId,
+  vultureId,
+  active,
+  onExit,
+  startFullscreen = true,
+}: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
+  const startFullscreenRef = useRef(startFullscreen);
+  startFullscreenRef.current = startFullscreen;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<GameState | null>(null);
   const viewRef = useRef<PlayView | null>(null);
@@ -119,7 +129,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
 
   const exitToMenu = useCallback(() => {
     void leaveBrowserFullscreen();
-    void import("@/lib/audio/midiPlayer").then(({ stopMidi }) => stopMidi());
+    void import("@/lib/audio/bgm").then(({ stopBgm }) => stopBgm());
     onExitRef.current?.();
   }, []);
 
@@ -384,9 +394,11 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         }
       };
 
-      // --- Phase 0: fullscreen + layout settle (prevents mid-game resize hitch) ---
+      // --- Phase 0: optional fullscreen + layout settle ---
       report("화면 준비…", 2);
-      await enterBrowserFullscreen(shell);
+      if (startFullscreenRef.current) {
+        await enterBrowserFullscreen(shell);
+      }
       resize();
       await waitFrames(8);
       resize();
@@ -505,9 +517,9 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       raf = requestAnimationFrame(loop);
 
       if (sfxModule) {
-        void import("@/lib/audio/midiPlayer")
-          .then(({ isMidiPlaying }) => {
-            if (cancelled || isMidiPlaying()) return;
+        void import("@/lib/audio/bgm")
+          .then(({ isBgmPlaying }) => {
+            if (cancelled || isBgmPlaying()) return;
             return sfxModule!.startZoneBgm(mapId);
           })
           .catch((e) => console.warn("[game] BGM skip", e));
@@ -524,7 +536,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       viewRef.current = null;
       view = null;
       stateRef.current = null;
-      void import("@/lib/audio/midiPlayer").then(({ stopMidi }) => stopMidi());
+      void import("@/lib/audio/bgm").then(({ stopBgm }) => stopBgm());
       void leaveBrowserFullscreen();
       ro?.disconnect();
       window.removeEventListener("resize", onWindowResize);

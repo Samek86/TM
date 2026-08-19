@@ -14,6 +14,12 @@ import { MAP_CATALOG_COUNT } from "@/lib/map";
 import { MidiPlayer } from "@/components/tm/MidiPlayer";
 import { CraftCardArt, MapPreview } from "@/components/tm/LobbyPreviews";
 import { BGM } from "@/lib/audio/sfx";
+import {
+  browserStorage,
+  readDisplayMode,
+  writeDisplayMode,
+  type DisplayMode,
+} from "@/game/displayMode";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -26,11 +32,14 @@ function HomePage() {
   const [playing, setPlaying] = useState(false);
   const [vultureId, setVultureId] = useState<VultureId>("born_armor");
   const [mapId, setMapId] = useState("jade_basin");
+  const [displayMode, setDisplayMode] = useState<DisplayMode>(() =>
+    readDisplayMode(browserStorage()),
+  );
 
   const exitGame = useCallback(() => {
     setPlaying(false);
     setTab("play");
-    void import("@/lib/audio/midiPlayer").then(({ stopMidi }) => stopMidi());
+    void import("@/lib/audio/bgm").then(({ stopBgm }) => stopBgm());
   }, []);
 
   // Prefetch Tone + MIDI while user picks craft/map so BGM can start instantly on play
@@ -60,7 +69,7 @@ function HomePage() {
             TACTICS MERCENARY
           </h1>
           <p className="mt-1 text-sm text-tm-muted">
-            완전 부활 · 3D 아레나 · 미사일·이펙트 SPR · tactics MIDI BGM · 21종 무기
+            완전 부활 · 3D 아레나 · 미사일·이펙트 SPR · tactics BGM · 21종 무기
           </p>
         </div>
         <nav className="flex flex-wrap gap-2">
@@ -162,12 +171,44 @@ function HomePage() {
                   ))}
                 </div>
 
+                <div className="mt-6">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-tm-dim">
+                    화면
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        ["fullscreen", "전체화면"],
+                        ["window", "창 모드"],
+                      ] as const
+                    ).map(([mode, label]) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => {
+                          setDisplayMode(mode);
+                          writeDisplayMode(mode, browserStorage());
+                        }}
+                        className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+                          displayMode === mode
+                            ? "border-tm-cyan bg-tm-cyan/10 text-tm-fg"
+                            : "border-tm-border bg-tm-elevated/40 text-tm-muted hover:text-tm-fg"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={startGame}
-                  className="mt-6 w-full rounded-xl bg-tm-accent py-3.5 font-display text-sm font-bold tracking-wider text-tm-void shadow-[0_0_24px_rgba(240,180,41,0.25)] hover:brightness-110"
+                  className="mt-3 w-full rounded-xl bg-tm-accent py-3.5 font-display text-sm font-bold tracking-wider text-tm-void shadow-[0_0_24px_rgba(240,180,41,0.25)] hover:brightness-110"
                 >
-                  CONNECT · 전체화면 전투 시작
+                  CONNECT ·{" "}
+                  {displayMode === "fullscreen"
+                    ? "전체화면 전투 시작"
+                    : "창 모드 전투 시작"}
                 </button>
                 <p className="mt-2 text-center text-[11px] text-tm-dim">
                   오르막으로만 고지 등반 · 절벽 하강 가능 · Esc 일시정지 · Q 종료
@@ -212,16 +253,16 @@ function HomePage() {
                 </div>
                 <MidiPlayer
                   src={BGM.tactics1}
-                  title="tactics1.mid — 로비 BGM"
+                  title="tactics1 — 로비 BGM"
                   loop
                 />
               </section>
             </div>
           ) : (
             <div className="rounded-2xl border border-tm-border bg-tm-panel/60 p-6 text-center text-sm text-tm-muted">
-              <p className="font-display text-tm-accent-fg">전투 중 · 전체화면</p>
+              <p className="font-display text-tm-accent-fg">전투 중</p>
               <p className="mt-2 text-xs">
-                게임이 전체 화면으로 실행 중입니다. 종료하려면 상단{" "}
+                게임이 실행 중입니다. 종료하려면 상단{" "}
                 <strong className="text-tm-danger">게임 종료</strong> 또는{" "}
                 <kbd className="rounded bg-tm-elevated px-1.5 py-0.5 font-mono text-tm-fg">
                   Q
@@ -247,6 +288,7 @@ function HomePage() {
           vultureId={vultureId}
           active={playing}
           onExit={exitGame}
+          startFullscreen={displayMode === "fullscreen"}
         />
       )}
 

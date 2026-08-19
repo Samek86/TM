@@ -16,6 +16,7 @@ function getCtx(): AudioContext {
 }
 
 export async function resumeAudio(): Promise<void> {
+  if (typeof window === "undefined") return;
   const c = getCtx();
   if (c.state === "suspended") await c.resume();
 }
@@ -76,10 +77,10 @@ export async function playSfxUrl(
 }
 
 const SOUND = "/archive/client/extracted/sound";
-/** Softened CC0 combat fire SFX (Kenney Digital Audio, processed + loudnorm). */
+/** Aircraft-style missile / cannon one-shots (procedural, loudnorm). */
 const COMBAT = "/sfx/combat";
 /** Cache-bust after re-export so browsers pick up louder masters. */
-const COMBAT_VER = "3";
+const COMBAT_VER = "4";
 
 /** SFX paths — fire uses modern soft pack; UI/world keep original client pack. */
 export const SFX = {
@@ -102,7 +103,7 @@ export const SFX = {
 } as const;
 
 /** Weapon fire gain (files are loudnorm'd; this is the final bus fader). */
-export const SHOOT_VOLUME = 0.52;
+export const SHOOT_VOLUME = 0.26;
 /** Damage-taken gain */
 export const HIT_VOLUME = 0.42;
 
@@ -140,49 +141,45 @@ export function bgmWavFallback(_mapId?: string): string {
   return SFX.interback;
 }
 
-const BGM_VOLUME_DB = -6.7;
-const BGM_WAV_VOLUME = 0.55;
+const BGM_OGG_VOLUME = 0.4;
 
 /**
- * Prefetch Tone.js / MIDI parser / map tracks while user is still on the menu.
- * Safe to call without a gesture (won't fully unlock audio until play).
+ * Prefetch the ogg loops while the user is still on the menu.
+ * Safe without a gesture (won't unlock playback until play()).
  */
 export async function warmZoneBgm(mapId?: string): Promise<void> {
   try {
-    const { warmBgmEngine } = await import("./midiPlayer");
+    const { warmBgm, bgmFileForMap } = await import("./bgm");
     const urls = mapId
-      ? [bgmForMap(mapId)]
-      : [BGM.tactics1, BGM.tactics2, BGM.tactics4, BGM.tactics5];
-    await warmBgmEngine(urls);
+      ? [bgmFileForMap(mapId)]
+      : [
+          "/sfx/bgm/tactics1.ogg",
+          "/sfx/bgm/tactics2.ogg",
+          "/sfx/bgm/tactics4.ogg",
+          "/sfx/bgm/tactics5.ogg",
+        ];
+    warmBgm(urls);
   } catch (e) {
     console.warn("[audio] warm BGM skip", e);
   }
 }
 
 /**
- * Start zone BGM from a user gesture when possible.
- * MIDI first, then interback.wav loop.
+ * Start zone BGM from a user gesture.
+ * Pre-rendered ogg loop — not live MIDI synth.
  * Idempotent: if the same track is already playing, does not restart.
  */
-export async function startZoneBgm(mapId: string): Promise<"midi" | "wav" | "none"> {
-  const midiUrl = bgmForMap(mapId);
+export async function startZoneBgm(
+  mapId: string,
+): Promise<"midi" | "wav" | "none"> {
   try {
-    // Parallel resume + midi module (module often already warm from menu)
-    const [, midiMod] = await Promise.all([
-      resumeAudio(),
-      import("./midiPlayer"),
-    ]);
-    // Already on the right track — keep going (avoid silence from restart)
-    if (
-      midiMod.isMidiPlaying() &&
-      midiMod.getPlayingUrl() === midiUrl
-    ) {
-      return "midi";
-    }
-    return await midiMod.playBgmWithFallback(midiUrl, bgmWavFallback(mapId), {
-      volumeDb: BGM_VOLUME_DB,
-      wavVolume: BGM_WAV_VOLUME,
-    });
+    const { playBgm, isBgmPlaying, getBgmUrl, bgmFileForMap } =
+      await import("./bgm");
+    await resumeAudio();
+    const url = bgmFileForMap(mapId);
+    if (isBgmPlaying() && getBgmUrl() === url) return "wav";
+    await playBgm(url, { volume: BGM_OGG_VOLUME });
+    return "wav";
   } catch (e) {
     console.warn("[audio] all BGM failed", e);
     return "none";

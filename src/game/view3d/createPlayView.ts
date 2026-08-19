@@ -5,7 +5,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { SMAAPass } from "three/addons/postprocessing/SMAAPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { qualityProfile, type QualityProfile } from "./quality";
+import { qualityProfile, resolvePixelRatio, type QualityProfile } from "./quality";
 import type { MapDef } from "@/data/maps";
 import type { VultureId } from "@/data/weapons";
 import { getPlayer, type GameState } from "@/game/engine";
@@ -181,7 +181,12 @@ export function createPlayView(
     resize(cssW, cssH, dpr, phoneLike = false) {
       cssWidth = Math.max(1, cssW);
       cssHeight = Math.max(1, cssH);
-      const ratio = Math.min(dpr, quality.maxDpr, MAX_DPR);
+      const ratio = resolvePixelRatio(
+        cssW,
+        cssH,
+        dpr,
+        Math.min(quality.maxDpr, MAX_DPR),
+      );
       renderer.setPixelRatio(ratio);
       renderer.setSize(cssW, cssH, false);
       composer?.setPixelRatio(ratio);

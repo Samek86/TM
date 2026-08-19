@@ -6,6 +6,7 @@
  * Pitches / timing / durations of original notes stay intact.
  */
 import * as Tone from "tone";
+import { stopBgm } from "./bgm";
 
 type MidiNote = {
   time: number;
@@ -487,6 +488,7 @@ function enrichWithBass(events: PlayEv[]): PlayEv[] {
 
 /** Stop any currently scheduled MIDI / WAV BGM. */
 export function stopMidi(): void {
+  stopBgm();
   stopWavFallback();
   if (activePart) {
     try {

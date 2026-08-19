@@ -1,16 +1,16 @@
 Combat weapon SFX (shoot*.wav)
 ================================
 
-Source pack: Kenney "Digital Audio"
-  https://kenney.nl/assets/digital-audio
-  License: Creative Commons CC0 1.0 (public domain dedication)
-  https://creativecommons.org/publicdomain/zero/1.0/
+Procedural aircraft-style missile / cannon one-shots (revival build).
+  - Layered ignition thump + swept pink-noise whoosh + engine hiss
+  - Variants per weapon class (cannon / dart / cruise / nuke / cloud)
+  - ffmpeg loudnorm → mono 44.1 kHz WAV
+  - Generator: scripts/render-missile-sfx.mjs
 
-Processing (revival build):
-  - Converted OGG → mono 44.1 kHz WAV
-  - High/low-pass filter, light compression
-  - Reduced gain, short fade-in/out, tempo variants per weapon
-  - Output: public/sfx/combat/shoot*.wav
+BGM loops (public/sfx/bgm/tactics*.ogg)
+=======================================
+Original client MIDI (tactics1/2/4/5.mid) bounced offline so the play
+loop never runs Tone.js. Generator: scripts/render-bgm.mjs
 
 Original 1999 client WAVs remain under public/archive/extracted/sound/
 (for archive fidelity; not used for in-game fire SFX anymore).
