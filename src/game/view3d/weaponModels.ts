@@ -13,29 +13,28 @@ type WeaponAsset = {
   shotLength: number;
 };
 
-const ASSET_BY_ID: Record<number, WeaponAsset> = {
-  1: { slug: "vulcan", bodyLength: 28, shotLength: 8 },
-  2: { slug: "ati-gun", bodyLength: 28, shotLength: 10 },
-  3: { slug: "em-gun", bodyLength: 30, shotLength: 12 },
-  4: { slug: "sorcerer-cannon", bodyLength: 27, shotLength: 9 },
-  5: { slug: "vulcan", bodyLength: 28, shotLength: 8 },
-  6: { slug: "energy", bodyLength: 27, shotLength: 12 },
-  7: { slug: "energy", bodyLength: 29, shotLength: 13 },
-  8: { slug: "energy", bodyLength: 32, shotLength: 14 },
-  9: { slug: "vulcan", bodyLength: 28, shotLength: 8 },
-  10: { slug: "fire-bomb", bodyLength: 22, shotLength: 10 },
-  11: { slug: "fire-bomb", bodyLength: 26, shotLength: 16 },
-  12: { slug: "stinger", bodyLength: 30, shotLength: 17 },
-  13: { slug: "stinger", bodyLength: 30, shotLength: 15 },
-  14: { slug: "tow", bodyLength: 31, shotLength: 18 },
-  15: { slug: "tomahawk", bodyLength: 34, shotLength: 20 },
-  16: { slug: "fire-bomb", bodyLength: 31, shotLength: 23 },
-  17: { slug: "energy", bodyLength: 27, shotLength: 12 },
-  18: { slug: "em-gun", bodyLength: 28, shotLength: 13 },
-  19: { slug: "stinger", bodyLength: 30, shotLength: 15 },
-  20: { slug: "em-gun", bodyLength: 28, shotLength: 14 },
-  21: { slug: "vulcan", bodyLength: 28, shotLength: 8 },
-};
+const BODY_LENGTHS = [
+  28, 28, 30, 27, 29, 29, 29, 32, 28, 24, 26, 30, 31, 31, 34, 34, 29, 29, 31,
+  30, 29,
+];
+const SHOT_LENGTHS = [
+  8, 10, 12, 9, 9, 12, 13, 14, 9, 10, 16, 17, 15, 18, 20, 23, 13, 13, 15, 14,
+  10,
+];
+export const WEAPON_MODEL_ASSETS: Record<number, WeaponAsset> =
+  Object.fromEntries(
+    BODY_LENGTHS.map((bodyLength, index) => {
+      const id = index + 1;
+      return [
+        id,
+        {
+          slug: String(id).padStart(2, "0"),
+          bodyLength,
+          shotLength: SHOT_LENGTHS[index]!,
+        },
+      ];
+    }),
+  );
 
 function dressMaterials(root: THREE.Object3D): void {
   root.traverse((object) => {
@@ -105,7 +104,10 @@ export async function loadWeaponModels(): Promise<WeaponModelKit> {
   const loader = new GLTFLoader();
   const kit: WeaponModelKit = { bodies: {}, shots: {} };
   const unique = new Map(
-    Object.entries(ASSET_BY_ID).map(([id, asset]) => [asset.slug, asset]),
+    Object.entries(WEAPON_MODEL_ASSETS).map(([id, asset]) => [
+      asset.slug,
+      asset,
+    ]),
   );
   const loaded = new Map<
     string,
@@ -120,7 +122,7 @@ export async function loadWeaponModels(): Promise<WeaponModelKit> {
       loaded.set(asset.slug, { body, shot });
     }),
   );
-  for (const [idString, asset] of Object.entries(ASSET_BY_ID)) {
+  for (const [idString, asset] of Object.entries(WEAPON_MODEL_ASSETS)) {
     const source = loaded.get(asset.slug);
     if (source?.body)
       kit.bodies[Number(idString)] = fitWeaponModel(

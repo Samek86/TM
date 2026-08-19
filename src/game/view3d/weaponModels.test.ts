@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { cloneWeaponModel, fitWeaponModel } from "./weaponModels";
+import {
+  cloneWeaponModel,
+  fitWeaponModel,
+  WEAPON_MODEL_ASSETS,
+} from "./weaponModels";
 
 function sourceModel(): THREE.Group {
   const root = new THREE.Group();
@@ -14,6 +18,13 @@ function sourceModel(): THREE.Group {
 }
 
 describe("weaponModels", () => {
+  it("registers separate body and shot assets for all 21 weapons", () => {
+    expect(Object.keys(WEAPON_MODEL_ASSETS)).toHaveLength(21);
+    expect(
+      new Set(Object.values(WEAPON_MODEL_ASSETS).map((asset) => asset.slug)),
+    ).toHaveSize(21);
+  });
+
   it("recentres and scales an authored model to its target world length", () => {
     const fitted = fitWeaponModel(sourceModel(), 24);
     fitted.updateMatrixWorld(true);

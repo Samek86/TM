@@ -273,3 +273,112 @@ for (const [slug, factory] of Object.entries(factories)) {
   await exportGlb(factory(), new URL("model.glb", dir));
   await exportGlb(projectile(slug), new URL("shot.glb", dir));
 }
+
+// Every revival weapon receives its own authored export.  The later weapons
+// are designed from their combat identity rather than inheriting an older
+// official-card model: their housings, emitters, payloads, and silhouettes
+// deliberately differ at match-camera distance.
+function decorated(id, shot = false) {
+  const bases = {
+    1: "vulcan",
+    2: "ati-gun",
+    3: "em-gun",
+    4: "sorcerer-cannon",
+    5: "ati-gun",
+    6: "energy",
+    7: "energy",
+    8: "energy",
+    9: "vulcan",
+    10: "fire-bomb",
+    11: "fire-bomb",
+    12: "stinger",
+    13: "stinger",
+    14: "tow",
+    15: "tomahawk",
+    16: "fire-bomb",
+    17: "energy",
+    18: "fire-bomb",
+    19: "stinger",
+    20: "em-gun",
+    21: "sorcerer-cannon",
+  };
+  const kind = bases[id];
+  const g = shot ? projectile(kind) : factories[kind]();
+  if (id === 5) {
+    tube(g, 0.25, 4.6, brass, [1.1, 0.38, 0]);
+    tube(g, 0.25, 4.6, brass, [1.1, -0.38, 0]);
+  } else if (id === 6) {
+    // Laser Cannon: unmistakable paired aperture rails.
+    for (const z of [-0.62, 0.62]) tube(g, 0.13, 4.7, cyan, [1.3, 0, z]);
+  } else if (id === 7) {
+    // Spiner: rotating energy drum and cyan flywheel.
+    ring(g, 0.82, 0.13, cyan, [-0.1, 0, 0]);
+    ring(g, 0.62, 0.08, violet, [0.42, 0, 0]);
+  } else if (id === 8) {
+    // Slayer: heavy, slab-sided energy penetrator.
+    box(g, [2.6, 1.15, 1.9], gunmetal, [0.35, 0, 0]);
+    cone(g, 0.48, 0.18, 1.25, orange, [2.45, 0, 0]);
+  } else if (id === 9) {
+    // Paranoid Shooter: offset sensor fork and defensive emitter.
+    box(g, [2.2, 0.24, 0.18], cyan, [0.4, 0.86, 0]);
+    box(g, [1.1, 0.7, 0.2], steel, [1.3, 0.55, 0]);
+  } else if (id === 10) {
+    // S-mine: radial proximity spikes, distinct from every bomb.
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      cone(
+        g,
+        0.06,
+        0.2,
+        1.1,
+        brass,
+        [0, Math.cos(a) * 0.7, Math.sin(a) * 0.7],
+        [0, -a, Math.PI / 2],
+      );
+    }
+  } else if (id === 13) {
+    // Multi Missiler: three staggered micro-missiles in a launch cradle.
+    for (const z of [-0.52, 0, 0.52]) {
+      cone(g, 0.11, 0.18, 2.7, warning, [0.2, 0, z]);
+      fin(g, [-0.95, 0, z], 0, steel);
+    }
+  } else if (id === 16) {
+    // Burst Apocalypse: oversized warhead with warning belts and arming fins.
+    ring(g, 0.83, 0.12, warning, [-0.8, 0, 0]);
+    ring(g, 0.83, 0.12, orange, [0.2, 0, 0]);
+    for (let i = 0; i < 4; i++) fin(g, [-1.9, 0, 0], (i * Math.PI) / 2, orange);
+  } else if (id === 17) {
+    // Blazing Beam: hot dual-core emitter.
+    for (const z of [-0.26, 0.26]) tube(g, 0.14, 5.2, orange, [1.25, 0, z]);
+  } else if (id === 18) {
+    // Fire Bault: incandescent napalm pressure cells.
+    for (const z of [-0.36, 0.36])
+      part(g, new THREE.SphereGeometry(0.36, 24, 16), orange, [-0.1, 0, z]);
+  } else if (id === 19) {
+    // Burst Launcher: six micro-rocket bores around a compact launcher.
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      tube(g, 0.12, 2.7, steel, [0.3, Math.cos(a) * 0.38, Math.sin(a) * 0.38]);
+    }
+  } else if (id === 20) {
+    // Ice Bault: frost crystal caps around a cryogenic core.
+    for (const x of [-0.45, 0.15, 0.75]) {
+      part(g, new THREE.OctahedronGeometry(0.42, 2), frost, [x, 0, 0]);
+    }
+  } else if (id === 21) {
+    // Lust Cannon: magenta three-prong pulse muzzle.
+    for (const y of [-0.42, 0, 0.42]) tube(g, 0.12, 3.9, violet, [1.1, y, 0]);
+    ring(g, 0.64, 0.1, violet, [0.95, 0, 0]);
+  }
+  return g;
+}
+
+for (let id = 1; id <= 21; id++) {
+  const dir = new URL(
+    `../public/assets/weapons/${String(id).padStart(2, "0")}/`,
+    import.meta.url,
+  );
+  await mkdir(dir, { recursive: true });
+  await exportGlb(decorated(id), new URL("model.glb", dir));
+  await exportGlb(decorated(id, true), new URL("shot.glb", dir));
+}
