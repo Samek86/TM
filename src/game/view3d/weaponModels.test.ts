@@ -21,8 +21,9 @@ describe("weaponModels", () => {
   it("registers separate body and shot assets for all 21 weapons", () => {
     expect(Object.keys(WEAPON_MODEL_ASSETS)).toHaveLength(21);
     expect(
-      new Set(Object.values(WEAPON_MODEL_ASSETS).map((asset) => asset.slug)),
-    ).toHaveSize(21);
+      new Set(Object.values(WEAPON_MODEL_ASSETS).map((asset) => asset.slug))
+        .size,
+    ).toBe(21);
   });
 
   it("recentres and scales an authored model to its target world length", () => {
