@@ -23,13 +23,13 @@ import {
 } from "./cameraRig";
 import { disposeCraftArt, type CraftArtKit } from "./craftAssets";
 import { disposeCraftModels, type CraftModelKit } from "./craftModels";
+import { disposeOrdnanceArt, type OrdnanceArtKit } from "./ordnanceArt";
 import { createAimCue } from "./aimCue";
 import { applyCraftPose, createCraftGroup } from "./crafts";
 import { createParticleLayer } from "./particles3d";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
 import { createTerrainScenery, type TerrainScenery } from "./terrainMesh";
 import { disposeTerrainKit, type TerrainKit } from "./terrainTextures";
-import { disposeWeaponModels, type WeaponModelKit } from "./weaponModels";
 import { biomeForMapId } from "@/game/terrainStyle";
 
 export type PlayView = {
@@ -49,7 +49,7 @@ export function createPlayView(
   map: MapDef,
   kit: TerrainKit | null = null,
   craftArt: CraftArtKit = {},
-  weaponModels: WeaponModelKit | null = null,
+  ordnance: OrdnanceArtKit | null = null,
   craftModels: CraftModelKit = {},
   quality: QualityProfile = qualityProfile("high"),
 ): PlayView {
@@ -130,8 +130,8 @@ export function createPlayView(
   scene.add(sun.target);
 
   const crafts = new Map<string, THREE.Group>();
-  const shots = createProjectileLayer(200, weaponModels);
-  const picks = createPickupLayer(12, weaponModels);
+  const shots = createProjectileLayer(200, ordnance);
+  const picks = createPickupLayer(12, ordnance);
   const fx = createParticleLayer();
   const aim = createAimCue();
   scene.add(shots.mesh);
@@ -256,7 +256,7 @@ export function createPlayView(
       disposeTerrainKit(kit);
       disposeCraftArt(craftArt);
       disposeCraftModels(craftModels);
-      if (weaponModels) disposeWeaponModels(weaponModels);
+      if (ordnance) disposeOrdnanceArt(ordnance);
       env.dispose();
       pmrem.dispose();
       if (typeof renderer.forceContextLoss === "function") {

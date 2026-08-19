@@ -16,7 +16,7 @@ import { createPlayView, type PlayView } from "@/game/view3d";
 import { loadCraftArt } from "@/game/view3d/craftAssets";
 import { CRAFT_IDS, loadCraftModels } from "@/game/view3d/craftModels";
 import { detectQuality } from "@/game/view3d/quality";
-import { loadWeaponModels } from "@/game/view3d/weaponModels";
+import { loadOrdnanceArt } from "@/game/view3d/ordnanceArt";
 import { loadTerrainKit } from "@/game/view3d/terrainTextures";
 import type { VultureId } from "@/data/weapons";
 import { PlayHud } from "./PlayHud";
@@ -434,8 +434,8 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       const spriteIds = CRAFT_IDS.filter((id) => !craftModels[id]);
       const craftArt = await loadCraftArt(spriteIds);
       if (cancelled) return;
-      report("무기 3D 에셋…", 66);
-      const weaponModels = await loadWeaponModels();
+      report("무기 페인팅…", 66);
+      const ordnance = await loadOrdnanceArt();
       if (cancelled) return;
 
       report("3D 뷰 시작…", 70);
@@ -446,7 +446,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
           map,
           kit,
           craftArt,
-          weaponModels,
+          ordnance,
           craftModels,
           quality,
         );

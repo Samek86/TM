@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type { MapDef } from "@/data/maps";
 import type { Bullet, GameState, Pickup } from "@/game/engine";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
-import type { WeaponModelKit } from "./weaponModels";
+import type { OrdnanceArtKit } from "./ordnanceArt";
 
 function miniMap(): MapDef {
   return {
@@ -89,57 +89,43 @@ function bullet(over: Partial<Bullet> = {}): Bullet {
   };
 }
 
-function model(name: string): THREE.Group {
-  const root = new THREE.Group();
-  root.name = name;
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 1, 1),
-    new THREE.MeshStandardMaterial({ color: 0x8ba4b0, metalness: 0.8 }),
-  );
-  mesh.castShadow = true;
-  root.add(mesh);
-  return root;
-}
-
-function models(ids: number[]): WeaponModelKit {
-  const bodies: WeaponModelKit["bodies"] = {};
-  const shots: WeaponModelKit["shots"] = {};
+function art(ids: number[]): OrdnanceArtKit {
+  const bodies: OrdnanceArtKit["bodies"] = {};
+  const shots: OrdnanceArtKit["shots"] = {};
   for (const id of ids) {
-    bodies[id] = model(`body-${id}`);
-    shots[id] = model(`shot-${id}`);
+    bodies[id] = [new THREE.Texture()];
+    shots[id] = [new THREE.Texture()];
   }
-  return { bodies, shots };
+  return { bodies, shots, items: [] };
 }
 
 describe("projectiles", () => {
-  it("builds a pooled layer for authored GLB shot models", () => {
+  it("builds a pooled layer for painted shot cards", () => {
     const layer = createProjectileLayer(8);
     expect(layer.mesh.type).toBe("Group");
-    const slot = layer.mesh.getObjectByName("shot0") as THREE.Group;
-    expect(slot.type).toBe("Group");
-    expect(slot.visible).toBe(false);
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect(card.geometry.type).toBe("PlaneGeometry");
+    expect(card.visible).toBe(false);
     layer.dispose();
   });
 
-  it("builds a 3D weapon mesh for a live field pickup", () => {
-    const layer = createPickupLayer(4, models([12]));
+  it("shows a painted weapon card for a live field pickup", () => {
+    const kit = art([12]);
+    const layer = createPickupLayer(4, kit);
     layer.sync(miniState({ pickups: [pickup({ weaponId: 12 })] }));
     const slot = layer.mesh.getObjectByName("pickup0") as THREE.Object3D;
     const icon = slot.getObjectByName("icon") as THREE.Mesh;
     const ring = slot.getObjectByName("lootRing") as THREE.Object3D;
     expect(slot.visible).toBe(true);
-    expect(icon.name).toBe("icon");
-    const mesh = icon.children[0] as THREE.Mesh;
-    expect(
-      (mesh.material as THREE.MeshStandardMaterial).isMeshStandardMaterial,
-    ).toBe(true);
-    expect(mesh.castShadow).toBe(true);
+    expect((icon.material as THREE.MeshBasicMaterial).map).toBe(
+      kit.bodies[12]?.[0],
+    );
     expect(ring.visible).toBe(true);
     layer.dispose();
   });
 
   it("dims a field pickup the local craft cannot stock", () => {
-    const layer = createPickupLayer(2, models([8]));
+    const layer = createPickupLayer(2, art([8]));
     layer.sync(
       miniState({
         pickups: [pickup({ weaponId: 8 })],
@@ -147,19 +133,18 @@ describe("projectiles", () => {
       }),
     );
     const slot = layer.mesh.getObjectByName("pickup0") as THREE.Object3D;
-    const icon = slot.getObjectByName("icon") as THREE.Group;
+    const icon = slot.getObjectByName("icon") as THREE.Mesh;
     const ring = slot.getObjectByName("lootRing") as THREE.Object3D;
     expect(slot.visible).toBe(true);
     expect(ring.visible).toBe(false);
-    expect(
-      ((icon.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial)
-        .opacity,
-    ).toBeLessThan(0.7);
+    expect((icon.material as THREE.MeshBasicMaterial).opacity).toBeLessThan(
+      0.7,
+    );
     layer.dispose();
   });
 
   it("hides a dead pickup", () => {
-    const layer = createPickupLayer(2, models([12]));
+    const layer = createPickupLayer(2, art([12]));
     layer.sync(
       miniState({ pickups: [pickup({ alive: false, weaponId: 12 })] }),
     );
@@ -168,17 +153,22 @@ describe("projectiles", () => {
     layer.dispose();
   });
 
-  it("uses an authored model instead of a supplied shot card", () => {
-    const layer = createProjectileLayer(4, models([12]));
+  it("uses a painted shot card for every live projectile", () => {
+    const kit = art([12]);
+    const layer = createProjectileLayer(4, kit);
     layer.sync(miniState({ bullets: [bullet({ weaponId: 12 })] }));
-    const slot = layer.mesh.getObjectByName("shot0") as THREE.Group;
-    expect(slot.visible).toBe(true);
-    expect(slot.children[0]?.name).toBe("shot-12");
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect(card.visible).toBe(true);
+    expect((card.material as THREE.MeshBasicMaterial).map).toBe(
+      kit.shots[12]?.[0],
+    );
     layer.dispose();
   });
 
-  it("assigns the matching authored shot model to each weapon id", () => {
-    const layer = createProjectileLayer(6, models([12, 15, 2, 11, 20, 10]));
+  it("assigns the matching painted card to each weapon id", () => {
+    const ids = [12, 15, 2, 11, 20, 10];
+    const kit = art(ids);
+    const layer = createProjectileLayer(6, kit);
     layer.sync(
       miniState({
         bullets: [
@@ -191,10 +181,12 @@ describe("projectiles", () => {
         ],
       }),
     );
-    for (const [index, id] of [12, 15, 2, 11, 20, 10].entries()) {
-      const slot = layer.mesh.getObjectByName(`shot${index}`) as THREE.Group;
-      expect(slot.visible).toBe(true);
-      expect(slot.children[0]?.name).toBe(`shot-${id}`);
+    for (const [index, id] of ids.entries()) {
+      const card = layer.mesh.getObjectByName(`shot${index}`) as THREE.Mesh;
+      expect(card.visible).toBe(true);
+      expect((card.material as THREE.MeshBasicMaterial).map).toBe(
+        kit.shots[id]?.[0],
+      );
     }
     layer.dispose();
   });

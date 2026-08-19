@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { getPlayer, type Bullet, type GameState } from "@/game/engine";
 import { sculptedHeight } from "@/game/heightfield";
 import { engineToThree } from "./coords";
-import { cloneWeaponModel, type WeaponModelKit } from "./weaponModels";
+import type { OrdnanceArtKit } from "./ordnanceArt";
 
 export type LayerHandle = {
   mesh: THREE.Object3D;
@@ -11,6 +11,47 @@ export type LayerHandle = {
 };
 
 const PICKUP_WORLD = 52;
+const SHOT_WORLD = 62;
+
+function makeCard(name: string): THREE.Mesh {
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      alphaTest: 0.05,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  mesh.name = name;
+  mesh.visible = false;
+  return mesh;
+}
+
+function setCard(
+  mesh: THREE.Mesh,
+  texture: THREE.Texture,
+  world: number,
+): void {
+  const material = mesh.material as THREE.MeshBasicMaterial;
+  if (material.map !== texture) {
+    material.map = texture;
+    material.needsUpdate = true;
+  }
+  const image = texture.image as
+    { width?: number; height?: number } | undefined;
+  const width = Math.max(1, Number(image?.width) || 1);
+  const height = Math.max(1, Number(image?.height) || 1);
+  const largest = Math.max(width, height);
+  mesh.scale.set((world * width) / largest, (world * height) / largest, 1);
+  mesh.visible = true;
+}
+
+/** Flat on the world plane: painted volume is visible from the play camera. */
+function layFlat(mesh: THREE.Object3D, heading = 0): void {
+  mesh.rotation.set(-Math.PI / 2, 0, -heading);
+}
 
 function hover(b: Bullet, terrainY: number): number {
   if (b.ammo === "mine") return terrainY + 0.9;
@@ -20,117 +61,42 @@ function hover(b: Bullet, terrainY: number): number {
   return terrainY + 3.2;
 }
 
-function assignModel(
-  slot: THREE.Group,
-  model: THREE.Group | undefined,
-  weaponId: number,
-): void {
-  if (slot.userData.weaponId === weaponId) return;
-  slot.traverse((object) => {
-    const mesh = object as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    for (const material of Array.isArray(mesh.material)
-      ? mesh.material
-      : [mesh.material]) {
-      material.dispose();
-    }
-  });
-  slot.clear();
-  if (model) slot.add(cloneWeaponModel(model));
-  slot.userData.weaponId = weaponId;
-}
-
 export function createProjectileLayer(
   maxShots: number,
-  models: WeaponModelKit | null = null,
+  art: OrdnanceArtKit | null = null,
 ): LayerHandle {
-  const trailGeom = new THREE.CylinderGeometry(0.08, 0.28, 1, 6, 1, true);
-  trailGeom.rotateZ(-Math.PI / 2);
-  const trailMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.55,
-    depthWrite: false,
-  });
-  const trails = new THREE.InstancedMesh(trailGeom, trailMat, maxShots);
-  trails.count = 0;
-  trails.frustumCulled = false;
-  const dummy = new THREE.Object3D();
-  const color = new THREE.Color();
-  const prevX = new Float32Array(maxShots);
-  const prevY = new Float32Array(maxShots);
-
   const group = new THREE.Group();
-  const slots = Array.from({ length: maxShots }, (_, index) => {
-    const slot = new THREE.Group();
-    slot.name = `shot${index}`;
-    slot.visible = false;
-    group.add(slot);
-    return slot;
+  const cards = Array.from({ length: maxShots }, (_, index) => {
+    const card = makeCard(`shot${index}`);
+    group.add(card);
+    return card;
   });
-  group.add(trails);
 
   return {
     mesh: group,
     sync(state: GameState, _camera?: THREE.Camera) {
       const map = state.map;
       let shotN = 0;
-      let tN = 0;
+      for (const card of cards) card.visible = false;
       for (let bi = 0; bi < state.bullets.length; bi++) {
         const b = state.bullets[bi]!;
         if (!b.alive) continue;
         if (shotN >= maxShots) continue;
+        const texture = art?.shots[b.weaponId]?.[0];
+        if (!texture) continue;
         const h = hover(b, sculptedHeight(map, b.x, b.y));
         const pos = engineToThree(b.x, b.y, h);
-        const slot = slots[shotN]!;
-        assignModel(slot, models?.shots[b.weaponId], b.weaponId);
-        slot.position.set(pos.x, pos.y, pos.z);
-        slot.rotation.set(0, -b.angle, 0);
-        slot.visible = slot.children.length > 0;
+        const card = cards[shotN]!;
+        card.position.set(pos.x, pos.y, pos.z);
+        setCard(card, texture, SHOT_WORLD * Math.max(0.82, b.drawScale || 1));
+        layFlat(card, b.angle);
         shotN += 1;
-        if (b.ammo !== "mine" && b.ammo !== "cloud" && tN < maxShots) {
-          const px = prevX[bi] || b.x;
-          const py = prevY[bi] || b.y;
-          const dx = b.x - px;
-          const dy = b.y - py;
-          const len = Math.hypot(dx, dy);
-          if (len > 0.8) {
-            const mid = engineToThree((b.x + px) * 0.5, (b.y + py) * 0.5, h);
-            dummy.position.set(mid.x, mid.y, mid.z);
-            dummy.scale.set(
-              Math.min(28, len * 1.15),
-              b.radius * 0.45,
-              b.radius * 0.45,
-            );
-            dummy.rotation.set(0, -Math.atan2(dy, dx), 0);
-            dummy.updateMatrix();
-            trails.setMatrixAt(tN, dummy.matrix);
-            trails.setColorAt(tN, color.set(b.color));
-            tN += 1;
-          }
-          prevX[bi] = b.x;
-          prevY[bi] = b.y;
-        }
       }
-      for (let index = shotN; index < slots.length; index++)
-        slots[index]!.visible = false;
-      trails.count = tN;
-      trails.instanceMatrix.needsUpdate = true;
-      if (trails.instanceColor) trails.instanceColor.needsUpdate = true;
     },
     dispose() {
-      trailGeom.dispose();
-      trailMat.dispose();
-      for (const slot of slots) {
-        slot.traverse((object) => {
-          const mesh = object as THREE.Mesh;
-          if (!mesh.isMesh) return;
-          for (const material of Array.isArray(mesh.material)
-            ? mesh.material
-            : [mesh.material]) {
-            material.dispose();
-          }
-        });
+      for (const card of cards) {
+        card.geometry.dispose();
+        (card.material as THREE.Material).dispose();
       }
     },
   };
@@ -156,7 +122,7 @@ function makeLootRing(): THREE.Mesh {
 
 export function createPickupLayer(
   maxPickups: number,
-  models: WeaponModelKit | null = null,
+  art: OrdnanceArtKit | null = null,
 ): LayerHandle {
   const group = new THREE.Group();
   const slots: THREE.Group[] = [];
@@ -164,6 +130,7 @@ export function createPickupLayer(
     const slot = new THREE.Group();
     slot.name = `pickup${i}`;
     slot.visible = false;
+    slot.add(makeCard("icon"));
     slot.add(makeLootRing());
     group.add(slot);
     slots.push(slot);
@@ -192,59 +159,23 @@ export function createPickupLayer(
         ring.visible = eligible;
         const ringMat = ring.material as THREE.MeshBasicMaterial;
         ringMat.opacity = 0.55 + 0.4 * (0.5 + 0.5 * Math.sin(pk.bob * 2));
-        const icon = slot.getObjectByName("icon") as THREE.Group | undefined;
-        if (!icon || icon.userData.weaponId !== pk.weaponId) {
-          if (icon) {
-            icon.traverse((object) => {
-              const mesh = object as THREE.Mesh;
-              if (!mesh.isMesh) return;
-              for (const material of Array.isArray(mesh.material)
-                ? mesh.material
-                : [mesh.material]) {
-                material.dispose();
-              }
-            });
-            slot.remove(icon);
-          }
-          const model = models?.bodies[pk.weaponId];
-          if (model) {
-            const next = cloneWeaponModel(model);
-            next.name = "icon";
-            next.userData.weaponId = pk.weaponId;
-            slot.add(next);
-          }
-        }
-        const current = slot.getObjectByName("icon") as THREE.Group | undefined;
-        if (current) {
-          current.visible = true;
-          current.rotation.y = pk.bob * 1.2;
-          current.traverse((object) => {
-            const mesh = object as THREE.Mesh;
-            if (!mesh.isMesh) return;
-            const materials = Array.isArray(mesh.material)
-              ? mesh.material
-              : [mesh.material];
-            for (const material of materials) {
-              const standard = material as THREE.MeshStandardMaterial;
-              if (!standard.isMeshStandardMaterial) continue;
-              standard.transparent = !eligible;
-              standard.opacity = eligible ? 1 : 0.42;
-            }
-          });
+        const icon = slot.getObjectByName("icon") as THREE.Mesh;
+        const texture = art?.bodies[pk.weaponId]?.[0];
+        if (texture) {
+          setCard(icon, texture, PICKUP_WORLD);
+          layFlat(icon, pk.bob * 0.35);
+          const material = icon.material as THREE.MeshBasicMaterial;
+          material.opacity = eligible ? 1 : 0.42;
+        } else {
+          icon.visible = false;
         }
       }
     },
     dispose() {
       for (const slot of slots) {
-        slot.traverse((object) => {
-          const mesh = object as THREE.Mesh;
-          if (!mesh.isMesh) return;
-          for (const material of Array.isArray(mesh.material)
-            ? mesh.material
-            : [mesh.material]) {
-            material.dispose();
-          }
-        });
+        const icon = slot.getObjectByName("icon") as THREE.Mesh | undefined;
+        icon?.geometry.dispose();
+        (icon?.material as THREE.Material | undefined)?.dispose();
         const ring = slot.getObjectByName("lootRing") as THREE.Mesh | undefined;
         ring?.geometry.dispose();
         (ring?.material as THREE.Material | undefined)?.dispose();
