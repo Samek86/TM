@@ -149,28 +149,30 @@ export function PlayHud(props: {
         </ul>
       </div>
 
-      <canvas
-        ref={miniRef}
-        width={MINI_W}
-        height={MINI_H}
-        className={`absolute rounded-md border border-white/15 bg-black/70 ${
-          mobile ? "left-2 top-[108px] h-[60px] w-[80px]" : "right-3 top-14"
-        }`}
-        aria-hidden
-      />
+      {!mobile && (
+        <canvas
+          ref={miniRef}
+          width={MINI_W}
+          height={MINI_H}
+          className="absolute right-3 top-14 rounded-md border border-white/15 bg-black/70"
+          aria-hidden
+        />
+      )}
 
       {player && (
         <div
           className={`absolute inset-x-0 flex items-end gap-2 bg-black/70 px-3 py-2 sm:px-4 ${
             mobile
-              ? "bottom-[calc(max(8.5rem,env(safe-area-inset-bottom)+8rem))]"
+              ? "inset-x-auto bottom-[calc(max(9.5rem,env(safe-area-inset-bottom)+9.5rem))] left-1/2 w-[min(52vw,240px)] -translate-x-1/2 flex-col items-center bg-transparent px-0 py-0"
               : "bottom-6 gap-3"
           }`}
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-mono text-[11px] text-slate-400">HP</span>
-              <div className="h-2.5 w-40 overflow-hidden rounded-sm bg-slate-800">
+              <div
+                className={`h-2.5 overflow-hidden rounded-sm bg-slate-800 ${mobile ? "w-24" : "w-40"}`}
+              >
                 <div
                   className={`h-full ${hpFrac > 0.3 ? "bg-emerald-500" : "bg-rose-500"}`}
                   style={{
@@ -179,9 +181,11 @@ export function PlayHud(props: {
                 />
               </div>
             </div>
-            <p className="mt-1 font-mono text-[11px] text-slate-300">
-              SPEED {speed} {elev >= 1 ? "HIGH" : "LOW"}
-            </p>
+            {!mobile && (
+              <p className="mt-1 font-mono text-[11px] text-slate-300">
+                SPEED {speed} {elev >= 1 ? "HIGH" : "LOW"}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-end gap-1">
             {player.weapons.map((wid, slot) => {
@@ -193,9 +197,9 @@ export function PlayHud(props: {
               const chip = (
                 <div
                   key={`${slot}-${wid}`}
-                  className={`flex h-10 w-14 flex-col items-center justify-center rounded border-2 font-mono ${
-                    empty ? "opacity-45" : ""
-                  }`}
+                  className={`flex flex-col items-center justify-center rounded border-2 font-mono ${
+                    mobile ? "h-9 w-10" : "h-10 w-14"
+                  } ${empty ? "opacity-45" : ""}`}
                   style={{
                     backgroundColor: active
                       ? ww.color
@@ -213,10 +217,14 @@ export function PlayHud(props: {
                   }}
                 >
                   <span className="text-[10px] font-bold">{slot + 1}</span>
-                  <span className="text-[8px] leading-none">
-                    {ww.name.slice(0, 6)}
-                  </span>
-                  <span className="text-[9px] font-bold">
+                  {!mobile && (
+                    <span className="text-[8px] leading-none">
+                      {ww.name.slice(0, 6)}
+                    </span>
+                  )}
+                  <span
+                    className={`${mobile ? "text-[8px]" : "text-[9px]"} font-bold`}
+                  >
                     {isDefault ? "∞" : `×${Math.max(0, am ?? 0)}`}
                   </span>
                 </div>
