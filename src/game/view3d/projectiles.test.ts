@@ -3,7 +3,11 @@ import * as THREE from "three";
 import type { MapDef } from "@/data/maps";
 import type { Bullet, GameState, Pickup } from "@/game/engine";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
-import { shotYawFrameIndex, type OrdnanceArtKit } from "./ordnanceArt";
+import {
+  ORIENTED_WEAPON_IDS,
+  shotYawFrameIndex,
+  type OrdnanceArtKit,
+} from "./ordnanceArt";
 
 function miniMap(): MapDef {
   return {
@@ -187,6 +191,12 @@ describe("projectiles", () => {
     expect(shotYawFrameIndex(Math.PI / 2, 16)).toBe(4);
     expect(shotYawFrameIndex(Math.PI, 16)).toBe(8);
     expect(shotYawFrameIndex(-Math.PI / 2, 16)).toBe(12);
+  });
+
+  it("registers all heading-dependent missiles and bombs for alpha yaw sprites", () => {
+    for (const id of [11, 12, 13, 14, 15, 16, 19]) {
+      expect(ORIENTED_WEAPON_IDS.has(id)).toBe(true);
+    }
   });
 
   it("assigns the matching painted card to each weapon id", () => {
