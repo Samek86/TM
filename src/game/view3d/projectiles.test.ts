@@ -199,14 +199,14 @@ describe("projectiles", () => {
     expect(shotYawFrameIndex(-Math.PI / 2, 16)).toBe(12);
   });
 
-  it("keeps small missiles below craft scale while reserving craft scale for nuke", () => {
-    expect(shotWorldSize(12)).toBeCloseTo(3.5);
-    expect(shotWorldSize(13)).toBeCloseTo(4.5);
-    expect(shotWorldSize(19)).toBeCloseTo(4.5);
-    expect(shotWorldSize(14)).toBeCloseTo(9);
-    expect(shotWorldSize(11)).toBeCloseTo(9);
-    expect(shotWorldSize(15)).toBeCloseTo(24);
-    expect(shotWorldSize(16)).toBeLessThanOrEqual(30);
+  it("compensates padded painted shots while capping heavy ordnance", () => {
+    expect(shotWorldSize(12)).toBeCloseTo(16);
+    expect(shotWorldSize(13)).toBeCloseTo(16);
+    expect(shotWorldSize(19)).toBeCloseTo(16);
+    expect(shotWorldSize(14)).toBeCloseTo(22);
+    expect(shotWorldSize(11)).toBeCloseTo(22);
+    expect(shotWorldSize(15)).toBeCloseTo(34);
+    expect(shotWorldSize(16)).toBeLessThanOrEqual(42);
   });
 
   it("registers every traveling projectile for alpha yaw sprites", () => {

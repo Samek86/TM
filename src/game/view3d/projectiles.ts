@@ -13,38 +13,38 @@ export type LayerHandle = {
 const PICKUP_WORLD = 52;
 
 /**
- * Visual-only world lengths. A typical fighter radius is 18–30 world units,
- * so small missiles read at 10–15% of a craft, while cruise/nuclear ordnance
- * tops out at one craft rather than dominating the arena.
+ * Visual-only world lengths. The painted frames include transparent padding,
+ * so these compensate for their visible silhouette on phone-sized screens.
+ * Cruise/nuclear ordnance may approach a craft size but never exceed it.
  */
 export const SHOT_WORLD_BY_WEAPON: Readonly<Record<number, number>> = {
-  1: 4,
-  2: 4,
-  3: 5,
-  4: 4,
-  5: 4,
-  6: 5,
-  7: 5,
-  8: 6,
-  9: 4,
-  10: 5,
-  11: 9,
-  12: 3.5,
-  13: 4.5,
-  14: 9,
-  15: 24,
-  16: 28,
-  17: 5,
-  18: 6,
-  19: 4.5,
-  20: 6,
-  21: 4,
+  1: 12,
+  2: 14,
+  3: 16,
+  4: 12,
+  5: 14,
+  6: 16,
+  7: 14,
+  8: 20,
+  9: 14,
+  10: 14,
+  11: 22,
+  12: 16,
+  13: 16,
+  14: 22,
+  15: 34,
+  16: 38,
+  17: 16,
+  18: 18,
+  19: 16,
+  20: 20,
+  21: 14,
 };
 
 export function shotWorldSize(weaponId: number, drawScale = 1): number {
   return Math.min(
-    30,
-    (SHOT_WORLD_BY_WEAPON[weaponId] ?? 4) * Math.max(0.82, drawScale),
+    42,
+    (SHOT_WORLD_BY_WEAPON[weaponId] ?? 12) * Math.max(0.82, drawScale),
   );
 }
 
