@@ -21,11 +21,19 @@ export type OffscreenCue = {
   edge: boolean;
 };
 
+export type ProjectWorld = (
+  engineX: number,
+  engineY: number,
+  height: number,
+) => { x: number; y: number } | null;
+
 export function offscreenCues(
   pilots: readonly OffscreenCuePilot[],
   viewportWidth: number,
   viewportHeight: number,
   mobile: boolean,
+  project?: ProjectWorld,
+  heightOf: (engineX: number, engineY: number) => number = () => 0,
 ): OffscreenCue[] {
   const player = pilots.find((pilot) => pilot.isPlayer);
   if (!player || viewportWidth <= 0 || viewportHeight <= 0) return [];
@@ -34,6 +42,11 @@ export function offscreenCues(
   const halfH = halfW * (viewportHeight / viewportWidth);
   const centerX = viewportWidth / 2;
   const centerY = viewportHeight / 2;
+  const playerScreen = project?.(
+    player.x,
+    player.y,
+    heightOf(player.x, player.y),
+  ) ?? { x: centerX, y: centerY };
   const sideInset = 10;
   const topInset = mobile ? 58 : 52;
   const bottomInset = mobile ? 176 : 42;
@@ -53,8 +66,14 @@ export function offscreenCues(
     const dx = pilot.x - player.x;
     const dy = pilot.y - player.y;
     const distance = Math.hypot(dx, dy);
+    const projected = project?.(pilot.x, pilot.y, heightOf(pilot.x, pilot.y));
+    const screenX = projected?.x ?? centerX + (dx / halfW) * centerX;
+    const screenY = projected?.y ?? centerY + (dy / halfH) * centerY;
     const offscreen =
-      Math.abs(dx) > halfW * 0.85 || Math.abs(dy) > halfH * 0.85;
+      screenX < viewportWidth * 0.075 ||
+      screenX > viewportWidth * 0.925 ||
+      screenY < viewportHeight * 0.075 ||
+      screenY > viewportHeight * 0.925;
     if (distance < 1e-4 || (offscreen && distance >= worldWidth * 5)) {
       continue;
     }
@@ -72,8 +91,8 @@ export function offscreenCues(
       left = centerX + nx * travel;
       top = centerY + ny * travel;
     } else {
-      left = centerX + (dx / halfW) * centerX;
-      top = centerY + (dy / halfH) * centerY - 18;
+      left = screenX;
+      top = screenY - 18;
     }
     for (const other of cues) {
       if (Math.hypot(left - other.left, top - other.top) < 54) {
@@ -87,7 +106,7 @@ export function offscreenCues(
       accent: pilot.accent,
       left,
       top,
-      angle: Math.atan2(ny, nx),
+      angle: Math.atan2(screenY - playerScreen.y, screenX - playerScreen.x),
       edge: offscreen,
     });
   }

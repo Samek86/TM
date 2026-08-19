@@ -81,4 +81,28 @@ describe("offscreenCues", () => {
     expect(cues[0]).toMatchObject({ id: "near", edge: false });
     expect(cues[0]!.top).toBeLessThan(422);
   });
+
+  it("uses live projected coordinates for onscreen labels", () => {
+    const [cue] = offscreenCues(
+      [
+        player,
+        {
+          id: "projected",
+          name: "BOT-2",
+          x: 25,
+          y: 10,
+          hp: 100,
+          respawn: 0,
+          isPlayer: false,
+          accent: "#0ff",
+        },
+      ],
+      390,
+      844,
+      true,
+      (x) => (x === 0 ? { x: 195, y: 422 } : { x: 120, y: 240 }),
+    );
+    expect(cue).toMatchObject({ id: "projected", edge: false, left: 120 });
+    expect(cue?.top).toBe(222);
+  });
 });

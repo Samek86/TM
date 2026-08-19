@@ -2,7 +2,8 @@ import { useEffect, useRef, type JSX } from "react";
 import { sampleLevel, type MapDef } from "@/data/maps";
 import { getWeaponById } from "@/data/weapons";
 import { getPlayer, type GameState, type Pilot } from "@/game/engine";
-import { offscreenCues } from "@/game/offscreenCues";
+import { offscreenCues, type ProjectWorld } from "@/game/offscreenCues";
+import { DirectionArrow } from "./DirectionArrow";
 
 const MINI_W = 120;
 const MINI_H = 90;
@@ -41,6 +42,8 @@ export function PlayHud(props: {
   mobile?: boolean;
   viewportWidth?: number;
   viewportHeight?: number;
+  projectWorld?: ProjectWorld;
+  heightOf?: (engineX: number, engineY: number) => number;
   onSelectWeapon?: (slot: number) => void;
 }): JSX.Element {
   const {
@@ -49,6 +52,8 @@ export function PlayHud(props: {
     mobile = false,
     viewportWidth = 0,
     viewportHeight = 0,
+    projectWorld,
+    heightOf,
     onSelectWeapon,
   } = props;
   const miniRef = useRef<HTMLCanvasElement>(null);
@@ -118,6 +123,8 @@ export function PlayHud(props: {
     cueViewportWidth,
     cueViewportHeight,
     mobile,
+    projectWorld,
+    heightOf,
   );
 
   return (
@@ -195,15 +202,11 @@ export function PlayHud(props: {
           }}
         >
           {cue.edge && (
-            <span
-              className="inline-block text-xs leading-none"
-              style={{
-                color: cue.accent,
-                transform: `rotate(${cue.angle}rad)`,
-              }}
-            >
-              ▶
-            </span>
+            <DirectionArrow
+              angle={cue.angle}
+              color={cue.accent}
+              size={mobile ? 9 : 13}
+            />
           )}
           <span>{cue.name}</span>
         </div>

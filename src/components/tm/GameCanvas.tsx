@@ -19,6 +19,7 @@ import { CRAFT_IDS, loadCraftModels } from "@/game/view3d/craftModels";
 import { detectQuality } from "@/game/view3d/quality";
 import { loadOrdnanceArt } from "@/game/view3d/ordnanceArt";
 import { loadTerrainKit } from "@/game/view3d/terrainTextures";
+import { sculptedHeight } from "@/game/heightfield";
 import type { VultureId } from "@/data/weapons";
 import { PlayHud } from "./PlayHud";
 import { TouchSticks } from "./TouchSticks";
@@ -618,6 +619,12 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
             mobile={showTouch}
             viewportWidth={viewport.width}
             viewportHeight={viewport.height}
+            projectWorld={(x, y, height) =>
+              viewRef.current?.projectWorld(x, y, height) ?? null
+            }
+            heightOf={(x, y) =>
+              sculptedHeight(stateRef.current!.map, x, y) + 18
+            }
             onSelectWeapon={(slot) => {
               const player = stateRef.current && getPlayer(stateRef.current);
               if (player && player.weapons[slot] !== undefined) {
