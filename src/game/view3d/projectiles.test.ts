@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import type { MapDef } from "@/data/maps";
 import type { Bullet, GameState, Pickup } from "@/game/engine";
-import { createPickupLayer, createProjectileLayer } from "./projectiles";
+import {
+  createPickupLayer,
+  createProjectileLayer,
+  shotWorldSize,
+} from "./projectiles";
 import {
   ORIENTED_WEAPON_IDS,
   shotYawFrameIndex,
@@ -193,6 +197,16 @@ describe("projectiles", () => {
     expect(shotYawFrameIndex(Math.PI / 2, 16)).toBe(4);
     expect(shotYawFrameIndex(Math.PI, 16)).toBe(8);
     expect(shotYawFrameIndex(-Math.PI / 2, 16)).toBe(12);
+  });
+
+  it("keeps small missiles below craft scale while reserving craft scale for nuke", () => {
+    expect(shotWorldSize(12)).toBeCloseTo(3.5);
+    expect(shotWorldSize(13)).toBeCloseTo(4.5);
+    expect(shotWorldSize(19)).toBeCloseTo(4.5);
+    expect(shotWorldSize(14)).toBeCloseTo(9);
+    expect(shotWorldSize(11)).toBeCloseTo(9);
+    expect(shotWorldSize(15)).toBeCloseTo(24);
+    expect(shotWorldSize(16)).toBeLessThanOrEqual(30);
   });
 
   it("registers all heading-dependent missiles and bombs for alpha yaw sprites", () => {

@@ -11,7 +11,42 @@ export type LayerHandle = {
 };
 
 const PICKUP_WORLD = 52;
-const SHOT_WORLD = 62;
+
+/**
+ * Visual-only world lengths. A typical fighter radius is 18–30 world units,
+ * so small missiles read at 10–15% of a craft, while cruise/nuclear ordnance
+ * tops out at one craft rather than dominating the arena.
+ */
+export const SHOT_WORLD_BY_WEAPON: Readonly<Record<number, number>> = {
+  1: 4,
+  2: 4,
+  3: 5,
+  4: 4,
+  5: 4,
+  6: 5,
+  7: 5,
+  8: 6,
+  9: 4,
+  10: 5,
+  11: 9,
+  12: 3.5,
+  13: 4.5,
+  14: 9,
+  15: 24,
+  16: 28,
+  17: 5,
+  18: 6,
+  19: 4.5,
+  20: 6,
+  21: 4,
+};
+
+export function shotWorldSize(weaponId: number, drawScale = 1): number {
+  return Math.min(
+    30,
+    (SHOT_WORLD_BY_WEAPON[weaponId] ?? 4) * Math.max(0.82, drawScale),
+  );
+}
 
 function makeCard(name: string): THREE.Mesh {
   const mesh = new THREE.Mesh(
@@ -89,7 +124,7 @@ export function createProjectileLayer(
         const pos = engineToThree(b.x, b.y, h);
         const card = cards[shotN]!;
         card.position.set(pos.x, pos.y, pos.z);
-        setCard(card, texture, SHOT_WORLD * Math.max(0.82, b.drawScale || 1));
+        setCard(card, texture, shotWorldSize(b.weaponId, b.drawScale || 1));
         // A 16-way painting already contains its heading; rotating it again
         // would make the east/north/west artwork drift out of sync.
         layFlat(card, frames.length > 1 ? 0 : b.angle);
