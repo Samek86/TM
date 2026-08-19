@@ -10,7 +10,7 @@ import type { MapDef } from "@/data/maps";
 import type { VultureId } from "@/data/weapons";
 import { getPlayer, type GameState } from "@/game/engine";
 import { sculptedHeight } from "@/game/heightfield";
-import { VIEW_WORLD_WIDTH } from "@/game/viewScale";
+import { playWorldWidth } from "@/game/viewScale";
 import { orthoAimRay, pickAimOnHeightfield } from "./aimPick";
 import { createSkyDome, horizonColor } from "./atmosphere";
 import { createMapBoundary } from "./boundary";
@@ -33,7 +33,7 @@ import { disposeTerrainKit, type TerrainKit } from "./terrainTextures";
 import { biomeForMapId } from "@/game/terrainStyle";
 
 export type PlayView = {
-  resize(cssW: number, cssH: number, dpr: number): void;
+  resize(cssW: number, cssH: number, dpr: number, phoneLike?: boolean): void;
   renderFrame(state: GameState, dt: number): void;
   pickAim(
     cssX: number,
@@ -170,13 +170,13 @@ export function createPlayView(
   }
 
   return {
-    resize(cssW, cssH, dpr) {
+    resize(cssW, cssH, dpr, phoneLike = false) {
       const ratio = Math.min(dpr, quality.maxDpr, MAX_DPR);
       renderer.setPixelRatio(ratio);
       renderer.setSize(cssW, cssH, false);
       composer?.setPixelRatio(ratio);
       composer?.setSize(cssW, cssH);
-      const worldW = Math.min(map.width, VIEW_WORLD_WIDTH);
+      const worldW = Math.min(map.width, playWorldWidth(cssW, phoneLike));
       const { halfW, halfH } = computeOrthoHalfExtents(cssW, cssH, worldW);
       camera.left = -halfW;
       camera.right = halfW;

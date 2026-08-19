@@ -49,7 +49,7 @@ function ThumbStick({
     <div className="flex flex-col items-center gap-1">
       <div
         ref={padRef}
-        className="relative h-32 w-32 touch-none rounded-full border border-white/25 bg-black/45 shadow-[0_0_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+        className="relative h-36 w-36 touch-none rounded-full border border-white/25 bg-black/45 shadow-[0_0_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
         style={{ boxShadow: held ? `0 0 22px ${accent}` : undefined }}
         onPointerDown={(e) => {
           e.preventDefault();
@@ -68,10 +68,10 @@ function ThumbStick({
         onPointerCancel={release}
       >
         <div
-          className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-white/80"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-white/80"
           style={{
             borderColor: accent,
-            transform: `translate(calc(-50% + ${knob.x * 36}px), calc(-50% + ${knob.y * 36}px))`,
+            transform: `translate(calc(-50% + ${knob.x * 42}px), calc(-50% + ${knob.y * 42}px))`,
           }}
         />
         <span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] font-bold tracking-wider text-white/50">

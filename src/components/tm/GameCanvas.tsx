@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   bindSfxModule,
   createGame,
+  getPlayer,
   setAimStick,
   setKey,
   setMoveStick,
@@ -204,7 +205,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       dpr = nextDpr;
       canvas.style.width = `${cssW}px`;
       canvas.style.height = `${cssH}px`;
-      view?.resize(cssW, cssH, dpr);
+      view?.resize(cssW, cssH, dpr, showTouchRef.current || cssW < 768);
       const r = canvas.getBoundingClientRect();
       rectLeft = r.left;
       rectTop = r.top;
@@ -322,6 +323,9 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       if (!t) return;
       syncPointer(t.clientX, t.clientY);
     };
+    const blockNativeTouch = (e: TouchEvent) => {
+      if (showTouchRef.current) e.preventDefault();
+    };
     const onScroll = () => {
       // Rare: scroll offset can move rect without resize
       const r = canvas.getBoundingClientRect();
@@ -338,6 +342,8 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("contextmenu", onContextMenu);
     canvas.addEventListener("touchmove", onTouchMove, { passive: true });
+    canvas.addEventListener("touchstart", blockNativeTouch, { passive: false });
+    canvas.addEventListener("touchmove", blockNativeTouch, { passive: false });
 
     const loop = (now: number) => {
       if (!running) return;
@@ -467,7 +473,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
 
       view = playView;
       viewRef.current = playView;
-      playView.resize(cssW, cssH, dpr);
+      playView.resize(cssW, cssH, dpr, showTouchRef.current || cssW < 768);
 
       report("프레임 안정화…", 90);
       for (let i = 0; i < 8; i++) {
@@ -524,6 +530,8 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       canvas.removeEventListener("mousemove", onMouseMove);
       canvas.removeEventListener("contextmenu", onContextMenu);
       canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchstart", blockNativeTouch);
+      canvas.removeEventListener("touchmove", blockNativeTouch);
     };
   }, [active, mapId, vultureId, exitToMenu, resumeGame, toggleFullscreen]);
 
@@ -546,11 +554,19 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       aria-label="Tactics Mercenary 전체화면 전투"
     >
       {!loading && !fatal && (
-        <div className="pointer-events-auto absolute left-0 right-0 top-0 z-20 flex items-center justify-between gap-2 bg-gradient-to-b from-black/80 to-transparent px-3 py-2 sm:px-4">
-          <div className="min-w-0 truncate font-mono text-[11px] text-slate-300 sm:text-xs">
-            {vultureId} · {mapId}
-            {isFs ? " · FULLSCREEN" : " · WINDOW"}
-          </div>
+        <div
+          className={`pointer-events-auto absolute z-20 flex items-center gap-2 ${
+            showTouch
+              ? "right-2 top-[max(0.5rem,env(safe-area-inset-top))]"
+              : "left-0 right-0 top-0 justify-between bg-gradient-to-b from-black/80 to-transparent px-3 py-2 sm:px-4"
+          }`}
+        >
+          {!showTouch && (
+            <div className="min-w-0 truncate font-mono text-[11px] text-slate-300 sm:text-xs">
+              {vultureId} · {mapId}
+              {isFs ? " · FULLSCREEN" : " · WINDOW"}
+            </div>
+          )}
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -559,13 +575,15 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
             >
               일시정지
             </button>
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="rounded-md border border-white/15 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-white/20"
-            >
-              {isFs ? "창 모드" : "전체화면"}
-            </button>
+            {!showTouch && (
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="rounded-md border border-white/15 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-white/20"
+              >
+                {isFs ? "창 모드" : "전체화면"}
+              </button>
+            )}
             <button
               type="button"
               onClick={exitToMenu}
@@ -588,7 +606,17 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         />
 
         {!loading && !fatal && (
-          <PlayHud state={stateRef.current} tick={hudTick} />
+          <PlayHud
+            state={stateRef.current}
+            tick={hudTick}
+            mobile={showTouch}
+            onSelectWeapon={(slot) => {
+              const player = stateRef.current && getPlayer(stateRef.current);
+              if (player && player.weapons[slot] !== undefined) {
+                player.weaponIndex = slot;
+              }
+            }}
+          />
         )}
 
         {(loading || fatal) && (
@@ -679,35 +707,28 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
         )}
 
         {showTouch && !loading && !fatal && (
-          <>
-            <button
-              type="button"
-              className="pointer-events-auto absolute right-3 top-3 z-20 rounded-lg border border-rose-400/40 bg-rose-600/90 px-3 py-1.5 text-xs font-bold text-white"
-              onClick={exitToMenu}
-            >
-              종료
-            </button>
-            <TouchSticks
-              onMove={(vec) => {
-                const state = stateRef.current;
-                if (state) setMoveStick(state, vec);
-              }}
-              onAim={(vec) => {
-                const state = stateRef.current;
-                if (state) setAimStick(state, vec);
-              }}
-              onAimHeld={(down) => {
-                const state = stateRef.current;
-                if (state) setKey(state, "Mouse0", down);
-              }}
-            />
-          </>
+          <TouchSticks
+            onMove={(vec) => {
+              const state = stateRef.current;
+              if (state) setMoveStick(state, vec);
+            }}
+            onAim={(vec) => {
+              const state = stateRef.current;
+              if (state) setAimStick(state, vec);
+            }}
+            onAimHeld={(down) => {
+              const state = stateRef.current;
+              if (state) setKey(state, "Mouse0", down);
+            }}
+          />
         )}
       </div>
 
-      <p className="pointer-events-none absolute bottom-1 left-1/2 z-20 -translate-x-1/2 text-[10px] text-white/40 sm:bottom-2">
-        Esc 일시정지 · Q/F10 종료 · F11 전체화면
-      </p>
+      {!showTouch && (
+        <p className="pointer-events-none absolute bottom-1 left-1/2 z-20 -translate-x-1/2 text-[10px] text-white/40 sm:bottom-2">
+          Esc 일시정지 · Q/F10 종료 · F11 전체화면
+        </p>
+      )}
     </div>
   );
 }
