@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { getPlayer, type Bullet, type GameState } from "@/game/engine";
 import { sculptedHeight } from "@/game/heightfield";
 import { engineToThree } from "./coords";
-import type { OrdnanceArtKit } from "./ordnanceArt";
+import { shotYawFrameIndex, type OrdnanceArtKit } from "./ordnanceArt";
 
 export type LayerHandle = {
   mesh: THREE.Object3D;
@@ -82,14 +82,17 @@ export function createProjectileLayer(
         const b = state.bullets[bi]!;
         if (!b.alive) continue;
         if (shotN >= maxShots) continue;
-        const texture = art?.shots[b.weaponId]?.[0];
+        const frames = art?.shots[b.weaponId];
+        const texture = frames?.[shotYawFrameIndex(b.angle, frames.length)];
         if (!texture) continue;
         const h = hover(b, sculptedHeight(map, b.x, b.y));
         const pos = engineToThree(b.x, b.y, h);
         const card = cards[shotN]!;
         card.position.set(pos.x, pos.y, pos.z);
         setCard(card, texture, SHOT_WORLD * Math.max(0.82, b.drawScale || 1));
-        layFlat(card, b.angle);
+        // A 16-way painting already contains its heading; rotating it again
+        // would make the east/north/west artwork drift out of sync.
+        layFlat(card, frames.length > 1 ? 0 : b.angle);
         shotN += 1;
       }
     },

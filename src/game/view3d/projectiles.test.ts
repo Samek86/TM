@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type { MapDef } from "@/data/maps";
 import type { Bullet, GameState, Pickup } from "@/game/engine";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
-import type { OrdnanceArtKit } from "./ordnanceArt";
+import { shotYawFrameIndex, type OrdnanceArtKit } from "./ordnanceArt";
 
 function miniMap(): MapDef {
   return {
@@ -163,6 +163,30 @@ describe("projectiles", () => {
       kit.shots[12]?.[0],
     );
     layer.dispose();
+  });
+
+  it("selects a different painted yaw frame as a missile changes heading", () => {
+    const frames = Array.from({ length: 16 }, () => new THREE.Texture());
+    const kit: OrdnanceArtKit = {
+      bodies: {},
+      shots: { 12: frames },
+      items: [],
+    };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(miniState({ bullets: [bullet({ angle: 0 })] }));
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[0]);
+    layer.sync(miniState({ bullets: [bullet({ angle: Math.PI })] }));
+    expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[8]);
+    expect(card.rotation.z).toBe(0);
+    layer.dispose();
+  });
+
+  it("wraps heading angles through the sixteen-way frame sequence", () => {
+    expect(shotYawFrameIndex(0, 16)).toBe(0);
+    expect(shotYawFrameIndex(Math.PI / 2, 16)).toBe(4);
+    expect(shotYawFrameIndex(Math.PI, 16)).toBe(8);
+    expect(shotYawFrameIndex(-Math.PI / 2, 16)).toBe(12);
   });
 
   it("assigns the matching painted card to each weapon id", () => {

@@ -7,6 +7,13 @@ export type OrdnanceArtKit = {
   items: THREE.Texture[];
 };
 
+export function shotYawFrameIndex(angle: number, frameCount: number): number {
+  const count = Math.max(1, frameCount);
+  const turn = Math.PI * 2;
+  const normalized = ((angle % turn) + turn) % turn;
+  return Math.round((normalized / turn) * count) % count;
+}
+
 async function loadPaintedTexture(path: string): Promise<THREE.Texture> {
   const texture = await new THREE.TextureLoader().loadAsync(path);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -25,10 +32,20 @@ export async function loadOrdnanceArt(): Promise<OrdnanceArtKit> {
       const id = String(weapon.id).padStart(2, "0");
       const [body, shot] = await Promise.all([
         loadPaintedTexture(`/assets/weapons/${id}/hero.jpg`),
-        loadPaintedTexture(`/assets/weapons/${id}/shot.jpg`),
+        weapon.ammo === "missile" || weapon.ammo === "explosive"
+          ? Promise.all(
+              Array.from({ length: 16 }, (_, frame) =>
+                loadPaintedTexture(
+                  `/assets/weapons/${id}/yaw_${String(frame).padStart(2, "0")}.jpg`,
+                ),
+              ),
+            )
+          : loadPaintedTexture(`/assets/weapons/${id}/shot.jpg`).then(
+              (texture) => [texture],
+            ),
       ]);
       kit.bodies[weapon.id] = [body];
-      kit.shots[weapon.id] = [shot];
+      kit.shots[weapon.id] = shot;
     }),
   );
   return kit;
