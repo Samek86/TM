@@ -7,7 +7,10 @@ export type OrdnanceArtKit = {
   items: THREE.Texture[];
 };
 
-export const ORIENTED_WEAPON_IDS = new Set([11, 12, 13, 14, 15, 16, 19]);
+/** Every traveling projectile has a painted 16-way facing sequence. Mines stay put. */
+export const ORIENTED_WEAPON_IDS = new Set([
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+]);
 
 export function shotYawFrameIndex(angle: number, frameCount: number): number {
   const count = Math.max(1, frameCount);

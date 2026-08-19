@@ -209,10 +209,13 @@ describe("projectiles", () => {
     expect(shotWorldSize(16)).toBeLessThanOrEqual(30);
   });
 
-  it("registers all heading-dependent missiles and bombs for alpha yaw sprites", () => {
-    for (const id of [11, 12, 13, 14, 15, 16, 19]) {
+  it("registers every traveling projectile for alpha yaw sprites", () => {
+    for (const id of [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+    ]) {
       expect(ORIENTED_WEAPON_IDS.has(id)).toBe(true);
     }
+    expect(ORIENTED_WEAPON_IDS.has(10)).toBe(false);
   });
 
   it("assigns the matching painted card to each weapon id", () => {
