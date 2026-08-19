@@ -10,7 +10,7 @@ import type { MapDef } from "@/data/maps";
 import type { VultureId } from "@/data/weapons";
 import { getPlayer, type GameState } from "@/game/engine";
 import { sculptedHeight } from "@/game/heightfield";
-import { VIEW_WORLD_WIDTH } from "@/game/viewScale";
+import { playWorldWidth } from "@/game/viewScale";
 import { orthoAimRay, pickAimOnHeightfield } from "./aimPick";
 import { createSkyDome, horizonColor } from "./atmosphere";
 import { createMapBoundary } from "./boundary";
@@ -23,23 +23,29 @@ import {
 } from "./cameraRig";
 import { disposeCraftArt, type CraftArtKit } from "./craftAssets";
 import { disposeCraftModels, type CraftModelKit } from "./craftModels";
+import { disposeOrdnanceArt, type OrdnanceArtKit } from "./ordnanceArt";
 import { createAimCue } from "./aimCue";
 import { applyCraftPose, createCraftGroup } from "./crafts";
 import { createParticleLayer } from "./particles3d";
-import { disposeOrdnanceArt, type OrdnanceArtKit } from "./ordnanceArt";
 import { createPickupLayer, createProjectileLayer } from "./projectiles";
 import { createTerrainScenery, type TerrainScenery } from "./terrainMesh";
 import { disposeTerrainKit, type TerrainKit } from "./terrainTextures";
 import { biomeForMapId } from "@/game/terrainStyle";
+import { engineToThree } from "./coords";
 
 export type PlayView = {
-  resize(cssW: number, cssH: number, dpr: number): void;
+  resize(cssW: number, cssH: number, dpr: number, phoneLike?: boolean): void;
   renderFrame(state: GameState, dt: number): void;
   pickAim(
     cssX: number,
     cssY: number,
     cssW: number,
     cssH: number,
+  ): { x: number; y: number } | null;
+  projectWorld(
+    engineX: number,
+    engineY: number,
+    height: number,
   ): { x: number; y: number } | null;
   dispose(): void;
 };
@@ -53,6 +59,8 @@ export function createPlayView(
   craftModels: CraftModelKit = {},
   quality: QualityProfile = qualityProfile("high"),
 ): PlayView {
+  let cssWidth = 1;
+  let cssHeight = 1;
   let renderer: THREE.WebGLRenderer;
   try {
     renderer = new THREE.WebGLRenderer({
@@ -170,13 +178,15 @@ export function createPlayView(
   }
 
   return {
-    resize(cssW, cssH, dpr) {
+    resize(cssW, cssH, dpr, phoneLike = false) {
+      cssWidth = Math.max(1, cssW);
+      cssHeight = Math.max(1, cssH);
       const ratio = Math.min(dpr, quality.maxDpr, MAX_DPR);
       renderer.setPixelRatio(ratio);
       renderer.setSize(cssW, cssH, false);
       composer?.setPixelRatio(ratio);
       composer?.setSize(cssW, cssH);
-      const worldW = Math.min(map.width, VIEW_WORLD_WIDTH);
+      const worldW = Math.min(map.width, playWorldWidth(cssW, phoneLike));
       const { halfW, halfH } = computeOrthoHalfExtents(cssW, cssH, worldW);
       camera.left = -halfW;
       camera.right = halfW;
@@ -242,6 +252,17 @@ export function createPlayView(
       const ndcY = -(cssY / cssH) * 2 + 1;
       const { origin, dir } = orthoAimRay(camera, ndcX, ndcY);
       return pickAimOnHeightfield(map, origin, dir);
+    },
+    projectWorld(engineX, engineY, height) {
+      const world = engineToThree(engineX, engineY, height);
+      const point = new THREE.Vector3(world.x, world.y, world.z).project(
+        camera,
+      );
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
+      return {
+        x: (point.x * 0.5 + 0.5) * cssWidth,
+        y: (-point.y * 0.5 + 0.5) * cssHeight,
+      };
     },
     dispose() {
       shots.dispose();

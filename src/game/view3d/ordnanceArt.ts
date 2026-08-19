@@ -1,17 +1,5 @@
 import * as THREE from "three";
-import {
-  FIELD_LOADOUT_WEAPON_IDS,
-  WEAPONS,
-  type WeaponDef,
-} from "@/data/weapons";
-import {
-  bakeBombCanvas,
-  bakeMissileCanvas,
-  bakePickupCanvas,
-  missileKindFromStyle,
-  pickupIconKind,
-  pickupTag,
-} from "@/game/missileDraw";
+import { WEAPONS } from "@/data/weapons";
 
 export type OrdnanceArtKit = {
   bodies: Partial<Record<number, THREE.Texture[]>>;
@@ -19,52 +7,52 @@ export type OrdnanceArtKit = {
   items: THREE.Texture[];
 };
 
-function texFromCanvas(canvas: HTMLCanvasElement): THREE.Texture {
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
-  tex.wrapS = THREE.ClampToEdgeWrapping;
-  tex.wrapT = THREE.ClampToEdgeWrapping;
-  tex.needsUpdate = true;
-  return tex;
+/** Every traveling projectile has a painted 16-way facing sequence. Mines stay put. */
+export const ORIENTED_WEAPON_IDS = new Set([
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+]);
+
+export function shotYawFrameIndex(angle: number, frameCount: number): number {
+  const count = Math.max(1, frameCount);
+  const turn = Math.PI * 2;
+  const normalized = ((angle % turn) + turn) % turn;
+  return Math.round((normalized / turn) * count) % count;
 }
 
-function bakeShot(w: WeaponDef): THREE.Texture {
-  if (w.ammo === "explosive" || w.style === "lob" || w.style === "nuke") {
-    return texFromCanvas(bakeBombCanvas(w.color, w.style === "nuke"));
-  }
-  return texFromCanvas(
-    bakeMissileCanvas(missileKindFromStyle(w.style), w.color),
-  );
+async function loadPaintedTexture(path: string): Promise<THREE.Texture> {
+  const texture = await new THREE.TextureLoader().loadAsync(path);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = 8;
+  return texture;
 }
 
-function bakePickup(w: WeaponDef): THREE.Texture {
-  return texFromCanvas(
-    bakePickupCanvas(pickupIconKind(w), w.color, pickupTag(w.name)),
-  );
-}
-
-/** Bake the clean 2D missile drawings. Original SPR is too small to upscale. */
+/** Painted weapon heroes for the 3D world; never uses legacy SPR pixels. */
 export async function loadOrdnanceArt(): Promise<OrdnanceArtKit> {
   const kit: OrdnanceArtKit = { bodies: {}, shots: {}, items: [] };
-  for (const w of WEAPONS) {
-    if (FIELD_LOADOUT_WEAPON_IDS.includes(w.id)) {
-      kit.bodies[w.id] = [bakePickup(w)];
-    }
-    if (
-      w.ammo === "missile" ||
-      w.ammo === "explosive" ||
-      w.style === "dart" ||
-      w.style === "cruise" ||
-      w.style === "scatter" ||
-      w.style === "lob" ||
-      w.style === "nuke"
-    ) {
-      kit.shots[w.id] = [bakeShot(w)];
-    }
-  }
+  await Promise.all(
+    WEAPONS.map(async (weapon) => {
+      const id = String(weapon.id).padStart(2, "0");
+      const [body, shot] = await Promise.all([
+        loadPaintedTexture(`/assets/weapons/${id}/hero.png`),
+        ORIENTED_WEAPON_IDS.has(weapon.id)
+          ? Promise.all(
+              Array.from({ length: 16 }, (_, frame) =>
+                loadPaintedTexture(
+                  `/assets/weapons/${id}/yaw_${String(frame).padStart(2, "0")}.png`,
+                ),
+              ),
+            )
+          : loadPaintedTexture(`/assets/weapons/${id}/shot.png`).then(
+              (texture) => [texture],
+            ),
+      ]);
+      kit.bodies[weapon.id] = [body];
+      kit.shots[weapon.id] = shot;
+    }),
+  );
   return kit;
 }
 

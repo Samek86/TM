@@ -12,8 +12,10 @@
   --color-tm-accent-fg: #ffe8a3;
   --color-tm-cyan: #38bdf8;
   --color-tm-danger: #f43f5e;
-  --font-sans: "IBM Plex Sans KR", "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Segoe UI", "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    "IBM Plex Sans KR", "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    "Segoe UI", "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
   --radius-tm: 0.75rem;
 }
 
@@ -50,6 +52,18 @@
   .tm-game-shell:-webkit-full-screen {
     width: 100%;
     height: 100%;
+  }
+  .tm-game-shell,
+  .tm-game-shell canvas,
+  .tm-game-shell * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tm-game-shell {
+    overscroll-behavior: none;
+    touch-action: none;
   }
   .tm-scroll {
     scrollbar-width: thin;

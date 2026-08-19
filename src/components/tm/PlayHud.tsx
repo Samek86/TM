@@ -2,6 +2,8 @@ import { useEffect, useRef, type JSX } from "react";
 import { sampleLevel, type MapDef } from "@/data/maps";
 import { getWeaponById } from "@/data/weapons";
 import { getPlayer, type GameState, type Pilot } from "@/game/engine";
+import { offscreenCues, type ProjectWorld } from "@/game/offscreenCues";
+import { DirectionArrow } from "./DirectionArrow";
 
 const MINI_W = 120;
 const MINI_H = 90;
@@ -29,11 +31,31 @@ function paintElevation(ctx: CanvasRenderingContext2D, map: MapDef): void {
 }
 
 function rankedPilots(pilots: Pilot[]): Pilot[] {
-  return [...pilots].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  return [...pilots].sort(
+    (a, b) => b.score - a.score || a.name.localeCompare(b.name),
+  );
 }
 
-export function PlayHud(props: { state: GameState | null; tick: number }): JSX.Element {
-  const { state, tick } = props;
+export function PlayHud(props: {
+  state: GameState | null;
+  tick: number;
+  mobile?: boolean;
+  viewportWidth?: number;
+  viewportHeight?: number;
+  projectWorld?: ProjectWorld;
+  heightOf?: (engineX: number, engineY: number) => number;
+  onSelectWeapon?: (slot: number) => void;
+}): JSX.Element {
+  const {
+    state,
+    tick,
+    mobile = false,
+    viewportWidth = 0,
+    viewportHeight = 0,
+    projectWorld,
+    heightOf,
+    onSelectWeapon,
+  } = props;
   const miniRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<MapDef | null>(null);
   const pipRef = useRef<Pip | null>(null);
@@ -62,11 +84,17 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
     }
     const cx = Math.max(
       PIP_R,
-      Math.min(MINI_W - 1 - PIP_R, (player.x / Math.max(1, state.map.width)) * MINI_W),
+      Math.min(
+        MINI_W - 1 - PIP_R,
+        (player.x / Math.max(1, state.map.width)) * MINI_W,
+      ),
     );
     const cy = Math.max(
       PIP_R,
-      Math.min(MINI_H - 1 - PIP_R, (player.y / Math.max(1, state.map.height)) * MINI_H),
+      Math.min(
+        MINI_H - 1 - PIP_R,
+        (player.y / Math.max(1, state.map.height)) * MINI_H,
+      ),
     );
     const px = Math.max(0, Math.floor(cx - PIP_R - 1));
     const py = Math.max(0, Math.floor(cy - PIP_R - 1));
@@ -86,20 +114,44 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
   const elev = player ? sampleLevel(state.map, player.x, player.y) : 0;
   const speed = player ? Math.round(Math.hypot(player.vx, player.vy)) : 0;
   const hpFrac = player ? player.hp / Math.max(1, player.maxHp) : 0;
+  const cueViewportWidth =
+    viewportWidth || (typeof window === "undefined" ? 0 : window.innerWidth);
+  const cueViewportHeight =
+    viewportHeight || (typeof window === "undefined" ? 0 : window.innerHeight);
+  const cues = offscreenCues(
+    state.pilots,
+    cueViewportWidth,
+    cueViewportHeight,
+    mobile,
+    projectWorld,
+    heightOf,
+  );
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 text-white">
-      <div className="absolute left-3 top-14 w-[210px] rounded-lg border border-white/15 bg-black/70 px-3 py-2">
-        <p className="truncate font-mono text-[11px] text-slate-300">{state.map.name}</p>
+      <div
+        className={`absolute rounded-lg border border-white/15 bg-black/70 ${
+          mobile
+            ? "left-2 top-2 w-[118px] px-2 py-1.5"
+            : "left-3 top-14 w-[210px] px-3 py-2"
+        }`}
+      >
+        <p className="truncate font-mono text-[11px] text-slate-300">
+          {state.map.name}
+        </p>
         <div className="mt-1 flex items-baseline justify-between">
-          <span className="text-[10px] font-bold tracking-wide text-slate-400">SCOREBOARD</span>
-          <span className="font-mono text-[10px] text-slate-500">K/{state.killLimit}</span>
+          <span className="text-[10px] font-bold tracking-wide text-slate-400">
+            SCOREBOARD
+          </span>
+          <span className="font-mono text-[10px] text-slate-500">
+            K/{state.killLimit}
+          </span>
         </div>
         <ul className="mt-1 space-y-0.5">
-          {leaders.map((p, i) => (
+          {leaders.slice(0, mobile ? 3 : leaders.length).map((p, i) => (
             <li
               key={p.id}
-              className={`flex items-center gap-1.5 rounded px-1 py-0.5 text-xs ${
+              className={`flex items-center gap-1.5 rounded px-1 py-0.5 ${mobile ? "text-[10px]" : "text-xs"} ${
                 p.isPlayer ? "bg-sky-400/15" : i === 0 ? "bg-amber-400/10" : ""
               }`}
             >
@@ -107,7 +159,9 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
                 className="inline-block h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: p.accent }}
               />
-              <span className={`min-w-0 flex-1 truncate ${p.isPlayer ? "font-bold" : "text-slate-200"}`}>
+              <span
+                className={`min-w-0 flex-1 truncate ${p.isPlayer ? "font-bold" : "text-slate-200"}`}
+              >
                 {p.isPlayer ? `${p.name} (YOU)` : p.name}
               </span>
               <span
@@ -122,29 +176,69 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
         </ul>
       </div>
 
-      <canvas
-        ref={miniRef}
-        width={MINI_W}
-        height={MINI_H}
-        className="absolute right-3 top-14 rounded-md border border-white/15 bg-black/70"
-        aria-hidden
-      />
+      {!mobile && (
+        <canvas
+          ref={miniRef}
+          width={MINI_W}
+          height={MINI_H}
+          className="absolute right-3 top-14 rounded-md border border-white/15 bg-black/70"
+          aria-hidden
+        />
+      )}
+
+      {cues.map((cue) => (
+        <div
+          key={cue.id}
+          className={`absolute z-20 flex items-center rounded-full border border-white/25 bg-black/75 font-mono font-bold text-white shadow-lg ${
+            mobile
+              ? "gap-0.5 px-1.5 py-0.5 text-[8px]"
+              : "gap-1 px-2 py-1 text-[10px]"
+          }`}
+          style={{
+            left: cue.left,
+            top: cue.top,
+            borderColor: cue.accent,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          {cue.edge && (
+            <DirectionArrow
+              angle={cue.angle}
+              color={cue.accent}
+              size={mobile ? 9 : 13}
+            />
+          )}
+          <span>{cue.name}</span>
+        </div>
+      ))}
 
       {player && (
-        <div className="absolute inset-x-0 bottom-6 flex items-end gap-3 bg-black/70 px-3 py-2 sm:px-4">
+        <div
+          className={`absolute inset-x-0 flex items-end gap-2 bg-black/70 px-3 py-2 sm:px-4 ${
+            mobile
+              ? "inset-x-auto bottom-[calc(max(9.5rem,env(safe-area-inset-bottom)+9.5rem))] left-1/2 w-[min(52vw,240px)] -translate-x-1/2 flex-col items-center bg-transparent px-0 py-0"
+              : "bottom-6 gap-3"
+          }`}
+        >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-mono text-[11px] text-slate-400">HP</span>
-              <div className="h-2.5 w-40 overflow-hidden rounded-sm bg-slate-800">
+              <div
+                className={`h-2.5 overflow-hidden rounded-sm bg-slate-800 ${mobile ? "w-24" : "w-40"}`}
+              >
                 <div
                   className={`h-full ${hpFrac > 0.3 ? "bg-emerald-500" : "bg-rose-500"}`}
-                  style={{ width: `${Math.max(0, Math.min(100, hpFrac * 100))}%` }}
+                  style={{
+                    width: `${Math.max(0, Math.min(100, hpFrac * 100))}%`,
+                  }}
                 />
               </div>
             </div>
-            <p className="mt-1 font-mono text-[11px] text-slate-300">
-              SPEED {speed} {elev >= 1 ? "HIGH" : "LOW"}
-            </p>
+            {!mobile && (
+              <p className="mt-1 font-mono text-[11px] text-slate-300">
+                SPEED {speed} {elev >= 1 ? "HIGH" : "LOW"}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-end gap-1">
             {player.weapons.map((wid, slot) => {
@@ -153,24 +247,53 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
               const am = player.ammo[wid];
               const empty = !isDefault && (am ?? 0) <= 0;
               const active = slot === player.weaponIndex && !empty;
-              return (
+              const chip = (
                 <div
                   key={`${slot}-${wid}`}
-                  className={`flex h-10 w-14 flex-col items-center justify-center rounded border-2 font-mono ${
-                    empty ? "opacity-45" : ""
-                  }`}
+                  className={`flex flex-col items-center justify-center rounded border-2 font-mono ${
+                    mobile ? "h-9 w-10" : "h-10 w-14"
+                  } ${empty ? "opacity-45" : ""}`}
                   style={{
-                    backgroundColor: active ? ww.color : empty ? "#0f172a" : "#1e293b",
-                    borderColor: active ? "#f8fafc" : empty ? "#1e293b" : isDefault ? "#475569" : "#334155",
+                    backgroundColor: active
+                      ? ww.color
+                      : empty
+                        ? "#0f172a"
+                        : "#1e293b",
+                    borderColor: active
+                      ? "#f8fafc"
+                      : empty
+                        ? "#1e293b"
+                        : isDefault
+                          ? "#475569"
+                          : "#334155",
                     color: active ? "#0f172a" : empty ? "#64748b" : "#cbd5e1",
                   }}
                 >
                   <span className="text-[10px] font-bold">{slot + 1}</span>
-                  <span className="text-[8px] leading-none">{ww.name.slice(0, 6)}</span>
-                  <span className="text-[9px] font-bold">
+                  {!mobile && (
+                    <span className="text-[8px] leading-none">
+                      {ww.name.slice(0, 6)}
+                    </span>
+                  )}
+                  <span
+                    className={`${mobile ? "text-[8px]" : "text-[9px]"} font-bold`}
+                  >
                     {isDefault ? "∞" : `×${Math.max(0, am ?? 0)}`}
                   </span>
                 </div>
+              );
+              return mobile ? (
+                <button
+                  key={`${slot}-${wid}`}
+                  type="button"
+                  className="pointer-events-auto touch-manipulation"
+                  onClick={() => onSelectWeapon?.(slot)}
+                  aria-label={`${ww.name} 선택`}
+                >
+                  {chip}
+                </button>
+              ) : (
+                chip
               );
             })}
           </div>
@@ -189,7 +312,9 @@ export function PlayHud(props: { state: GameState | null; tick: number }): JSX.E
             <h2 className="font-display text-center text-2xl text-white">
               {state.message || "MATCH OVER"}
             </h2>
-            <p className="mt-2 text-center text-xs text-slate-400">R 재시작 · Q 로비</p>
+            <p className="mt-2 text-center text-xs text-slate-400">
+              R 재시작 · Q 로비
+            </p>
           </div>
         </div>
       )}

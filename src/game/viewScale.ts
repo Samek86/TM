@@ -16,6 +16,16 @@ export const VIEW_TILES_ACROSS = 24;
 
 /** World width the camera tries to show (capped by map bounds in camera). */
 export const VIEW_WORLD_WIDTH = VIEW_REF_CELL * VIEW_TILES_ACROSS;
+export const MOBILE_VIEW_WORLD_MULTIPLIER = 0.3;
+
+/** Phone play needs a tighter frustum so the craft remains readable. */
+export function playWorldWidth(
+  cssWidth: number,
+  coarsePointer = false,
+): number {
+  const phoneLike = coarsePointer || cssWidth < 768;
+  return VIEW_WORLD_WIDTH * (phoneLike ? MOBILE_VIEW_WORLD_MULTIPLIER : 1);
+}
 
 /**
  * Hitbox / draw radius in world units from vulture radiusTiles.

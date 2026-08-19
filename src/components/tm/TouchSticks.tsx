@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { stickFromPointer, type StickVec } from "@/game/touchStick";
 
 function ThumbStick({
@@ -16,62 +16,138 @@ function ThumbStick({
 }) {
   const padRef = useRef<HTMLDivElement>(null);
   const heldRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
+  const touchIdRef = useRef<number | null>(null);
+  const onChangeRef = useRef(onChange);
+  const onHeldRef = useRef(onHeld);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [held, setHeld] = useState(false);
+  onChangeRef.current = onChange;
+  onHeldRef.current = onHeld;
 
-  const apply = useCallback(
-    (clientX: number, clientY: number) => {
-      const el = padRef.current;
-      if (!el) return;
-      const box = el.getBoundingClientRect();
-      const vec = stickFromPointer(
-        box.left + box.width / 2,
-        box.top + box.height / 2,
-        clientX,
-        clientY,
-        box.width / 2,
-      );
-      setKnob(vec);
-      onChange(vec);
-    },
-    [onChange],
-  );
+  const applyInput = useCallback((clientX: number, clientY: number) => {
+    const el = padRef.current;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    const vec = stickFromPointer(
+      box.left + box.width / 2,
+      box.top + box.height / 2,
+      clientX,
+      clientY,
+      box.width / 2,
+    );
+    const rawX = clientX - (box.left + box.width / 2);
+    const rawY = clientY - (box.top + box.height / 2);
+    const maxOffset = box.width * 0.32;
+    const rawLength = Math.hypot(rawX, rawY);
+    const clamp = rawLength > maxOffset ? maxOffset / rawLength : 1;
+    setKnob({ x: rawX * clamp, y: rawY * clamp });
+    onChangeRef.current(vec);
+  }, []);
 
   const release = useCallback(() => {
     heldRef.current = false;
+    pointerIdRef.current = null;
+    touchIdRef.current = null;
     setHeld(false);
     setKnob({ x: 0, y: 0 });
-    onChange(null);
-    onHeld?.(false);
-  }, [onChange, onHeld]);
+    onChangeRef.current(null);
+    onHeldRef.current?.(false);
+  }, []);
+
+  useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      if (
+        heldRef.current &&
+        pointerIdRef.current !== null &&
+        event.pointerId === pointerIdRef.current
+      ) {
+        applyInput(event.clientX, event.clientY);
+      }
+    };
+    const onPointerEnd = (event: PointerEvent) => {
+      if (
+        event.pointerId === pointerIdRef.current &&
+        touchIdRef.current === null
+      ) {
+        release();
+      }
+    };
+    const onPointerCancel = (event: PointerEvent) => {
+      // iOS can emit a ghost pointercancel while the matching touch remains.
+      if (
+        event.pointerId === pointerIdRef.current &&
+        touchIdRef.current === null
+      ) {
+        release();
+      }
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (!heldRef.current) return;
+      const touch = [...event.touches].find(
+        (candidate) => candidate.identifier === touchIdRef.current,
+      );
+      if (!touch) return;
+      event.preventDefault();
+      applyInput(touch.clientX, touch.clientY);
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      if (
+        [...event.changedTouches].some(
+          (touch) => touch.identifier === touchIdRef.current,
+        )
+      ) {
+        release();
+      }
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerEnd);
+    window.addEventListener("pointercancel", onPointerCancel);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: false });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: false });
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerCancel);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [applyInput, release]);
 
   return (
     <div className="flex flex-col items-center gap-1">
       <div
         ref={padRef}
-        className="relative h-32 w-32 touch-none rounded-full border border-white/25 bg-black/45 shadow-[0_0_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+        className="relative h-28 w-28 touch-none rounded-full border border-white/25 bg-black/45 shadow-[0_0_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
         style={{ boxShadow: held ? `0 0 22px ${accent}` : undefined }}
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+          pointerIdRef.current = e.pointerId;
           heldRef.current = true;
           setHeld(true);
-          onHeld?.(true);
-          apply(e.clientX, e.clientY);
+          onHeldRef.current?.(true);
+          applyInput(e.clientX, e.clientY);
         }}
-        onPointerMove={(e) => {
-          if (!heldRef.current) return;
-          apply(e.clientX, e.clientY);
+        onTouchStart={(e) => {
+          const touch = e.changedTouches[0];
+          if (!touch) return;
+          e.preventDefault();
+          e.stopPropagation();
+          touchIdRef.current = touch.identifier;
+          heldRef.current = true;
+          setHeld(true);
+          onHeldRef.current?.(true);
+          applyInput(touch.clientX, touch.clientY);
         }}
-        onPointerUp={release}
-        onPointerCancel={release}
       >
         <div
-          className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-white/80"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 rounded-full border-2 bg-white/80"
           style={{
             borderColor: accent,
-            transform: `translate(calc(-50% + ${knob.x * 36}px), calc(-50% + ${knob.y * 36}px))`,
+            transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))`,
           }}
         />
         <span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] font-bold tracking-wider text-white/50">
@@ -93,7 +169,7 @@ export function TouchSticks({
   onAimHeld: (held: boolean) => void;
 }) {
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex items-end justify-between px-4 pb-[max(2.25rem,env(safe-area-inset-bottom)+2.25rem)]">
       <div className="pointer-events-auto">
         <ThumbStick
           label="MOVE"
