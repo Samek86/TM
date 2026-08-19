@@ -2,6 +2,7 @@ import { useEffect, useRef, type JSX } from "react";
 import { sampleLevel, type MapDef } from "@/data/maps";
 import { getWeaponById } from "@/data/weapons";
 import { getPlayer, type GameState, type Pilot } from "@/game/engine";
+import { offscreenCues } from "@/game/offscreenCues";
 
 const MINI_W = 120;
 const MINI_H = 90;
@@ -38,9 +39,18 @@ export function PlayHud(props: {
   state: GameState | null;
   tick: number;
   mobile?: boolean;
+  viewportWidth?: number;
+  viewportHeight?: number;
   onSelectWeapon?: (slot: number) => void;
 }): JSX.Element {
-  const { state, tick, mobile = false, onSelectWeapon } = props;
+  const {
+    state,
+    tick,
+    mobile = false,
+    viewportWidth = 0,
+    viewportHeight = 0,
+    onSelectWeapon,
+  } = props;
   const miniRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<MapDef | null>(null);
   const pipRef = useRef<Pip | null>(null);
@@ -99,6 +109,12 @@ export function PlayHud(props: {
   const elev = player ? sampleLevel(state.map, player.x, player.y) : 0;
   const speed = player ? Math.round(Math.hypot(player.vx, player.vy)) : 0;
   const hpFrac = player ? player.hp / Math.max(1, player.maxHp) : 0;
+  const cues = offscreenCues(
+    state.pilots,
+    viewportWidth,
+    viewportHeight,
+    mobile,
+  );
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 text-white">
@@ -158,6 +174,30 @@ export function PlayHud(props: {
           aria-hidden
         />
       )}
+
+      {cues.map((cue) => (
+        <div
+          key={cue.id}
+          className="absolute flex items-center gap-1 rounded-full border border-white/25 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold text-white shadow-lg"
+          style={{
+            left: cue.left,
+            top: cue.top,
+            borderColor: cue.accent,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <span
+            className="inline-block text-xs leading-none"
+            style={{
+              color: cue.accent,
+              transform: `rotate(${cue.angle}rad)`,
+            }}
+          >
+            ▶
+          </span>
+          <span>{cue.name}</span>
+        </div>
+      ))}
 
       {player && (
         <div

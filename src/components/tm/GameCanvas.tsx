@@ -97,6 +97,7 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
   const [fatal, setFatal] = useState<string | null>(null);
   const [hudTick, setHudTick] = useState(0);
   const [isFs, setIsFs] = useState(false);
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const showTouchRef = useRef(false);
   showTouchRef.current = showTouch;
 
@@ -203,6 +204,11 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
       cssW = nextW;
       cssH = nextH;
       dpr = nextDpr;
+      setViewport((previous) =>
+        previous.width === cssW && previous.height === cssH
+          ? previous
+          : { width: cssW, height: cssH },
+      );
       canvas.style.width = `${cssW}px`;
       canvas.style.height = `${cssH}px`;
       view?.resize(cssW, cssH, dpr, showTouchRef.current || cssW < 768);
@@ -610,6 +616,8 @@ export function GameCanvas({ mapId, vultureId, active, onExit }: Props) {
             state={stateRef.current}
             tick={hudTick}
             mobile={showTouch}
+            viewportWidth={viewport.width}
+            viewportHeight={viewport.height}
             onSelectWeapon={(slot) => {
               const player = stateRef.current && getPlayer(stateRef.current);
               if (player && player.weapons[slot] !== undefined) {
