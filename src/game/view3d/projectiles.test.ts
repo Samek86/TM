@@ -166,6 +166,8 @@ describe("projectiles", () => {
     expect((card.material as THREE.MeshBasicMaterial).map).toBe(
       kit.shots[12]?.[0],
     );
+    expect((card.material as THREE.MeshBasicMaterial).transparent).toBe(true);
+    expect((card.material as THREE.MeshBasicMaterial).depthWrite).toBe(false);
     layer.dispose();
   });
 
