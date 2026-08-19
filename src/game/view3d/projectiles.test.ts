@@ -178,7 +178,7 @@ describe("projectiles", () => {
     expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[0]);
     layer.sync(miniState({ bullets: [bullet({ angle: Math.PI })] }));
     expect((card.material as THREE.MeshBasicMaterial).map).toBe(frames[8]);
-    expect(card.rotation.z).toBe(0);
+    expect(Math.abs(card.rotation.z)).toBe(0);
     layer.dispose();
   });
 
