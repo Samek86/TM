@@ -54,7 +54,7 @@ describe("offscreenCues", () => {
         {
           id: "far",
           name: "FAR",
-          x: 500,
+          x: 1200,
           y: 0,
           hp: 100,
           respawn: 0,

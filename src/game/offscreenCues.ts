@@ -45,7 +45,7 @@ export function offscreenCues(
       pilot.isPlayer ||
       pilot.hp <= 0 ||
       pilot.respawn > 0 ||
-      cues.length >= 6
+      cues.length >= 8
     ) {
       continue;
     }
@@ -54,7 +54,7 @@ export function offscreenCues(
     const distance = Math.hypot(dx, dy);
     const offscreen =
       Math.abs(dx) > halfW * 0.85 || Math.abs(dy) > halfH * 0.85;
-    if (!offscreen || distance >= worldWidth * 1.7 || distance < 1e-4) {
+    if (!offscreen || distance >= worldWidth * 5 || distance < 1e-4) {
       continue;
     }
     const nx = dx / distance;

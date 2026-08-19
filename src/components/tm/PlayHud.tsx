@@ -109,10 +109,14 @@ export function PlayHud(props: {
   const elev = player ? sampleLevel(state.map, player.x, player.y) : 0;
   const speed = player ? Math.round(Math.hypot(player.vx, player.vy)) : 0;
   const hpFrac = player ? player.hp / Math.max(1, player.maxHp) : 0;
+  const cueViewportWidth =
+    viewportWidth || (typeof window === "undefined" ? 0 : window.innerWidth);
+  const cueViewportHeight =
+    viewportHeight || (typeof window === "undefined" ? 0 : window.innerHeight);
   const cues = offscreenCues(
     state.pilots,
-    viewportWidth,
-    viewportHeight,
+    cueViewportWidth,
+    cueViewportHeight,
     mobile,
   );
 
@@ -178,7 +182,7 @@ export function PlayHud(props: {
       {cues.map((cue) => (
         <div
           key={cue.id}
-          className="absolute flex items-center gap-1 rounded-full border border-white/25 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold text-white shadow-lg"
+          className="absolute z-20 flex items-center gap-1 rounded-full border border-white/25 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold text-white shadow-lg"
           style={{
             left: cue.left,
             top: cue.top,
