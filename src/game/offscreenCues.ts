@@ -18,6 +18,7 @@ export type OffscreenCue = {
   left: number;
   top: number;
   angle: number;
+  edge: boolean;
 };
 
 export function offscreenCues(
@@ -45,7 +46,7 @@ export function offscreenCues(
       pilot.isPlayer ||
       pilot.hp <= 0 ||
       pilot.respawn > 0 ||
-      cues.length >= 8
+      cues.length >= 12
     ) {
       continue;
     }
@@ -54,19 +55,26 @@ export function offscreenCues(
     const distance = Math.hypot(dx, dy);
     const offscreen =
       Math.abs(dx) > halfW * 0.85 || Math.abs(dy) > halfH * 0.85;
-    if (!offscreen || distance >= worldWidth * 5 || distance < 1e-4) {
+    if (distance < 1e-4 || (offscreen && distance >= worldWidth * 5)) {
       continue;
     }
     const nx = dx / distance;
     const ny = dy / distance;
-    const edgeX = nx >= 0 ? right - centerX : centerX - sideInset;
-    const edgeY = ny >= 0 ? bottom - centerY : centerY - topInset;
-    const travel = Math.min(
-      Math.abs(nx) > 1e-5 ? Math.abs(edgeX / nx) : Infinity,
-      Math.abs(ny) > 1e-5 ? Math.abs(edgeY / ny) : Infinity,
-    );
-    let left = centerX + nx * travel;
-    let top = centerY + ny * travel;
+    let left: number;
+    let top: number;
+    if (offscreen) {
+      const edgeX = nx >= 0 ? right - centerX : centerX - sideInset;
+      const edgeY = ny >= 0 ? bottom - centerY : centerY - topInset;
+      const travel = Math.min(
+        Math.abs(nx) > 1e-5 ? Math.abs(edgeX / nx) : Infinity,
+        Math.abs(ny) > 1e-5 ? Math.abs(edgeY / ny) : Infinity,
+      );
+      left = centerX + nx * travel;
+      top = centerY + ny * travel;
+    } else {
+      left = centerX + (dx / halfW) * centerX;
+      top = centerY + (dy / halfH) * centerY - 18;
+    }
     for (const other of cues) {
       if (Math.hypot(left - other.left, top - other.top) < 54) {
         left = Math.min(right, Math.max(sideInset, left - ny * 30));
@@ -80,6 +88,7 @@ export function offscreenCues(
       left,
       top,
       angle: Math.atan2(ny, nx),
+      edge: offscreen,
     });
   }
   return cues;

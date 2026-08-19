@@ -182,7 +182,11 @@ export function PlayHud(props: {
       {cues.map((cue) => (
         <div
           key={cue.id}
-          className="absolute z-20 flex items-center gap-1 rounded-full border border-white/25 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold text-white shadow-lg"
+          className={`absolute z-20 flex items-center rounded-full border border-white/25 bg-black/75 font-mono font-bold text-white shadow-lg ${
+            mobile
+              ? "gap-0.5 px-1.5 py-0.5 text-[8px]"
+              : "gap-1 px-2 py-1 text-[10px]"
+          }`}
           style={{
             left: cue.left,
             top: cue.top,
@@ -190,15 +194,17 @@ export function PlayHud(props: {
             transform: "translate(-50%, -50%)",
           }}
         >
-          <span
-            className="inline-block text-xs leading-none"
-            style={{
-              color: cue.accent,
-              transform: `rotate(${cue.angle}rad)`,
-            }}
-          >
-            ▶
-          </span>
+          {cue.edge && (
+            <span
+              className="inline-block text-xs leading-none"
+              style={{
+                color: cue.accent,
+                transform: `rotate(${cue.angle}rad)`,
+              }}
+            >
+              ▶
+            </span>
+          )}
           <span>{cue.name}</span>
         </div>
       ))}

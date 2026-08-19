@@ -35,9 +35,10 @@ describe("offscreenCues", () => {
     expect(cue?.name).toBe("BOT-1");
     expect(cue?.left).toBeGreaterThan(370);
     expect(cue?.angle).toBeCloseTo(0);
+    expect(cue?.edge).toBe(true);
   });
 
-  it("filters onscreen, distant, and dead enemies", () => {
+  it("shows a name above an onscreen enemy but filters distant and dead enemies", () => {
     const cues = offscreenCues(
       [
         player,
@@ -76,6 +77,8 @@ describe("offscreenCues", () => {
       844,
       true,
     );
-    expect(cues).toEqual([]);
+    expect(cues).toHaveLength(1);
+    expect(cues[0]).toMatchObject({ id: "near", edge: false });
+    expect(cues[0]!.top).toBeLessThan(422);
   });
 });
