@@ -16,47 +16,72 @@ function ThumbStick({
 }) {
   const padRef = useRef<HTMLDivElement>(null);
   const heldRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
   const touchIdRef = useRef<number | null>(null);
+  const onChangeRef = useRef(onChange);
+  const onHeldRef = useRef(onHeld);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [held, setHeld] = useState(false);
+  onChangeRef.current = onChange;
+  onHeldRef.current = onHeld;
 
-  const applyInput = useCallback(
-    (clientX: number, clientY: number) => {
-      const el = padRef.current;
-      if (!el) return;
-      const box = el.getBoundingClientRect();
-      const vec = stickFromPointer(
-        box.left + box.width / 2,
-        box.top + box.height / 2,
-        clientX,
-        clientY,
-        box.width / 2,
-      );
-      const rawX = clientX - (box.left + box.width / 2);
-      const rawY = clientY - (box.top + box.height / 2);
-      const maxOffset = box.width * 0.32;
-      const rawLength = Math.hypot(rawX, rawY);
-      const clamp = rawLength > maxOffset ? maxOffset / rawLength : 1;
-      setKnob({ x: rawX * clamp, y: rawY * clamp });
-      onChange(vec);
-    },
-    [onChange],
-  );
+  const applyInput = useCallback((clientX: number, clientY: number) => {
+    const el = padRef.current;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    const vec = stickFromPointer(
+      box.left + box.width / 2,
+      box.top + box.height / 2,
+      clientX,
+      clientY,
+      box.width / 2,
+    );
+    const rawX = clientX - (box.left + box.width / 2);
+    const rawY = clientY - (box.top + box.height / 2);
+    const maxOffset = box.width * 0.32;
+    const rawLength = Math.hypot(rawX, rawY);
+    const clamp = rawLength > maxOffset ? maxOffset / rawLength : 1;
+    setKnob({ x: rawX * clamp, y: rawY * clamp });
+    onChangeRef.current(vec);
+  }, []);
 
   const release = useCallback(() => {
     heldRef.current = false;
+    pointerIdRef.current = null;
     touchIdRef.current = null;
     setHeld(false);
     setKnob({ x: 0, y: 0 });
-    onChange(null);
-    onHeld?.(false);
-  }, [onChange, onHeld]);
+    onChangeRef.current(null);
+    onHeldRef.current?.(false);
+  }, []);
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
-      if (heldRef.current) applyInput(event.clientX, event.clientY);
+      if (
+        heldRef.current &&
+        pointerIdRef.current !== null &&
+        event.pointerId === pointerIdRef.current
+      ) {
+        applyInput(event.clientX, event.clientY);
+      }
     };
-    const onPointerEnd = () => release();
+    const onPointerEnd = (event: PointerEvent) => {
+      if (
+        event.pointerId === pointerIdRef.current &&
+        touchIdRef.current === null
+      ) {
+        release();
+      }
+    };
+    const onPointerCancel = (event: PointerEvent) => {
+      // iOS can emit a ghost pointercancel while the matching touch remains.
+      if (
+        event.pointerId === pointerIdRef.current &&
+        touchIdRef.current === null
+      ) {
+        release();
+      }
+    };
     const onTouchMove = (event: TouchEvent) => {
       if (!heldRef.current) return;
       const touch = [...event.touches].find(
@@ -77,14 +102,14 @@ function ThumbStick({
     };
     window.addEventListener("pointermove", onPointerMove, { passive: false });
     window.addEventListener("pointerup", onPointerEnd);
-    window.addEventListener("pointercancel", onPointerEnd);
+    window.addEventListener("pointercancel", onPointerCancel);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd, { passive: false });
     window.addEventListener("touchcancel", onTouchEnd, { passive: false });
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerEnd);
-      window.removeEventListener("pointercancel", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerCancel);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
@@ -100,23 +125,23 @@ function ThumbStick({
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          pointerIdRef.current = e.pointerId;
           heldRef.current = true;
           setHeld(true);
-          onHeld?.(true);
+          onHeldRef.current?.(true);
           applyInput(e.clientX, e.clientY);
         }}
         onTouchStart={(e) => {
           const touch = e.changedTouches[0];
           if (!touch) return;
           e.preventDefault();
+          e.stopPropagation();
           touchIdRef.current = touch.identifier;
           heldRef.current = true;
           setHeld(true);
-          onHeld?.(true);
+          onHeldRef.current?.(true);
           applyInput(touch.clientX, touch.clientY);
         }}
-        onPointerUp={release}
-        onPointerCancel={release}
       >
         <div
           className="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 rounded-full border-2 bg-white/80"
