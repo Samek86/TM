@@ -179,7 +179,7 @@ export const WEAPONS: WeaponDef[] = [
     allowed: allow(false, false, true),
     /** Sorcerer default — fastest poke, lowest chunk damage */
     damage: 7, // was 5 · ×1.4
-    fireRate: 5.5, // Born laser 3.6 · faster poke, not a hose (was 10.2)
+    fireRate: 6, // Born laser 3.6 · faster poke, not a hose (was 10.2)
     bulletSpeed: 2.015, // was 1.55 · ×1.3
     spread: 0.03,
     pellets: 1,
@@ -216,7 +216,7 @@ export const WEAPONS: WeaponDef[] = [
     ammo: "beam",
     allowed: allow(true, false, false),
     /** Born default — twin parallel beams, longest baseline reach */
-    damage: 8,
+    damage: 7,
     fireRate: 3.6,
     bulletSpeed: 1.35,
     spread: 0.1,
