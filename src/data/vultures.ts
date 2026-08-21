@@ -80,7 +80,7 @@ export const VULTURES: VultureDef[] = [
     name: "Sorcerer",
     codeName: "Sorcerer",
     spriteHint: "char3.spr",
-    tilesPerSec: 18.5,
+    tilesPerSec: 17.5,
     maxHp: 90,
     radiusTiles: 0.6,
     damageMul: 0.85,

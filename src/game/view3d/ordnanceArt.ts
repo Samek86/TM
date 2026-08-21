@@ -4,8 +4,18 @@ import { WEAPONS } from "@/data/weapons";
 export type OrdnanceArtKit = {
   bodies: Partial<Record<number, THREE.Texture[]>>;
   shots: Partial<Record<number, THREE.Texture[]>>;
+  /** Looping lightning-mist sphere (crackle frames, not yaw). */
+  clouds?: Partial<Record<number, THREE.Texture[]>>;
   items: THREE.Texture[];
 };
+
+/** Killers EM-Gun painted storm sphere. `cloud_00.png` … */
+export const STORM_CLOUD_WEAPON_ID = 3;
+export const STORM_CLOUD_FRAME_COUNT = 6;
+
+export function stormCloudFramePath(index: number): string {
+  return `/assets/weapons/03/cloud_${String(index).padStart(2, "0")}.png`;
+}
 
 /** Every traveling projectile has a painted 16-way facing sequence. Mines stay put. */
 export const ORIENTED_WEAPON_IDS = new Set([
@@ -49,11 +59,30 @@ async function loadPaintedTexture(path: string): Promise<THREE.Texture> {
   return texture;
 }
 
-/** Painted weapon heroes for the 3D world; never uses legacy SPR pixels. */
+async function loadStormCloudSheet(): Promise<THREE.Texture[] | null> {
+  try {
+    const frames = await Promise.all(
+      Array.from({ length: STORM_CLOUD_FRAME_COUNT }, (_, i) =>
+        loadPaintedTexture(stormCloudFramePath(i)).then((texture) => {
+          texture.generateMipmaps = false;
+          texture.minFilter = THREE.LinearFilter;
+          texture.anisotropy = 1;
+          return texture;
+        }),
+      ),
+    );
+    return frames.length ? frames : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Painted weapon heroes for the 3D world. Storm uses the G lightning-mist sphere. */
 export async function loadOrdnanceArt(): Promise<OrdnanceArtKit> {
-  const kit: OrdnanceArtKit = { bodies: {}, shots: {}, items: [] };
-  await Promise.all(
-    WEAPONS.map(async (weapon) => {
+  const kit: OrdnanceArtKit = { bodies: {}, shots: {}, clouds: {}, items: [] };
+  const storm = loadStormCloudSheet();
+  await Promise.all([
+    ...WEAPONS.map(async (weapon) => {
       const id = String(weapon.id).padStart(2, "0");
       const [body, shot] = await Promise.all([
         loadPaintedTexture(`/assets/weapons/${id}/hero.png`),
@@ -72,7 +101,10 @@ export async function loadOrdnanceArt(): Promise<OrdnanceArtKit> {
       kit.bodies[weapon.id] = [body];
       kit.shots[weapon.id] = shot;
     }),
-  );
+    storm.then((frames) => {
+      if (frames?.length) kit.clouds![STORM_CLOUD_WEAPON_ID] = frames;
+    }),
+  ]);
   return kit;
 }
 
@@ -87,6 +119,9 @@ export function disposeOrdnanceArt(kit: OrdnanceArtKit): void {
     for (const tex of frames ?? []) drop(tex);
   }
   for (const frames of Object.values(kit.shots)) {
+    for (const tex of frames ?? []) drop(tex);
+  }
+  for (const frames of Object.values(kit.clouds ?? {})) {
     for (const tex of frames ?? []) drop(tex);
   }
   for (const tex of kit.items) drop(tex);

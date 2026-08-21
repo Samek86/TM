@@ -56,6 +56,10 @@ describe("boundary", () => {
     expect(first.z).toBeCloseTo(last.z);
   });
 
+  it("keeps the wall shorter than a two-cell skyline", () => {
+    expect(BOUNDARY_WALL_CELLS).toBeLessThan(2);
+  });
+
   it("raises a wall that stands on the terrain along the whole rim", () => {
     const boundary = createMapBoundary(FLAT, "jungle");
     const wall = boundary.group.getObjectByName("boundary-wall") as THREE.Mesh;
@@ -96,11 +100,18 @@ describe("boundary", () => {
   it("brightens as the craft closes on the rim", () => {
     const boundary = createMapBoundary(FLAT, "outpost");
     const wall = boundary.group.getObjectByName("boundary-wall") as THREE.Mesh;
+    const beacons = boundary.group.getObjectByName(
+      "boundary-beacons",
+    ) as THREE.InstancedMesh;
     const mat = wall.material as THREE.ShaderMaterial;
+    const beaconMat = beacons.material as THREE.MeshStandardMaterial;
     boundary.update(1.5, 60, 60);
+    const farGlow = beaconMat.emissiveIntensity;
     expect(mat.uniforms.uTime!.value).toBeCloseTo(1.5);
     expect(mat.uniforms.uFocus!.value.x).toBeCloseTo(60);
     expect(mat.uniforms.uFocus!.value.z).toBeCloseTo(60);
+    boundary.update(1.5, 6, 60);
+    expect(beaconMat.emissiveIntensity).toBeGreaterThan(farGlow);
     boundary.dispose();
   });
 });

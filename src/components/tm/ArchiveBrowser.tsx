@@ -18,7 +18,7 @@ export function ArchiveBrowser() {
   const current = ARCHIVE_ITEMS.find((i) => i.id === selected) ?? items[0];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 lg:flex-row">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden lg:flex-row lg:gap-4">
       <aside className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
         <div className="flex flex-wrap gap-1.5">
           <CatChip active={cat === "전체"} onClick={() => setCat("전체")}>
@@ -30,7 +30,7 @@ export function ArchiveBrowser() {
             </CatChip>
           ))}
         </div>
-        <ul className="tm-scroll max-h-56 space-y-1 overflow-y-auto rounded-xl border border-tm-border bg-tm-panel/80 p-2 lg:max-h-none lg:flex-1">
+        <ul className="tm-scroll max-h-20 space-y-1 overflow-y-auto rounded-xl border border-tm-border bg-tm-panel/80 p-2 sm:max-h-36 lg:max-h-none lg:flex-1">
           {items.map((item) => (
             <li key={item.id}>
               <button
@@ -66,7 +66,7 @@ export function ArchiveBrowser() {
                 <img
                   src={current.path}
                   alt={current.title}
-                  className="max-h-[min(60vh,520px)] max-w-full object-contain"
+                  className="max-h-[min(32dvh,520px)] max-w-full object-contain sm:max-h-[min(40dvh,520px)]"
                   crossOrigin="anonymous"
                 />
               )}
@@ -74,7 +74,7 @@ export function ArchiveBrowser() {
                 <video
                   src={current.path}
                   controls
-                  className="max-h-[min(60vh,520px)] max-w-full"
+                  className="max-h-[min(40dvh,520px)] max-w-full"
                   playsInline
                 />
               )}

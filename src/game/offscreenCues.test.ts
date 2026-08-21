@@ -20,7 +20,7 @@ describe("offscreenCues", () => {
         {
           id: "bot",
           name: "BOT-1",
-          x: 180,
+          x: 450,
           y: 0,
           hp: 100,
           respawn: 0,
@@ -55,7 +55,7 @@ describe("offscreenCues", () => {
         {
           id: "far",
           name: "FAR",
-          x: 1200,
+          x: 4000,
           y: 0,
           hp: 100,
           respawn: 0,

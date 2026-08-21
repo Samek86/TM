@@ -271,8 +271,8 @@ export function MapViewer() {
   }, [map, cursor]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 lg:flex-row">
-      <aside className="flex w-full shrink-0 flex-col gap-3 lg:w-64">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden lg:flex-row">
+      <aside className="flex max-h-[min(32dvh,15rem)] w-full shrink-0 flex-col gap-3 overflow-y-auto overscroll-contain lg:max-h-none lg:w-64">
         <div>
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-tm-dim">
             원본 MAP ({ORIGINAL_MAP_CATALOG.length})
@@ -363,7 +363,7 @@ export function MapViewer() {
         </label>
 
         {map && (
-          <div className="rounded-xl border border-tm-border bg-tm-elevated/40 p-3 font-mono text-[11px] leading-relaxed text-tm-muted">
+          <div className="hidden rounded-xl border border-tm-border bg-tm-elevated/40 p-3 font-mono text-[11px] leading-relaxed text-tm-muted lg:block">
             <div className="text-tm-fg">
               {map.width}×{map.height} · h {map.heightMin}–{map.heightMax}
             </div>
@@ -416,7 +416,7 @@ export function MapViewer() {
           </span>
         </div>
 
-        <div className="tm-scroll relative flex min-h-[280px] flex-1 items-center justify-center overflow-auto p-3">
+        <div className="tm-scroll relative flex min-h-0 flex-1 items-center justify-center overflow-auto p-3">
           {error && (
             <p className="max-w-md text-center text-sm text-tm-danger">{error}</p>
           )}

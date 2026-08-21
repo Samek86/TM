@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "bake:maps": "node scripts/bake-map-terrain.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.3",

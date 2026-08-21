@@ -651,14 +651,21 @@ function ammoRadius(w: WeaponDef): number {
   return Math.max(2, base * (w.hitScale ?? 1));
 }
 
+/** Storm cloud max radius as a multiple of the firing craft's hit radius. */
+export const STORM_CLOUD_CRAFT_SIZE_MUL = 1.5;
+
 /** Cloud expands to this world radius by end of life. */
-function cloudGrowTo(w: WeaponDef, planeSpd: number): number {
-  // Frost = huge area deny; storm = mid roaming cloud
+function cloudGrowTo(
+  w: WeaponDef,
+  planeSpd: number,
+  craftRadius: number,
+): number {
+  // Frost = huge area deny; storm = 1.5× the firing craft
   if (w.style === "frost") {
     return Math.max(100, Math.min(160, planeSpd * 0.38 + w.damage * 5));
   }
   if (w.style === "storm") {
-    return Math.max(48, Math.min(92, planeSpd * 0.22 + w.damage * 2.4));
+    return Math.max(10, craftRadius * STORM_CLOUD_CRAFT_SIZE_MUL);
   }
   return Math.max(48, Math.min(96, planeSpd * 0.22 + w.damage * 2.5));
 }
@@ -823,8 +830,11 @@ function tryFire(state: GameState, pilot: Pilot): void {
   if (w.ammo === "cloud") {
     const life = Math.max(1.1, w.range);
     const crawl = planeSpd * Math.max(0.08, w.bulletSpeed);
-    const r0 = Math.max(8, ammoRadius(w) * (w.style === "frost" ? 0.7 : 0.55));
-    const growTo = cloudGrowTo(w, planeSpd);
+    const growTo = cloudGrowTo(w, planeSpd, pilot.radius);
+    const r0 =
+      w.style === "storm"
+        ? growTo
+        : Math.max(8, ammoRadius(w) * (w.style === "frost" ? 0.7 : 0.55));
     const c = Math.cos(base);
     const s = Math.sin(base);
     const ox = pilot.x + c * (pilot.radius + 10);

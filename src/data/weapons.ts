@@ -157,8 +157,8 @@ export const WEAPONS: WeaponDef[] = [
     ammo: "cloud",
     allowed: allow(false, true, false),
     /** Killers default — mid storm cloud (weaker than frost field) */
-    damage: 9,
-    fireRate: 2.635, // was 1.55 · ×1.7 fire rate for Killers baseline
+    damage: 6,
+    fireRate: 5,
     bulletSpeed: 1.404, // was 1.08 · ×1.3 cloud travel speed
     spread: 0,
     pellets: 1,
@@ -179,7 +179,7 @@ export const WEAPONS: WeaponDef[] = [
     allowed: allow(false, false, true),
     /** Sorcerer default — fastest poke, lowest chunk damage */
     damage: 7, // was 5 · ×1.4
-    fireRate: 10.2, // was 6.8 · ×1.5
+    fireRate: 5.5, // Born laser 3.6 · faster poke, not a hose (was 10.2)
     bulletSpeed: 2.015, // was 1.55 · ×1.3
     spread: 0.03,
     pellets: 1,

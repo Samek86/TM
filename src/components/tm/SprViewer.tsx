@@ -148,7 +148,7 @@ export function SprViewer() {
   return (
     <div className="flex h-full min-h-0 max-h-full flex-col gap-3 overflow-hidden lg:flex-row">
       {/* Sidebar — list scrolls inside viewport */}
-      <aside className="flex max-h-[40vh] w-full shrink-0 flex-col gap-2 overflow-hidden lg:max-h-full lg:w-64">
+      <aside className="flex max-h-[min(22dvh,10rem)] w-full shrink-0 flex-col gap-2 overflow-hidden lg:max-h-full lg:w-64">
         <div className="flex shrink-0 flex-wrap gap-1">
           {SPR_CATEGORIES.map((c) => (
             <button
@@ -331,7 +331,7 @@ export function SprViewer() {
           )}
 
           {frame && (
-            <p className="font-mono text-[10px] leading-relaxed text-tm-dim">
+            <p className="hidden font-mono text-[10px] leading-relaxed text-tm-dim sm:block">
               hotspot A[{frame.pointsA.join(",")}] · B[{frame.pointsB.join(",")}]
               {sprite?.globalPoints
                 ? ` · global[${sprite.globalPoints.join(",")}]`

@@ -22,10 +22,7 @@ import { tilToSprPalette } from "@/lib/spr/tilPalette";
 import type { VultureId } from "@/data/weapons";
 import { WEAPONS } from "@/data/weapons";
 import { getMap, type MapDef } from "@/data/maps";
-import {
-  buildStylizedTerrain,
-  type StylizedTerrain,
-} from "@/game/terrainStyle";
+import { type StylizedTerrain } from "@/game/terrainStyle";
 
 export interface TerrainAsset {
   map: TmMap;
@@ -33,7 +30,7 @@ export interface TerrainAsset {
   tileCache: Map<number, HTMLCanvasElement>;
   tileIndices: Uint16Array;
   tileSize: number;
-  style: StylizedTerrain;
+  style: StylizedTerrain | null;
 }
 
 export type VultureSpriteSet = {
@@ -451,10 +448,12 @@ export async function loadGameAssetsEssential(
   let mapDef = base;
   let sprPalette: RgbaPalette = getDefaultPalette();
 
-  progress("전략 맵 베이크…", 10);
+  progress("전략 맵…", 10);
   mapDef = base;
   await yieldFrame();
-  style = buildStylizedTerrain(mapDef, mapId);
+  // Playfield albedo is public/assets/maps/{id}.top.jpg (see bakedMaps.ts).
+  // Do not CPU-bake here — that hitch belongs only to `npm run bake:maps`.
+  style = null;
   await yieldFrame();
 
   if (entry.tilFile) {

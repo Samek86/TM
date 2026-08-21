@@ -62,17 +62,41 @@ function isSlimShot(weaponId: number): boolean {
   );
 }
 
-/** Padded energy/dart art — fit the glyph, not the empty 512² frame. */
+function isCloudBullet(b: {
+  ammo?: string;
+  style?: string;
+}): boolean {
+  return b.ammo === "cloud" || b.style === "storm" || b.style === "frost";
+}
+
+/** Padded energy/dart/cloud art — fit the glyph, not the empty 512² frame. */
 function needsOpaqueFit(weaponId: number): boolean {
   const w = getWeaponById(weaponId);
   return (
     w.ammo === "beam" ||
+    w.ammo === "cloud" ||
     w.style === "pierce" ||
     w.style === "poke" ||
     w.style === "twin_beam" ||
     w.style === "dart" ||
-    w.style === "scatter"
+    w.style === "scatter" ||
+    w.style === "storm" ||
+    w.style === "frost"
   );
+}
+
+export const STORM_CRACKLE_FPS = 12;
+/** Storm sphere fill — keep terrain readable through overlapping shots. */
+export const STORM_CLOUD_OPACITY = 0.5;
+
+/** Looping lightning sizzle. `age` is seconds since the cloud spawned. */
+export function cloudCrackleFrame(
+  age: number,
+  frameCount: number,
+  fps = STORM_CRACKLE_FPS,
+): number {
+  const n = Math.max(1, frameCount);
+  return Math.floor(Math.max(0, age) * fps) % n;
 }
 
 export function shotWorldSize(weaponId: number, drawScale = 1): number {
@@ -83,6 +107,18 @@ export function shotWorldSize(weaponId: number, drawScale = 1): number {
       visualMul *
       Math.max(0.82, drawScale),
   );
+}
+
+/** Clouds fill their engine hit radius; other shots keep the painted table. */
+export function projectileWorldSize(b: {
+  weaponId: number;
+  radius: number;
+  ammo?: string;
+  style?: string;
+  drawScale?: number;
+}): number {
+  if (isCloudBullet(b)) return Math.max(8, b.radius * 2);
+  return shotWorldSize(b.weaponId, b.drawScale || 1);
 }
 
 /** Scale a 1×1 card so `world` is the opaque silhouette's longest side. */
@@ -154,8 +190,10 @@ function setCard(
   texture: THREE.Texture,
   world: number,
   fitOpaque = false,
+  opacity = 1,
 ): void {
   const material = mesh.material as THREE.MeshBasicMaterial;
+  material.opacity = opacity;
   if (material.map !== texture) {
     material.map = texture;
     material.needsUpdate = true;
@@ -206,11 +244,15 @@ export function createProjectileLayer(
         const b = state.bullets[bi]!;
         if (!b.alive) continue;
         if (shotN >= maxShots) continue;
+        const cloudFrames = art?.clouds?.[b.weaponId];
         const frames = art?.shots[b.weaponId];
-        // Side-view frame (yaw_00). The 16-way sheets do not share a compass:
-        // some nose east, some west, some advance opposite engine Y-down.
-        // Yawing this one card onto the flight vector keeps the nose honest.
-        const texture = frames?.[0];
+        // Storm uses the painted lightning-mist sphere, crackling by age.
+        // Other shots keep a single side-view frame yawed onto the flight vector.
+        const cloud = isCloudBullet(b);
+        const age = Math.max(0, b.maxLife - b.life);
+        const texture = cloudFrames?.length
+          ? cloudFrames[cloudCrackleFrame(age, cloudFrames.length)]
+          : frames?.[0];
         if (!texture) continue;
         const h = hover(b, sculptedHeight(map, b.x, b.y));
         const pos = engineToThree(b.x, b.y, h);
@@ -219,10 +261,13 @@ export function createProjectileLayer(
         setCard(
           card,
           texture,
-          shotWorldSize(b.weaponId, b.drawScale || 1),
-          needsOpaqueFit(b.weaponId),
+          projectileWorldSize(b),
+          // Sphere sheet already fills the frame. Measuring 1024² RGBA
+          // with getImageData on first show stalls the play thread.
+          !!cloudFrames?.length ? false : needsOpaqueFit(b.weaponId),
+          b.style === "storm" ? STORM_CLOUD_OPACITY : 1,
         );
-        layFlat(card, shotCardHeading(b.weaponId, b.angle));
+        layFlat(card, cloud ? 0 : shotCardHeading(b.weaponId, b.angle));
         shotN += 1;
       }
     },

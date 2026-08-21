@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DISPLAY_MODE_KEY,
+  isPhonePlay,
   parseDisplayMode,
   readDisplayMode,
   writeDisplayMode,
@@ -12,6 +13,15 @@ describe("parseDisplayMode", () => {
     expect(parseDisplayMode("fullscreen")).toBe("fullscreen");
     expect(parseDisplayMode(null)).toBe("fullscreen");
     expect(parseDisplayMode("nope")).toBe("fullscreen");
+  });
+});
+
+describe("isPhonePlay", () => {
+  it("treats coarse pointers and narrow viewports as phone", () => {
+    expect(isPhonePlay({ innerWidth: 390, coarsePointer: true })).toBe(true);
+    expect(isPhonePlay({ innerWidth: 1280, coarsePointer: false })).toBe(false);
+    expect(isPhonePlay({ innerWidth: 767, coarsePointer: false })).toBe(true);
+    expect(isPhonePlay({ innerWidth: 1280, coarsePointer: true })).toBe(true);
   });
 });
 

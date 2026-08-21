@@ -7,7 +7,7 @@ import type { VultureId } from "@/data/weapons";
 import { loadSpr, frameToRgba, loadSharedClientPalette } from "@/lib/spr";
 import { sprUrl } from "@/lib/spr/catalog";
 import { formatMapSize, getMap } from "@/data/maps";
-import { buildStylizedTerrain } from "@/game/terrainStyle";
+import { bakedMapTopUrl } from "@/game/bakedMaps";
 
 const SPR_FILE: Record<VultureId, string> = {
   born_armor: "char1.spr",
@@ -70,45 +70,31 @@ export function CraftPreview({ vultureId }: { vultureId: VultureId }) {
 }
 
 export function MapPreview({ mapId }: { mapId: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [label, setLabel] = useState("맵 로딩…");
+  const map = getMap(mapId);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    setLabel("맵 로딩…");
-    try {
-      const map = getMap(mapId);
-      const style = buildStylizedTerrain(map, mapId);
-      if (cancelled) return;
-      const c = canvasRef.current;
-      if (!c) return;
-      const ctx = c.getContext("2d");
-      if (!ctx) return;
-      c.width = style.canvas.width;
-      c.height = style.canvas.height;
-      ctx.drawImage(style.canvas, 0, 0);
-      setLabel(
-        `${map.name} · ${formatMapSize(map)} · ${map.features.slice(0, 2).join(" · ")}`,
-      );
-    } catch {
-      if (!cancelled) setLabel("미리보기 실패");
-    }
-    return () => {
-      cancelled = true;
-    };
+    setFailed(false);
   }, [mapId]);
+
+  const label = failed
+    ? "미리보기 실패"
+    : `${map.name} · ${formatMapSize(map)} · ${map.features.slice(0, 2).join(" · ")}`;
 
   return (
     <div className="overflow-hidden rounded-xl border border-tm-border bg-black">
-      <div className="flex max-h-52 items-center justify-center overflow-hidden bg-black p-1">
-        <canvas
-          ref={canvasRef}
-          className="max-h-48 w-full object-contain"
+      <div className="h-40 overflow-hidden bg-[#122018] sm:h-48">
+        <img
+          src={bakedMapTopUrl(mapId)}
+          alt={map.name}
+          className="h-full w-full object-cover object-center"
           style={{ imageRendering: "auto" }}
+          onError={() => setFailed(true)}
         />
       </div>
-      <p className="border-t border-tm-border px-3 py-1.5 text-center text-[11px] text-tm-muted">
-        {label}
+      <p className="truncate border-t border-tm-border px-3 py-1.5 text-[11px] text-tm-muted">
+        <span className="sm:hidden">{map.name}</span>
+        <span className="hidden sm:inline">{label}</span>
       </p>
     </div>
   );
@@ -127,7 +113,7 @@ export function CraftCardArt({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-xl border p-3 text-left transition ${
+      className={`w-full min-w-0 rounded-xl border p-3 text-left transition ${
         selected
           ? "border-tm-accent bg-tm-accent/10"
           : "border-tm-border bg-tm-elevated/50 hover:border-tm-muted"

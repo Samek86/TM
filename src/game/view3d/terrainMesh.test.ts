@@ -117,6 +117,21 @@ describe("terrainMesh", () => {
     expect(sceneryHeight(map, 0, 45)).toBeCloseTo(sculptedHeight(map, 0, 45));
   });
 
+  it("maps playfield UVs into 0..1 over the arena when uvMode is map", () => {
+    const map = miniMap(
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [false, false, false, false, false, false, false, false, false],
+    );
+    const g = buildTerrainGeometry(map, "map");
+    const uv = g.getAttribute("uv") as THREE.BufferAttribute;
+    const pos = g.getAttribute("position") as THREE.BufferAttribute;
+    expect(uv.count).toBe(pos.count);
+    for (let i = 0; i < pos.count; i++) {
+      expect(uv.getX(i)).toBeCloseTo(pos.getX(i) / map.width, 5);
+      expect(uv.getY(i)).toBeCloseTo(pos.getZ(i) / map.height, 5);
+    }
+  });
+
   it("cliff banks reach the valley floor and inset the plateau rim", () => {
     const map = miniMap(
       [1, 1, 1, 0, 0, 0, 0, 0, 0],

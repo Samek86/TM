@@ -4,8 +4,10 @@ import type { MapDef } from "@/data/maps";
 import type { Bullet, GameState, Pickup } from "@/game/engine";
 import {
   cardScaleForOpaque,
+  cloudCrackleFrame,
   createPickupLayer,
   createProjectileLayer,
+  projectileWorldSize,
   shotWorldSize,
 } from "./projectiles";
 import {
@@ -331,6 +333,151 @@ describe("projectiles", () => {
         kit.shots[id]?.[0],
       );
     }
+    layer.dispose();
+  });
+
+  it("sizes storm and frost cards to the live engine cloud diameter", () => {
+    expect(projectileWorldSize({ weaponId: 3, ammo: "cloud", style: "storm", radius: 40 })).toBe(80);
+    expect(projectileWorldSize({ weaponId: 20, ammo: "cloud", style: "frost", radius: 70 })).toBe(140);
+    expect(projectileWorldSize({ weaponId: 12, ammo: "missile", style: "dart", radius: 6, drawScale: 1 })).toBeCloseTo(24);
+  });
+
+  it("opaque-fits EM-Gun storm so the lightning glyph fills the cloud diameter", () => {
+    const texture = new THREE.Texture();
+    texture.image = { width: 512, height: 512 };
+    texture.userData.opaqueSpan = { w: 208, h: 147 };
+    const kit: OrdnanceArtKit = { bodies: {}, shots: { 3: [texture] }, items: [] };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [
+          bullet({
+            weaponId: 3,
+            ammo: "cloud",
+            style: "storm",
+            radius: 40,
+            drawScale: 1,
+          }),
+        ],
+      }),
+    );
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect(card.visible).toBe(true);
+    expect(card.scale.x).toBeCloseTo((80 * 512) / 208);
+    expect(card.scale.y).toBeCloseTo((80 * 512) / 208);
+    layer.dispose();
+  });
+
+  it("plays the painted storm sphere instead of the yaw missile card", () => {
+    const yaw = new THREE.Texture();
+    const crackle = [
+      new THREE.Texture(),
+      new THREE.Texture(),
+      new THREE.Texture(),
+      new THREE.Texture(),
+    ];
+    const kit: OrdnanceArtKit = {
+      bodies: {},
+      shots: { 3: [yaw] },
+      clouds: { 3: crackle },
+      items: [],
+    };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [
+          bullet({
+            weaponId: 3,
+            ammo: "cloud",
+            style: "storm",
+            radius: 8,
+            baseRadius: 8,
+            growTo: 45,
+            angle: 1.2,
+            maxLife: 2,
+            life: 2 - 0.09,
+          }),
+        ],
+      }),
+    );
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect(card.visible).toBe(true);
+    expect((card.material as THREE.MeshBasicMaterial).map).toBe(crackle[1]);
+    expect(card.rotation.z).toBeCloseTo(0);
+    layer.dispose();
+  });
+
+  it("crackles storm frames from flight age at 12 fps and loops", () => {
+    expect(cloudCrackleFrame(0, 8)).toBe(0);
+    expect(cloudCrackleFrame(1 / 12, 8)).toBe(1);
+    expect(cloudCrackleFrame(8 / 12, 8)).toBe(0);
+  });
+
+  it("does not opaque-fit the storm sphere sheet during play", () => {
+    const sphere = new THREE.Texture();
+    sphere.image = { width: 1024, height: 1024 };
+    sphere.userData.opaqueSpan = { w: 200, h: 200 };
+    const kit: OrdnanceArtKit = {
+      bodies: {},
+      shots: { 3: [new THREE.Texture()] },
+      clouds: { 3: [sphere] },
+      items: [],
+    };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [
+          bullet({
+            weaponId: 3,
+            ammo: "cloud",
+            style: "storm",
+            radius: 20,
+            drawScale: 1,
+          }),
+        ],
+      }),
+    );
+    const card = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect(card.scale.x).toBeCloseTo(40);
+    expect((card.material as THREE.MeshBasicMaterial).alphaTest).toBeCloseTo(
+      0.05,
+    );
+    layer.dispose();
+  });
+
+  it("draws storm spheres dimmer than other shots", () => {
+    const sphere = new THREE.Texture();
+    sphere.image = { width: 512, height: 512 };
+    const kit: OrdnanceArtKit = {
+      bodies: {},
+      shots: { 12: [new THREE.Texture()] },
+      clouds: { 3: [sphere] },
+      items: [],
+    };
+    const layer = createProjectileLayer(2, kit);
+    layer.sync(
+      miniState({
+        bullets: [
+          bullet({
+            weaponId: 3,
+            ammo: "cloud",
+            style: "storm",
+            radius: 20,
+          }),
+        ],
+      }),
+    );
+    const storm = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect((storm.material as THREE.MeshBasicMaterial).opacity).toBeCloseTo(
+      0.5,
+    );
+    layer.sync(
+      miniState({
+        bullets: [bullet({ weaponId: 12, style: "dart", ammo: "missile" })],
+      }),
+    );
+    const dart = layer.mesh.getObjectByName("shot0") as THREE.Mesh;
+    expect((dart.material as THREE.MeshBasicMaterial).opacity).toBe(1);
     layer.dispose();
   });
 });

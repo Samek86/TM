@@ -7,6 +7,8 @@ import {
   type TerrainKit,
 } from "./terrainTextures";
 
+export type TerrainUvMode = "tile" | "map";
+
 /** Grid samples per map cell. */
 const SUB = 6;
 /** How far the outer landscape reaches past the playfield, in world units. */
@@ -241,6 +243,7 @@ function buildGrid(
   xs: readonly number[],
   zs: readonly number[],
   keep: Keep | null,
+  uvMode: TerrainUvMode,
 ): THREE.BufferGeometry {
   const nx = xs.length;
   const nz = zs.length;
@@ -285,8 +288,13 @@ function buildGrid(
       normals[v * 3] = -gx * inv;
       normals[v * 3 + 1] = inv;
       normals[v * 3 + 2] = -gz * inv;
-      uvs[v * 2] = ex / TERRAIN_TILE;
-      uvs[v * 2 + 1] = ey / TERRAIN_TILE;
+      if (uvMode === "map") {
+        uvs[v * 2] = map.width > 0 ? ex / map.width : 0;
+        uvs[v * 2 + 1] = map.height > 0 ? ey / map.height : 0;
+      } else {
+        uvs[v * 2] = ex / TERRAIN_TILE;
+        uvs[v * 2 + 1] = ey / TERRAIN_TILE;
+      }
       const w = splatAt(map, ex, ey, Math.hypot(gx, gz), h);
       splats.set(w, v * 4);
       const shade = aoAt(ao, ex, ey);
@@ -345,12 +353,16 @@ function sceneryLines(span: number, steps: number): number[] {
   return [...before.reverse(), ...inner, ...after];
 }
 
-export function buildTerrainGeometry(map: MapDef): THREE.BufferGeometry {
+export function buildTerrainGeometry(
+  map: MapDef,
+  uvMode: TerrainUvMode = "tile",
+): THREE.BufferGeometry {
   return buildGrid(
     map,
     playLines(map.width, map.cols * SUB),
     playLines(map.height, map.rows * SUB),
     null,
+    uvMode,
   );
 }
 
@@ -363,6 +375,7 @@ export function buildSceneryGeometry(map: MapDef): THREE.BufferGeometry {
     sceneryLines(map.width, map.cols * SUB),
     sceneryLines(map.height, map.rows * SUB),
     outside,
+    "tile",
   );
 }
 

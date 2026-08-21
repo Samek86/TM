@@ -75,7 +75,7 @@ export function MidiPlayer({
 
   return (
     <div
-      className={`flex w-full max-w-md flex-col gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4 ${className}`}
+      className={`flex w-full min-w-0 max-w-full flex-col gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4 sm:max-w-md ${className}`}
     >
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider text-tm-dim">

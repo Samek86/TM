@@ -4,10 +4,10 @@ import { cellSizeOf } from "@/game/heightfield";
 import { biomeForMapId, type BiomeId } from "@/game/terrainStyle";
 import { sceneryHeight } from "./terrainMesh";
 
-/** Wall height in map cells — tall enough to read, low enough to see over. */
-export const BOUNDARY_WALL_CELLS = 2.4;
+/** Wall height in map cells — a short veil, not a skyline. */
+export const BOUNDARY_WALL_CELLS = 1.7;
 /** How far the ground marking reaches inward, in map cells. */
-const BAND_CELLS = 0.8;
+const BAND_CELLS = 0.55;
 /** Spacing between fence posts, in map cells. */
 const POST_CELLS = 4;
 
@@ -90,17 +90,17 @@ const WALL_FRAG = /* glsl */ `
   varying vec3 vWorld;
 
   void main() {
-    // Solid near the ground, open at the top: the eye reads a wall without
-    // losing sight of the terrain behind it.
-    float foot = pow( 1.0 - vUv.y, 1.7 );
-    float bars = smoothstep( 0.40, 0.5, abs( fract( vUv.x ) - 0.5 ) );
-    float rungs = smoothstep( 0.44, 0.5, abs( fract( vUv.y * 3.0 ) - 0.5 ) );
-    float grid = max( bars, rungs * 0.55 );
-    float scan = 0.5 + 0.5 * sin( vUv.y * 7.0 - uTime * 2.0 + vUv.x * 1.7 );
-    float near = exp( -length( vWorld.xz - uFocus.xz ) / 460.0 );
-    float alpha = ( foot * 0.42 + grid * 0.30 + scan * 0.05 ) * ( 0.5 + 1.0 * near );
-    vec3 rgb = uColor * ( 0.6 + 0.8 * grid + 0.6 * foot );
-    gl_FragColor = vec4( rgb, clamp( alpha, 0.0, 1.0 ) );
+    // A thin haze that thickens at the foot. From mid-map it should read as a
+    // line, not a neon slab; it only fills in as the craft closes on the rim.
+    float foot = pow( 1.0 - vUv.y, 2.6 );
+    float bars = smoothstep( 0.47, 0.5, abs( fract( vUv.x ) - 0.5 ) );
+    float rungs = smoothstep( 0.48, 0.5, abs( fract( vUv.y * 2.0 ) - 0.5 ) );
+    float grid = max( bars, rungs * 0.28 );
+    float scan = 0.5 + 0.5 * sin( vUv.y * 5.0 - uTime * 1.0 + vUv.x * 1.2 );
+    float near = exp( -length( vWorld.xz - uFocus.xz ) / 220.0 );
+    float alpha = ( foot * 0.20 + grid * 0.10 + scan * 0.015 ) * ( 0.14 + 0.62 * near );
+    vec3 rgb = uColor * ( 0.28 + 0.28 * grid + 0.20 * foot );
+    gl_FragColor = vec4( rgb, clamp( alpha, 0.0, 0.38 ) );
   }
 `;
 
@@ -114,11 +114,11 @@ const BAND_FRAG = /* glsl */ `
   void main() {
     // Seen straight down, the wall is edge-on — this stripe on the dirt is
     // what actually tells the player where the arena ends.
-    float edge = pow( 1.0 - vUv.y, 1.6 );
-    float dash = smoothstep( 0.42, 0.5, abs( fract( vUv.x * 0.5 - uTime * 0.05 ) - 0.5 ) );
-    float near = exp( -length( vWorld.xz - uFocus.xz ) / 520.0 );
-    float alpha = ( edge * 0.42 + dash * edge * 0.35 ) * ( 0.55 + 0.9 * near );
-    gl_FragColor = vec4( uColor * ( 0.75 + 0.6 * dash ), clamp( alpha, 0.0, 1.0 ) );
+    float edge = pow( 1.0 - vUv.y, 1.9 );
+    float dash = smoothstep( 0.45, 0.5, abs( fract( vUv.x * 0.5 - uTime * 0.035 ) - 0.5 ) );
+    float near = exp( -length( vWorld.xz - uFocus.xz ) / 240.0 );
+    float alpha = ( edge * 0.20 + dash * edge * 0.12 ) * ( 0.22 + 0.5 * near );
+    gl_FragColor = vec4( uColor * ( 0.4 + 0.25 * dash ), clamp( alpha, 0.0, 0.32 ) );
   }
 `;
 
@@ -175,9 +175,9 @@ export type MapBoundary = {
 };
 
 /**
- * Containment fence on the map rim: a glowing wall, a stripe painted on the
- * ground for the top-down view, and posts that carry the line around corners.
- * All three brighten as the craft approaches, so the limit is never a surprise.
+ * Containment fence on the map rim: a short veil, a stripe on the ground, and
+ * posts that carry the line around corners. All three stay quiet from mid-map
+ * and only brighten as the craft approaches, so the limit is never a surprise.
  */
 export function createMapBoundary(
   map: MapDef,
@@ -264,24 +264,24 @@ export function createMapBoundary(
       travelled = 0;
     }
   }
-  const postH = cell * BOUNDARY_WALL_CELLS * 0.55;
-  const postGeo = new THREE.CylinderGeometry(cell * 0.06, cell * 0.09, postH, 6);
+  const postH = cell * BOUNDARY_WALL_CELLS * 0.5;
+  const postGeo = new THREE.CylinderGeometry(cell * 0.05, cell * 0.075, postH, 6);
   const postMat = new THREE.MeshStandardMaterial({
     color: 0x2b3138,
-    roughness: 0.5,
-    metalness: 0.6,
-    emissive: color.clone().multiplyScalar(0.25),
+    roughness: 0.55,
+    metalness: 0.5,
+    emissive: color.clone().multiplyScalar(0.1),
   });
   const posts = new THREE.InstancedMesh(postGeo, postMat, sites.length);
   posts.name = "boundary-posts";
   posts.castShadow = true;
   posts.frustumCulled = false;
-  const beaconGeo = new THREE.OctahedronGeometry(cell * 0.13, 0);
+  const beaconGeo = new THREE.OctahedronGeometry(cell * 0.07, 0);
   const beaconMat = new THREE.MeshStandardMaterial({
     color: 0x101418,
     emissive: color,
-    emissiveIntensity: 1.6,
-    roughness: 0.4,
+    emissiveIntensity: 0.32,
+    roughness: 0.5,
   });
   const beacons = new THREE.InstancedMesh(beaconGeo, beaconMat, sites.length);
   beacons.name = "boundary-beacons";
@@ -309,6 +309,14 @@ export function createMapBoundary(
     update(time, focusX, focusZ) {
       shared.uTime.value = time;
       shared.uFocus.value.set(focusX, 0, focusZ);
+      let nearest = Infinity;
+      for (const p of sites) {
+        const d = Math.hypot(p.x - focusX, p.z - focusZ);
+        if (d < nearest) nearest = d;
+      }
+      const wake = Math.exp(-nearest / (cell * 8));
+      beaconMat.emissiveIntensity = 0.12 + 0.38 * wake;
+      postMat.emissive.copy(color).multiplyScalar(0.04 + 0.1 * wake);
     },
     dispose() {
       wall.geometry.dispose();

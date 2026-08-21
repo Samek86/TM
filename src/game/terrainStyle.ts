@@ -69,6 +69,13 @@ export interface StylizedTerrain {
   usedLfx: boolean;
 }
 
+/** Pixels per map cell in the CPU bake (lobby isometric + combat top-down). */
+export const OUT_TILE = 28;
+/** Extra rows painted below high cells in the isometric bake. */
+export const CLIFF_H = 18;
+
+export type TerrainBakeMode = "isometric" | "topdown";
+
 export function worldElevLift(
   style: StylizedTerrain | null | undefined,
   map: MapDef,
@@ -102,18 +109,32 @@ function noise2(x: number, y: number): number {
  * Bake a clean modern strategic map from MapDef levels + ramps.
  * Does not depend on original TIL (optional args ignored for craft maps).
  */
+export function buildTopDownTerrain(
+  map: MapDef,
+  mapId: string,
+  opts?: { tm?: TmMap; til?: TmTil | null; lfx?: TmLfx | null },
+): StylizedTerrain {
+  return buildStylizedTerrain(map, mapId, { ...opts, mode: "topdown" });
+}
+
 export function buildStylizedTerrain(
   map: MapDef,
   mapId: string,
-  _opts?: { tm?: TmMap; til?: TmTil | null; lfx?: TmLfx | null },
+  _opts?: {
+    tm?: TmMap;
+    til?: TmTil | null;
+    lfx?: TmLfx | null;
+    mode?: TerrainBakeMode;
+  },
 ): StylizedTerrain {
   const theme = biomeForMapId(mapId);
   const cell = map.cellSize ?? 20;
   const worldW = map.width;
   const worldH = map.height;
-  // Hi-res revival bake — crisp plateaus under modern zoom
-  const outTile = 28;
-  const cliffH = 18; // visual cliff face height in bake px
+  const mode: TerrainBakeMode =
+    _opts?.mode === "topdown" ? "topdown" : "isometric";
+  const outTile = OUT_TILE;
+  const cliffH = mode === "topdown" ? 0 : CLIFF_H;
   const bw = map.cols * outTile;
   const bh = map.rows * outTile + cliffH;
 
@@ -169,7 +190,7 @@ export function buildStylizedTerrain(
       const level = elev(cx, cy);
       const isHigh = level >= 0.5;
       const isRamp = rampAt(cx, cy);
-      const lift = isHigh ? cliffH : 0;
+      const lift = isHigh && cliffH > 0 ? cliffH : 0;
       const baseX = cx * outTile;
       const baseY = cy * outTile + cliffH - lift;
 
@@ -315,6 +336,23 @@ export function buildStylizedTerrain(
   ctx.putImageData(img, 0, 0);
 
   // Soft contact shadow under plateau edges (after raster for blend)
+  if (cliffH <= 0) {
+    return {
+      theme,
+      canvas,
+      worldW,
+      worldH,
+      cols: map.cols,
+      rows: map.rows,
+      cell,
+      waterLevel: 0.5,
+      fromOriginalTiles: false,
+      outTile,
+      maxLift: cliffH,
+      heightScale: cliffH,
+      usedLfx: false,
+    };
+  }
   ctx.save();
   for (let cy = 0; cy < map.rows; cy++) {
     for (let cx = 0; cx < map.cols; cx++) {

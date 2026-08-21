@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Bake map JPEGs</title>
+<script type="module">
+  import { MAPS } from "/src/data/maps.ts";
+  import {
+    buildStylizedTerrain,
+    buildTopDownTerrain,
+  } from "/src/game/terrainStyle.ts";
+
+  const jpeg = (canvas) =>
+    new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("toBlob failed"));
+            return;
+          }
+          const fr = new FileReader();
+          fr.onload = () => {
+            const url = String(fr.result);
+            const b64 = url.split(",")[1];
+            if (!b64) {
+              reject(new Error("empty jpeg"));
+              return;
+            }
+            resolve(b64);
+          };
+          fr.onerror = () => reject(fr.error);
+          fr.readAsDataURL(blob);
+        },
+        "image/jpeg",
+        0.9,
+      );
+    });
+
+  window.__bakeMaps = async () => {
+    const out = [];
+    for (const map of MAPS) {
+      const iso = buildStylizedTerrain(map, map.id);
+      const top = buildTopDownTerrain(map, map.id);
+      if (!iso.canvas.width || !iso.canvas.height) {
+        throw new Error(`empty isometric canvas for ${map.id}`);
+      }
+      if (!top.canvas.width || !top.canvas.height) {
+        throw new Error(`empty top-down canvas for ${map.id}`);
+      }
+      out.push({
+        id: map.id,
+        iso: await jpeg(iso.canvas),
+        top: await jpeg(top.canvas),
+        isoW: iso.canvas.width,
+        isoH: iso.canvas.height,
+        topW: top.canvas.width,
+        topH: top.canvas.height,
+      });
+    }
+    return out;
+  };
+</script>

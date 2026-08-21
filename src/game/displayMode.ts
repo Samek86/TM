@@ -9,6 +9,14 @@ export function parseDisplayMode(raw: string | null | undefined): DisplayMode {
   return raw === "window" ? "window" : "fullscreen";
 }
 
+/** Phone / tablet play: no windowed mode; always fill the viewport. */
+export function isPhonePlay(input: {
+  innerWidth: number;
+  coarsePointer: boolean;
+}): boolean {
+  return input.coarsePointer || input.innerWidth < 768;
+}
+
 export function readDisplayMode(storage?: Readable | null): DisplayMode {
   try {
     return parseDisplayMode(storage?.getItem(DISPLAY_MODE_KEY) ?? null);
