@@ -127,6 +127,6 @@ describe("offscreenCues", () => {
       (_x, y) => (y === 0 ? { x: 422, y: 195 } : { x: 422, y: 500 }),
     );
     expect(cue).toMatchObject({ id: "below", edge: true, left: 422 });
-    expect(cue?.top).toBe(378);
+    expect(cue?.top).toBe(362);
   });
 });

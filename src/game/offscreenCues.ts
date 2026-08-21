@@ -53,7 +53,7 @@ export function offscreenCues(
   // landscape the controls sit along the bottom, so reserving the portrait
   // rail's 176px pushes all cues into the middle of the short viewport.
   const topInset = landscapePhone ? 10 : mobile ? 58 : 52;
-  const bottomInset = landscapePhone ? 12 : mobile ? 176 : 42;
+  const bottomInset = landscapePhone ? 28 : mobile ? 176 : 42;
   const right = viewportWidth - sideInset;
   const bottom = viewportHeight - bottomInset;
   const cues: OffscreenCue[] = [];
