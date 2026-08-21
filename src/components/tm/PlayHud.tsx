@@ -118,6 +118,7 @@ export function PlayHud(props: {
     viewportWidth || (typeof window === "undefined" ? 0 : window.innerWidth);
   const cueViewportHeight =
     viewportHeight || (typeof window === "undefined" ? 0 : window.innerHeight);
+  const landscapePhone = mobile && cueViewportWidth > cueViewportHeight;
   const cues = offscreenCues(
     state.pilots,
     cueViewportWidth,
@@ -219,6 +220,14 @@ export function PlayHud(props: {
               ? "inset-x-auto bottom-[calc(max(9.5rem,env(safe-area-inset-bottom)+9.5rem))] left-1/2 w-[min(52vw,240px)] -translate-x-1/2 flex-col items-center bg-transparent px-0 py-0"
               : "bottom-6 gap-3"
           }`}
+          style={
+            landscapePhone
+              ? {
+                  bottom:
+                    "max(0.5rem, calc(env(safe-area-inset-bottom) + 0.5rem))",
+                }
+              : undefined
+          }
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
