@@ -47,9 +47,13 @@ export function offscreenCues(
     player.y,
     heightOf(player.x, player.y),
   ) ?? { x: centerX, y: centerY };
+  const landscapePhone = mobile && viewportWidth > viewportHeight;
   const sideInset = 10;
-  const topInset = mobile ? 58 : 52;
-  const bottomInset = mobile ? 176 : 42;
+  // Portrait reserves room for the score panel and bottom controls. In phone
+  // landscape the controls sit along the bottom, so reserving the portrait
+  // rail's 176px pushes all cues into the middle of the short viewport.
+  const topInset = landscapePhone ? 10 : mobile ? 58 : 52;
+  const bottomInset = landscapePhone ? 28 : mobile ? 176 : 42;
   const right = viewportWidth - sideInset;
   const bottom = viewportHeight - bottomInset;
   const cues: OffscreenCue[] = [];

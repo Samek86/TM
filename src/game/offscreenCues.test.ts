@@ -105,4 +105,28 @@ describe("offscreenCues", () => {
     expect(cue).toMatchObject({ id: "projected", edge: false, left: 120 });
     expect(cue?.top).toBe(222);
   });
+
+  it("clamps a below-camera enemy to the bottom edge in phone landscape", () => {
+    const [cue] = offscreenCues(
+      [
+        player,
+        {
+          id: "below",
+          name: "BOT-3",
+          x: 0,
+          y: 450,
+          hp: 100,
+          respawn: 0,
+          isPlayer: false,
+          accent: "#0ff",
+        },
+      ],
+      844,
+      390,
+      true,
+      (_x, y) => (y === 0 ? { x: 422, y: 195 } : { x: 422, y: 500 }),
+    );
+    expect(cue).toMatchObject({ id: "below", edge: true, left: 422 });
+    expect(cue?.top).toBe(362);
+  });
 });
