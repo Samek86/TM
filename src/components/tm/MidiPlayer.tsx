@@ -39,7 +39,7 @@ export function MidiPlayer({
     try {
       const ogg = oggForMidiPath(src);
       if (ogg) {
-        await playBgm(ogg, { volume: 0.42 });
+        await playBgm(ogg);
         setDuration(0);
         setStatus("playing");
         return;

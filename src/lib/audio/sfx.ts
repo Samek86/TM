@@ -1,6 +1,9 @@
 /**
  * Lightweight Web Audio SFX loader/player for original client WAVs.
  */
+import { browserStorage } from "@/game/displayMode";
+import { readBgmVolume, readSfxVolume } from "@/game/gameSettings";
+
 const cache = new Map<string, AudioBuffer>();
 let ctx: AudioContext | null = null;
 
@@ -59,7 +62,7 @@ export function playSfx(
       src.playbackRate.value = opts.playbackRate;
     }
     const gain = c.createGain();
-    gain.gain.value = opts.volume ?? 0.7;
+    gain.gain.value = (opts.volume ?? 0.7) * readSfxVolume(browserStorage());
     src.connect(gain);
     gain.connect(c.destination);
     src.start(0);
@@ -141,8 +144,6 @@ export function bgmWavFallback(_mapId?: string): string {
   return SFX.interback;
 }
 
-const BGM_OGG_VOLUME = 0.4;
-
 /**
  * Prefetch the ogg loops while the user is still on the menu.
  * Safe without a gesture (won't unlock playback until play()).
@@ -178,7 +179,7 @@ export async function startZoneBgm(
     await resumeAudio();
     const url = bgmFileForMap(mapId);
     if (isBgmPlaying() && getBgmUrl() === url) return "wav";
-    await playBgm(url, { volume: BGM_OGG_VOLUME });
+    await playBgm(url, { volume: readBgmVolume(browserStorage()) });
     return "wav";
   } catch (e) {
     console.warn("[audio] all BGM failed", e);
