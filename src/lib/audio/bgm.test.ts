@@ -2,10 +2,16 @@ import { describe, expect, it } from "vitest";
 import { bgmFileForMap, oggForMidiPath } from "./bgm";
 
 describe("bgmFileForMap", () => {
-  it("maps play arenas to pre-rendered ogg, not live midi", () => {
+  it("maps lobby arenas to their pre-rendered FluidR3 ogg loops", () => {
     expect(bgmFileForMap("jade_basin")).toBe("/sfx/bgm/tactics1.ogg");
-    expect(bgmFileForMap("scar_ridge")).toBe("/sfx/bgm/tactics4.ogg");
+    expect(bgmFileForMap("scar_ridge")).toBe("/sfx/bgm/tactics2.ogg");
     expect(bgmFileForMap("iron_ring")).toBe("/sfx/bgm/tactics5.ogg");
+  });
+
+  it("does not map a lobby arena to the tactics4 reserve track", () => {
+    expect(
+      ["jade_basin", "scar_ridge", "iron_ring"].map(bgmFileForMap),
+    ).not.toContain("/sfx/bgm/tactics4.ogg");
   });
 });
 
