@@ -16,10 +16,10 @@ export const VIEW_TILES_ACROSS = 24;
 
 /** World width the camera tries to show (capped by map bounds in camera). */
 export const VIEW_WORLD_WIDTH = VIEW_REF_CELL * VIEW_TILES_ACROSS;
-/** Phone FOV vs desktop. 1 = same world span as PC so enemies stay in view. */
-export const MOBILE_VIEW_WORLD_MULTIPLIER = 1;
+/** Phone FOV vs desktop. 0.9 = a slightly closer view than PC. */
+export const MOBILE_VIEW_WORLD_MULTIPLIER = 0.9;
 
-/** Phone play matches desktop world span (HUD still uses phone insets). */
+/** Phone play shows 90% of desktop world width (HUD still uses phone insets). */
 export function playWorldWidth(
   cssWidth: number,
   coarsePointer = false,
