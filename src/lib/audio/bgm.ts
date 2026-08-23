@@ -11,17 +11,14 @@ export function oggForMidiPath(midiUrl: string): string | null {
   return `/sfx/bgm/${name}.ogg`;
 }
 
-/** Map id → loop file. Same track intent as the old MIDI picker. */
+/** Lobby map id → pre-rendered loop file. tactics4.ogg is an unmapped reserve. */
 export function bgmFileForMap(mapId: string): string {
-  const id = mapId.toLowerCase();
-  if (id.includes("desert") || id.includes("scar")) {
-    return "/sfx/bgm/tactics4.ogg";
-  }
-  if (id.includes("vil") || id.includes("iron")) {
-    return "/sfx/bgm/tactics5.ogg";
-  }
-  if (id.includes("jungle2")) return "/sfx/bgm/tactics2.ogg";
-  return "/sfx/bgm/tactics1.ogg";
+  const tracks: Record<string, string> = {
+    jade_basin: "/sfx/bgm/tactics1.ogg",
+    scar_ridge: "/sfx/bgm/tactics2.ogg",
+    iron_ring: "/sfx/bgm/tactics5.ogg",
+  };
+  return tracks[mapId.toLowerCase()] ?? tracks.jade_basin;
 }
 
 let el: HTMLAudioElement | null = null;
