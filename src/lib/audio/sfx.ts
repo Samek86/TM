@@ -141,7 +141,7 @@ export function bgmWavFallback(_mapId?: string): string {
   return SFX.interback;
 }
 
-const BGM_OGG_VOLUME = 0.4;
+const BGM_OGG_VOLUME = 0.28;
 
 /**
  * Prefetch the ogg loops while the user is still on the menu.
