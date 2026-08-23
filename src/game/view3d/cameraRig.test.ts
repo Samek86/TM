@@ -13,8 +13,8 @@ describe("cameraRig", () => {
     expect(halfH * 2).toBeCloseTo(720 * (720 / 1280));
   });
 
-  it("uses desktop world span on phone-like play", () => {
-    expect(MOBILE_VIEW_WORLD_MULTIPLIER).toBe(1);
+  it("uses a slightly closer world span on phone-like play", () => {
+    expect(MOBILE_VIEW_WORLD_MULTIPLIER).toBe(0.9);
     expect(playWorldWidth(1280, false)).toBe(VIEW_WORLD_WIDTH);
     expect(playWorldWidth(390, false)).toBeCloseTo(
       VIEW_WORLD_WIDTH * MOBILE_VIEW_WORLD_MULTIPLIER,
