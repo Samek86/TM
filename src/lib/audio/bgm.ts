@@ -63,7 +63,7 @@ export async function playBgm(
   const a = new Audio(url);
   a.loop = true;
   a.preload = "auto";
-  a.volume = opts.volume ?? 0.4;
+  a.volume = opts.volume ?? 0.32;
   el = a;
   playingUrl = url;
   try {
