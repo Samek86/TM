@@ -21,6 +21,14 @@ import {
   writeDisplayMode,
   type DisplayMode,
 } from "@/game/displayMode";
+import {
+  readBgmVolume,
+  readSfxVolume,
+  readViewScale,
+  writeBgmVolume,
+  writeSfxVolume,
+  writeViewScale,
+} from "@/game/gameSettings";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -37,15 +45,29 @@ function HomePage() {
     readDisplayMode(browserStorage()),
   );
   const [phonePlay, setPhonePlay] = useState(false);
-
-  useEffect(() => {
-    const update = () => {
-      setPhonePlay(
+  const [bgmVolume, setBgmVolume] = useState(() => readBgmVolume(browserStorage()));
+  const [sfxVolume, setSfxVolume] = useState(() => readSfxVolume(browserStorage()));
+  const [viewScale, setViewScale] = useState(() =>
+    readViewScale(
+      typeof window !== "undefined" &&
         isPhonePlay({
           innerWidth: window.innerWidth,
           coarsePointer: window.matchMedia("(pointer: coarse)").matches,
         }),
-      );
+      browserStorage(),
+    ),
+  );
+
+  useEffect(() => {
+    const update = () => {
+      const phoneLike = isPhonePlay({
+        innerWidth: window.innerWidth,
+        coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+      });
+      setPhonePlay(phoneLike);
+      if (!browserStorage()?.getItem("tm.viewScale")) {
+        setViewScale(readViewScale(phoneLike, browserStorage()));
+      }
     };
     update();
     window.addEventListener("resize", update);
@@ -109,6 +131,80 @@ function HomePage() {
         </button>
       ))}
     </div>
+  );
+
+  const lobbySettings = (
+    <section className="mt-5 rounded-xl border border-tm-border bg-tm-elevated/30 p-3">
+      <h3 className="text-xs font-semibold text-tm-fg">전투 설정</h3>
+      <div className="mt-3 space-y-3">
+        {[
+          {
+            id: "bgm-volume",
+            label: "배경음악",
+            value: bgmVolume,
+            min: 0,
+            max: 1,
+            step: 0.01,
+            text: `${Math.round(bgmVolume * 100)}%`,
+            onChange: (value: number) => {
+              setBgmVolume(value);
+              writeBgmVolume(value, browserStorage());
+              void import("@/lib/audio/bgm").then(({ setBgmVolume: applyVolume }) =>
+                applyVolume(value),
+              );
+            },
+          },
+          {
+            id: "sfx-volume",
+            label: "효과음",
+            value: sfxVolume,
+            min: 0,
+            max: 1,
+            step: 0.01,
+            text: `${Math.round(sfxVolume * 100)}%`,
+            onChange: (value: number) => {
+              setSfxVolume(value);
+              writeSfxVolume(value, browserStorage());
+            },
+          },
+          {
+            id: "view-scale",
+            label: "화면 배율",
+            value: viewScale,
+            min: 0.5,
+            max: 1,
+            step: 0.01,
+            text: viewScale.toFixed(2),
+            onChange: (value: number) => {
+              setViewScale(value);
+              writeViewScale(value, phonePlay, browserStorage());
+            },
+          },
+        ].map((setting) => (
+          <div key={setting.id}>
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <label htmlFor={setting.id} className="font-medium text-tm-muted">
+                {setting.label}
+              </label>
+              <output htmlFor={setting.id} className="font-mono text-tm-cyan">
+                {setting.text}
+              </output>
+            </div>
+            <input
+              id={setting.id}
+              type="range"
+              min={setting.min}
+              max={setting.max}
+              step={setting.step}
+              value={setting.value}
+              onChange={(event) => setting.onChange(Number(event.target.value))}
+              className="mt-1.5 block w-full accent-tm-cyan"
+            />
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-[10px] text-tm-dim">낮은 화면 배율 = 더 가까운 확대 화면</p>
+    </section>
   );
 
   return (
@@ -239,6 +335,8 @@ function HomePage() {
                         </button>
                       ))}
                     </div>
+
+                    {lobbySettings}
 
                     <div className="mt-6 hidden lg:block">
                       {!phonePlay && (

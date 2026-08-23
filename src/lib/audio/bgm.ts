@@ -2,6 +2,8 @@
  * In-match / lobby BGM via HTMLAudioElement.
  * Pre-rendered ogg — no Tone.js on the play path (live MIDI synth hitching).
  */
+import { browserStorage } from "@/game/displayMode";
+import { readBgmVolume } from "@/game/gameSettings";
 
 const TACTICS = new Set(["tactics1", "tactics2", "tactics4", "tactics5"]);
 
@@ -51,19 +53,25 @@ export function getBgmUrl(): string | null {
   return playingUrl;
 }
 
+/** Updates the current loop too, so the lobby preview reacts immediately. */
+export function setBgmVolume(volume: number): void {
+  if (el) el.volume = Math.max(0, Math.min(1, volume));
+}
+
 export async function playBgm(
   url: string,
   opts: { volume?: number } = {},
 ): Promise<void> {
+  const volume = opts.volume ?? readBgmVolume(browserStorage());
   if (el && playingUrl === url && !el.paused) {
-    if (opts.volume != null) el.volume = opts.volume;
+    el.volume = volume;
     return;
   }
   stopBgm();
   const a = new Audio(url);
   a.loop = true;
   a.preload = "auto";
-  a.volume = opts.volume ?? 0.4;
+  a.volume = volume;
   el = a;
   playingUrl = url;
   try {

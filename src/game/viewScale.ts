@@ -4,6 +4,8 @@
  * Large maps only expand the playable world; they must not shrink the
  * plane on screen. Zoom is fixed so craft always looks the same size.
  */
+import { browserStorage } from "./displayMode";
+import { readViewScale } from "./gameSettings";
 
 /** Reference world units per "visual tile" for craft + FOV. */
 export const VIEW_REF_CELL = 30;
@@ -16,16 +18,20 @@ export const VIEW_TILES_ACROSS = 24;
 
 /** World width the camera tries to show (capped by map bounds in camera). */
 export const VIEW_WORLD_WIDTH = VIEW_REF_CELL * VIEW_TILES_ACROSS;
-/** Phone FOV vs desktop. 1 = same world span as PC so enemies stay in view. */
-export const MOBILE_VIEW_WORLD_MULTIPLIER = 1;
+/** Default phone FOV multiplier. Smaller span gives the mobile camera a closer zoom. */
+export const MOBILE_VIEW_WORLD_MULTIPLIER = 0.85;
 
-/** Phone play matches desktop world span (HUD still uses phone insets). */
+/** Uses the saved zoom scale; phone-like play defaults to the mobile fallback. */
 export function playWorldWidth(
   cssWidth: number,
   coarsePointer = false,
 ): number {
   const phoneLike = coarsePointer || cssWidth < 768;
-  return VIEW_WORLD_WIDTH * (phoneLike ? MOBILE_VIEW_WORLD_MULTIPLIER : 1);
+  const fallback = phoneLike ? MOBILE_VIEW_WORLD_MULTIPLIER : 1;
+  return (
+    VIEW_WORLD_WIDTH *
+    readViewScale(phoneLike, browserStorage() ?? { getItem: () => String(fallback) })
+  );
 }
 
 /**
