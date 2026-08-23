@@ -16,6 +16,7 @@ function parseInRange(
   min: number,
   max: number,
 ): number {
+  if (raw == null || raw.trim() === "") return fallback;
   const value = Number(raw);
   return Number.isFinite(value) && value >= min && value <= max ? value : fallback;
 }
