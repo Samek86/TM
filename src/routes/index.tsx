@@ -13,7 +13,10 @@ import { SPR_CATALOG_COUNT } from "@/lib/spr";
 import { MAP_CATALOG_COUNT } from "@/lib/map";
 import { MidiPlayer } from "@/components/tm/MidiPlayer";
 import { CraftCardArt, MapPreview } from "@/components/tm/LobbyPreviews";
+import { AccountPanel } from "@/components/tm/AccountPanel";
+import { RankingPanel } from "@/components/tm/RankingPanel";
 import { BGM } from "@/lib/audio/sfx";
+import { useGameAuth } from "@/lib/game-auth";
 import {
   browserStorage,
   isPhonePlay,
@@ -26,9 +29,10 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-type Tab = "play" | "sprites" | "maps" | "archive" | "codex";
+type Tab = "play" | "ranking" | "sprites" | "maps" | "archive" | "codex";
 
 function HomePage() {
+  const { user, isPending: authPending } = useGameAuth();
   const [tab, setTab] = useState<Tab>("play");
   const [playing, setPlaying] = useState(false);
   const [vultureId, setVultureId] = useState<VultureId>("born_armor");
@@ -80,7 +84,18 @@ function HomePage() {
       onClick={startGame}
       className="w-full min-w-0 whitespace-normal rounded-xl bg-tm-accent px-3 py-3.5 text-center text-sm font-bold text-tm-void shadow-[0_0_24px_rgba(240,180,41,0.25)] hover:brightness-110"
     >
-      CONNECT · {phonePlay ? "전투 시작" : displayMode === "fullscreen" ? "전체화면 전투 시작" : "창 모드 전투 시작"}
+      CONNECT ·{" "}
+      {user
+        ? phonePlay
+          ? "랭킹 대전"
+          : displayMode === "fullscreen"
+            ? "전체화면 랭킹 대전"
+            : "창 모드 랭킹 대전"
+        : phonePlay
+          ? "연습 대전"
+          : displayMode === "fullscreen"
+            ? "전체화면 연습 대전"
+            : "창 모드 연습 대전"}
     </button>
   );
 
@@ -124,11 +139,19 @@ function HomePage() {
           <p className="mt-0.5 truncate text-[11px] text-tm-muted sm:mt-1 sm:text-sm">
             완전 부활 · 3D 아레나 · 21종 무기
           </p>
+          <p className="mt-1 truncate text-[11px] text-tm-cyan sm:text-xs">
+            {authPending
+              ? "계정 확인 중…"
+              : user
+                ? `${user.username} · 랭킹 기록 ON`
+                : "게스트 · 연습 대전 (승리는 기록되지 않음)"}
+          </p>
         </div>
         <nav className="mt-3 flex flex-wrap gap-2 sm:mt-0">
           {(
             [
               ["play", "플레이"],
+              ["ranking", "랭킹"],
               ["maps", "MAP 뷰어"],
               ["sprites", "SPR 뷰어"],
               ["archive", "자료실"],
@@ -195,6 +218,9 @@ function HomePage() {
                       선택 맵 미리보기
                     </h3>
                     <MapPreview mapId={mapId} />
+                    <div className="mt-3">
+                      <AccountPanel compact />
+                    </div>
                   </div>
                   <section className="min-w-0 max-w-full rounded-2xl border border-tm-border bg-tm-panel/90 p-4 sm:p-5">
                     <h2 className="font-display text-lg text-tm-accent-fg">
@@ -251,12 +277,17 @@ function HomePage() {
                       )}
                       <div className={phonePlay ? "" : "mt-3"}>{connectButton}</div>
                       <p className="mt-2 text-center text-[11px] text-tm-dim">
-                        오르막으로만 고지 등반 · 절벽 하강 가능 · Esc 일시정지 · Q 종료
+                        {user
+                          ? "랭킹 대전 · 승리 시 계정·기체 기록이 저장됩니다 · Esc 일시정지 · Q 종료"
+                          : "연습 대전 · 로그인하면 랭킹에 기록됩니다 · Esc 일시정지 · Q 종료"}
                       </p>
                     </div>
                   </section>
 
                   <section className="flex min-w-0 max-w-full flex-col gap-4">
+                    <div className="hidden lg:block">
+                      <AccountPanel />
+                    </div>
                     <div className="hidden lg:block">
                       <h3 className="mb-2 font-display text-sm text-tm-accent-fg">
                         선택 맵 미리보기
@@ -335,7 +366,14 @@ function HomePage() {
           active={playing}
           onExit={exitGame}
           startFullscreen={phonePlay || displayMode === "fullscreen"}
+          ranked={Boolean(user)}
         />
+      )}
+
+      {tab === "ranking" && (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <RankingPanel />
+        </div>
       )}
 
       {tab === "archive" && (
