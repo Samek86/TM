@@ -5,6 +5,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { GameAuthProvider } from "@/lib/game-auth";
 import appCss from "@/styles.css?url";
 
 export const Route = createRootRoute({
@@ -33,7 +34,9 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      <GameAuthProvider>
+        <Outlet />
+      </GameAuthProvider>
     </RootDocument>
   );
 }

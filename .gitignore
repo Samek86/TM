@@ -23,6 +23,15 @@ dist/
 *.tmp
 tmp/
 
+# Game-account SQLite (local ranking / login)
+data/*.sqlite
+data/*.sqlite-*
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.data/
+
 # Isolated worktrees + SDD scratch
 .worktrees/
 .superpowers/

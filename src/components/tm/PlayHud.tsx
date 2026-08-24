@@ -45,6 +45,7 @@ export function PlayHud(props: {
   projectWorld?: ProjectWorld;
   heightOf?: (engineX: number, engineY: number) => number;
   onSelectWeapon?: (slot: number) => void;
+  rankNote?: string | null;
 }): JSX.Element {
   const {
     state,
@@ -55,6 +56,7 @@ export function PlayHud(props: {
     projectWorld,
     heightOf,
     onSelectWeapon,
+    rankNote = null,
   } = props;
   const miniRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<MapDef | null>(null);
@@ -315,6 +317,9 @@ export function PlayHud(props: {
             <p className="mt-2 text-center text-xs text-slate-400">
               R 재시작 · Q 로비
             </p>
+            {rankNote && (
+              <p className="mt-3 text-center text-xs text-amber-200">{rankNote}</p>
+            )}
           </div>
         </div>
       )}

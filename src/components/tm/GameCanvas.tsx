@@ -21,6 +21,7 @@ import { loadOrdnanceArt } from "@/game/view3d/ordnanceArt";
 import { loadTerrainKit } from "@/game/view3d/terrainTextures";
 import { sculptedHeight } from "@/game/heightfield";
 import type { VultureId } from "@/data/weapons";
+import { recordMatchWin } from "@/lib/game-auth/client";
 import { PlayHud } from "./PlayHud";
 import { TouchSticks } from "./TouchSticks";
 
@@ -31,6 +32,8 @@ interface Props {
   onExit?: () => void;
   /** Browser Fullscreen API on match start. False = stay in the tab (창 모드). */
   startFullscreen?: boolean;
+  /** Logged-in ranked match — record a win when the local player hits killLimit. */
+  ranked?: boolean;
 }
 
 function readQuality() {
@@ -89,6 +92,7 @@ export function GameCanvas({
   active,
   onExit,
   startFullscreen = true,
+  ranked = false,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const startFullscreenRef = useRef(startFullscreen);
@@ -109,8 +113,13 @@ export function GameCanvas({
   const [hudTick, setHudTick] = useState(0);
   const [isFs, setIsFs] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [rankNote, setRankNote] = useState<string | null>(null);
   const showTouchRef = useRef(false);
   showTouchRef.current = showTouch;
+  const rankedRef = useRef(ranked);
+  rankedRef.current = ranked;
+  const winPostedRef = useRef(false);
+  const lastPhaseRef = useRef<GameState["phase"] | "">("");
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse), (max-width: 768px)");
@@ -373,6 +382,33 @@ export function GameCanvas({
       const dt = Math.min(0.033, (now - last) / 1000);
       last = now;
       if (dt > 0) update(state, dt);
+      if (state.phase === "playing" && lastPhaseRef.current === "over") {
+        winPostedRef.current = false;
+        setRankNote(null);
+      }
+      if (
+        state.phase === "over" &&
+        lastPhaseRef.current !== "over" &&
+        !winPostedRef.current
+      ) {
+        const winner = state.pilots.find((p) => p.score >= state.killLimit);
+        if (winner?.isPlayer) {
+          winPostedRef.current = true;
+          if (rankedRef.current) {
+            void recordMatchWin({
+              vultureId: winner.vultureId,
+              mapId: state.mapId,
+            })
+              .then(() => setRankNote("랭킹에 승리를 기록했습니다"))
+              .catch(() => setRankNote("랭킹 기록에 실패했습니다"));
+          } else {
+            setRankNote("게스트 · 연습 대전 (기록되지 않음)");
+          }
+        } else {
+          winPostedRef.current = true;
+        }
+      }
+      lastPhaseRef.current = state.phase;
       play.renderFrame(state, dt);
       if (((now / 100) | 0) !== (((now - dt * 1000) / 100) | 0)) {
         setHudTick((t) => t + 1);
@@ -446,6 +482,9 @@ export function GameCanvas({
       state.map = map;
       startMatch(state);
       stateRef.current = state;
+      winPostedRef.current = false;
+      lastPhaseRef.current = state.phase;
+      setRankNote(null);
       if (import.meta.env.DEV) {
         (window as unknown as { __tmState?: GameState }).__tmState = state;
       }
@@ -584,6 +623,7 @@ export function GameCanvas({
             <div className="min-w-0 truncate font-mono text-[11px] text-slate-300 sm:text-xs">
               {vultureId} · {mapId}
               {isFs ? " · FULLSCREEN" : " · WINDOW"}
+              {ranked ? " · RANKED" : " · GUEST"}
             </div>
           )}
           <div className="flex shrink-0 items-center gap-2">
@@ -643,6 +683,7 @@ export function GameCanvas({
                 player.weaponIndex = slot;
               }
             }}
+            rankNote={rankNote}
           />
         )}
 

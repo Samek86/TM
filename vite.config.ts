@@ -30,6 +30,26 @@ function pgliteBootstrapPlugin(): Plugin {
   };
 }
 
+function gameAuthBootstrapPlugin(): Plugin {
+  return {
+    name: "tm-game-auth-bootstrap",
+    apply: "serve",
+    async configureServer(server) {
+      try {
+        const mod = (await server.ssrLoadModule(
+          "/src/lib/game-auth/db.ts",
+        )) as { ensureGameDbReady?: () => unknown };
+        if (typeof mod.ensureGameDbReady === "function") {
+          mod.ensureGameDbReady();
+        }
+      } catch (err) {
+        console.error("[game-auth] SQLite bootstrap failed:", err);
+        throw err;
+      }
+    },
+  };
+}
+
 /**
  * Live-preview OAuth popup — handled HERE so the agent never has to create a
  * `/auth/popup` route (and cannot break it by scaffolding a React page that
@@ -138,8 +158,15 @@ export default defineConfig(({ command }) => ({
     allowedHosts: true,
   },
   resolve: { tsconfigPaths: true },
+  optimizeDeps: {
+    exclude: ["better-sqlite3", "argon2"],
+  },
+  ssr: {
+    external: ["better-sqlite3", "argon2"],
+  },
   plugins: [
     pgliteBootstrapPlugin(),
+    gameAuthBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
     tailwindcss(),
